@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RandM.RMLib;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -12,9 +13,24 @@ namespace LORD2
         static RTReader()
         {
             // TODO Initialize stuff
+            ParseRefFiles(ProcessUtils.StartupPath);
         }
 
-        static public void ParseRefFile(string fileName)
+        static public void DisplayRefFileSections()
+        {
+            Crt.ClrScr();
+            Crt.WriteLn("TODO DEBUG OUTPUT");
+            foreach (KeyValuePair<string, Dictionary<string, string[]>> RefFile in _RefFiles)
+            {
+                Crt.WriteLn("Ref File Name: " + RefFile.Key);
+                foreach (KeyValuePair<string, string[]> Section in RefFile.Value)
+                {
+                    Crt.WriteLn("  - " + Section.Key + " (" + Section.Value.Length.ToString() + " lines)");
+                }
+            }
+        }
+
+        static private void ParseRefFile(string fileName)
         {
             // A place to store all the sections found in this file
             Dictionary<string, string[]> Sections = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
@@ -45,15 +61,18 @@ namespace LORD2
                 }
             }
 
-            _RefFiles.Add(fileName, Sections);
+            // Store last open section in dictionary
+            Sections.Add(CurrentSectionName, CurrentSectionScript.ToArray());
+
+            _RefFiles.Add(Path.GetFileNameWithoutExtension(fileName), Sections);
         }
 
-        static public void ParseRefFiles(string directoryName)
+        static private void ParseRefFiles(string directoryName)
         {
             string[] RefFileNames = Directory.GetFiles(directoryName, "*.ref", SearchOption.TopDirectoryOnly);
             foreach (string RefFileName in RefFileNames)
             {
-                ParseRefFiles(RefFileName);
+                ParseRefFile(RefFileName);
             }
         }
     }

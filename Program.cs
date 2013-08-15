@@ -9,7 +9,7 @@ namespace LORD2
     {
         static void Main(string[] args)
         {
-            RTReader.ParseRefFiles(ProcessUtils.StartupPath);
+            RTReader.DisplayRefFileSections();
             Console.WriteLine("Press any key to quit");
             Console.ReadKey();
         }

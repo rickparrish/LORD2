@@ -9,7 +9,8 @@ namespace LORD2
     {
         static void Main(string[] args)
         {
-            RTReader.DisplayRefFileSections();
+            //RTReader.DisplayRefFileSections();
+            RTReader.RunSection("RTWALL", "START");
             Console.WriteLine("Press any key to quit");
             Console.ReadKey();
         }

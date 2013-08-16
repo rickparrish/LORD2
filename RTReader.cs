@@ -22,7 +22,7 @@ namespace LORD2
         private static bool _InSHOW = false;
         private static string _InWRITEFILE = "";
         private static Random _R = new Random();
-        private static Dictionary<string, Dictionary<string, string[]>> _RefFiles = new Dictionary<string, Dictionary<string, string[]>>(StringComparer.OrdinalIgnoreCase);
+        private static Dictionary<string, Dictionary<string, RTRSection>> _RefFiles = new Dictionary<string, Dictionary<string, RTRSection>>(StringComparer.OrdinalIgnoreCase);
         private static int _Version = 2;
 
         static RTReader()
@@ -126,12 +126,12 @@ namespace LORD2
         {
             Crt.ClrScr();
             Crt.WriteLn("DEBUG OUTPUT");
-            foreach (KeyValuePair<string, Dictionary<string, string[]>> RefFile in _RefFiles)
+            foreach (KeyValuePair<string, Dictionary<string, RTRSection>> RefFile in _RefFiles)
             {
                 Crt.WriteLn("Ref File Name: " + RefFile.Key);
-                foreach (KeyValuePair<string, string[]> Section in RefFile.Value)
+                foreach (KeyValuePair<string, RTRSection> Section in RefFile.Value)
                 {
-                    Crt.WriteLn("  - " + Section.Key + " (" + Section.Value.Length.ToString() + " lines)");
+                    Crt.WriteLn("  - " + Section.Key + " (" + Section.Value.Script.Count.ToString() + " lines)");
                 }
             }
         }
@@ -273,11 +273,11 @@ namespace LORD2
         private static void LoadRefFile(string fileName)
         {
             // A place to store all the sections found in this file
-            Dictionary<string, string[]> Sections = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, RTRSection> Sections = new Dictionary<string, RTRSection>(StringComparer.OrdinalIgnoreCase);
 
             // Where to store the info for the section we're currently working on
             string CurrentSectionName = "_HEADER";
-            List<string> CurrentSectionScript = new List<string>();
+            RTRSection CurrentSection = new RTRSection();
 
             // Loop through the file
             string[] Lines = File.ReadAllLines(fileName);
@@ -289,20 +289,27 @@ namespace LORD2
                 if (LineTrimmed.StartsWith("@#"))
                 {
                     // Store section in dictionary
-                    Sections.Add(CurrentSectionName, CurrentSectionScript.ToArray());
+                    Sections.Add(CurrentSectionName, CurrentSection);
 
                     // Get new section name (presumes only one word headers allowed, trims @# off start) and reset script block
                     CurrentSectionName = Line.Trim().Split(' ')[0].Substring(2);
-                    CurrentSectionScript.Clear();
+                    CurrentSection = new RTRSection();
+                }
+                else if (LineTrimmed.StartsWith("@LABEL "))
+                {
+                    CurrentSection.Script.Add(Line);
+
+                    string[] Tokens = LineTrimmed.Split(' ');
+                    CurrentSection.Labels.Add(Tokens[1].ToUpper(), CurrentSection.Script.Count - 1);
                 }
                 else
                 {
-                    CurrentSectionScript.Add(Line);
+                    CurrentSection.Script.Add(Line);
                 }
             }
 
             // Store last open section in dictionary
-            Sections.Add(CurrentSectionName, CurrentSectionScript.ToArray());
+            Sections.Add(CurrentSectionName, CurrentSection);
 
             _RefFiles.Add(Path.GetFileNameWithoutExtension(fileName), Sections);
         }
@@ -319,10 +326,10 @@ namespace LORD2
         public static void RunSection(string fileName, string sectionName)
         {
             // TODO What happens if invalid file and/or section name is given
-            Dictionary<string, string[]> RefFile = _RefFiles[fileName];
+            Dictionary<string, RTRSection> RefFile = _RefFiles[fileName];
             if (RefFile != null)
             {
-                string[] Lines = RefFile[sectionName];
+                string[] Lines = RefFile[sectionName].Script.ToArray();
                 if (Lines != null)
                 {
                     RunScript(Lines);

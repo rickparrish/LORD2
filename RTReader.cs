@@ -9,6 +9,8 @@ namespace LORD2
 {
     public static class RTReader
     {
+        private static int _CurrentLineNumber = 0;
+        private static RTRSection _CurrentSection = null;
         private static Dictionary<string, Int16> _GlobalI = new Dictionary<string, Int16>(StringComparer.OrdinalIgnoreCase);
         private static Dictionary<string, string> _GlobalOther = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private static Dictionary<string, Int32> _GlobalP = new Dictionary<string, Int32>(StringComparer.OrdinalIgnoreCase);
@@ -141,7 +143,15 @@ namespace LORD2
             switch (tokens[1].ToUpper())
             {
                 case "GOTO": // @DO GOTO <header or label>
-                    // TODO
+                    // TODO Need to handle header gotos
+                    if (_CurrentSection.Labels.ContainsKey(tokens[2]))
+                    {
+                        _CurrentLineNumber = _CurrentSection.Labels[tokens[2]];
+                    }
+                    else
+                    {
+                        Crt.WriteLn("TODO: " + string.Join(" ", tokens));
+                    }
                     return;
                 case "NUMRETURN": // @DO NUMRETURN <int var> <string var>
                     string Translated = TranslateVariables(tokens[3]);
@@ -327,22 +337,16 @@ namespace LORD2
         {
             // TODO What happens if invalid file and/or section name is given
             Dictionary<string, RTRSection> RefFile = _RefFiles[fileName];
-            if (RefFile != null)
-            {
-                string[] Lines = RefFile[sectionName].Script.ToArray();
-                if (Lines != null)
-                {
-                    RunScript(Lines);
-                }
-            }
+            _CurrentSection = RefFile[sectionName];
+            string[] Lines = _CurrentSection.Script.ToArray();
+            RunScript(Lines);
         }
 
         private static void RunScript(string[] script)
         {
-            int LineNumber = 0;
-            while (LineNumber < script.Length)
+            while (_CurrentLineNumber < script.Length)
             {
-                string Line = script[LineNumber];
+                string Line = script[_CurrentLineNumber];
                 string LineTranslated = TranslateVariables(Line);
                 string LineTrimmed = Line.Trim();
 
@@ -396,13 +400,13 @@ namespace LORD2
 
                                 // Check if it's an IF block, or inline IF
                                 // TODO This isn't ideal -- what if the next line is a blank or a comment or something
-                                if (script[LineNumber + 1].Trim().ToUpper().StartsWith("@BEGIN"))
+                                if (script[_CurrentLineNumber + 1].Trim().ToUpper().StartsWith("@BEGIN"))
                                 {
                                     if (!Result)
                                     {
                                         _InIFFalse = _InBEGINCount;
                                         _InBEGINCount += 1;
-                                        LineNumber += 1;
+                                        _CurrentLineNumber += 1;
                                     }
                                 }
                                 else
@@ -449,7 +453,7 @@ namespace LORD2
                     }
                 }
 
-                LineNumber += 1;
+                _CurrentLineNumber += 1;
             }
         }
 

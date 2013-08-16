@@ -11,8 +11,8 @@ namespace LORD2
         {
             //RTReader.DisplayRefFileSections();
             RTReader.RunSection("RTWALL", "START");
-            Console.WriteLine("Press any key to quit");
-            Console.ReadKey();
+            Crt.Write("Press any key to quit");
+            Crt.ReadKey();
         }
     }
 }

@@ -10,6 +10,7 @@ namespace LORD2
     public static class RTReader
     {
         private static Dictionary<string, Int16> _GlobalI = new Dictionary<string, Int16>(StringComparer.OrdinalIgnoreCase);
+        private static Dictionary<string, string> _GlobalOther = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private static Dictionary<string, Int32> _GlobalP = new Dictionary<string, Int32>(StringComparer.OrdinalIgnoreCase);
         private static Dictionary<string, string> _GlobalPLUS = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private static Dictionary<string, string> _GlobalS = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -20,6 +21,7 @@ namespace LORD2
         private static int _InIFFalse = 999;
         private static bool _InSHOW = false;
         private static string _InWRITEFILE = "";
+        private static Random _R = new Random();
         private static Dictionary<string, Dictionary<string, string[]>> _RefFiles = new Dictionary<string, Dictionary<string, string[]>>(StringComparer.OrdinalIgnoreCase);
         private static int _Version = 2;
 
@@ -35,6 +37,41 @@ namespace LORD2
             for (int i = 1; i <= 10; i++) _GlobalS.Add("`S" + StringUtils.PadLeft(i.ToString(), '0', 2), "");
             for (int i = 1; i <= 99; i++) _GlobalT.Add("`T" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
             for (int i = 1; i <= 40; i++) _GlobalV.Add("`V" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
+
+            _GlobalOther.Add("`N", "TODO User Name");
+            _GlobalOther.Add("`E", "TODO Enemy Name");
+            _GlobalOther.Add("`G", "TODO Graphics Level");
+            _GlobalOther.Add("`X", " ");
+            _GlobalOther.Add("`D", "\x08");
+            _GlobalOther.Add("`1", Ansi.TextColor(Crt.Blue));
+            _GlobalOther.Add("`2", Ansi.TextColor(Crt.Green));
+            _GlobalOther.Add("`3", Ansi.TextColor(Crt.Cyan));
+            _GlobalOther.Add("`4", Ansi.TextColor(Crt.Red));
+            _GlobalOther.Add("`5", Ansi.TextColor(Crt.Magenta));
+            _GlobalOther.Add("`6", Ansi.TextColor(Crt.Brown));
+            _GlobalOther.Add("`7", Ansi.TextColor(Crt.LightGray));
+            _GlobalOther.Add("`8", Ansi.TextColor(Crt.White)); // Supposed to be dark gray, but actually white
+            _GlobalOther.Add("`9", Ansi.TextColor(Crt.LightBlue));
+            _GlobalOther.Add("`0", Ansi.TextColor(Crt.LightGreen));
+            _GlobalOther.Add("`!", Ansi.TextColor(Crt.LightCyan));
+            _GlobalOther.Add("`@", Ansi.TextColor(Crt.LightRed));
+            _GlobalOther.Add("`#", Ansi.TextColor(Crt.LightMagenta));
+            _GlobalOther.Add("`$", Ansi.TextColor(Crt.Yellow));
+            _GlobalOther.Add("`%", Ansi.TextColor(Crt.White));
+            _GlobalOther.Add("`^", Ansi.TextColor(15));
+            _GlobalOther.Add("`W", "TODO 1/10s");
+            _GlobalOther.Add("`L", "TODO 1/2s");
+            _GlobalOther.Add("`\\", "\r\n");
+            _GlobalOther.Add("`r0", Ansi.TextBackground(Crt.Black));
+            _GlobalOther.Add("`r1", Ansi.TextBackground(Crt.Blue));
+            _GlobalOther.Add("`r2", Ansi.TextBackground(Crt.Green));
+            _GlobalOther.Add("`r3", Ansi.TextBackground(Crt.Cyan));
+            _GlobalOther.Add("`r4", Ansi.TextBackground(Crt.Red));
+            _GlobalOther.Add("`r5", Ansi.TextBackground(Crt.Magenta));
+            _GlobalOther.Add("`r6", Ansi.TextBackground(Crt.Brown));
+            _GlobalOther.Add("`r7", Ansi.TextBackground(Crt.LightGray));
+            _GlobalOther.Add("`c", Ansi.ClrScr() + "\r\n\r\n");
+            _GlobalOther.Add("`k", "TODO MORE");
         }
 
         private static void AssignVariable(string variable, string value)
@@ -103,15 +140,71 @@ namespace LORD2
         {
             switch (tokens[1].ToUpper())
             {
+                case "GOTO": // @DO GOTO <header or label>
+                    // TODO
+                    return;
+                case "NUMRETURN": // @DO NUMRETURN <int var> <string var>
+                    string Translated = TranslateVariables(tokens[3]);
+                    string TranslatedWithoutNumbers = Regex.Replace(Translated, "[0-9]", "", RegexOptions.IgnoreCase);
+                    AssignVariable(tokens[2], (Translated.Length - TranslatedWithoutNumbers.Length).ToString());
+                    return;
+                case "READSTRING": // @DO READSTRING <MAX LENGTH> <DEFAULT> <variable TO PUT IT IN> (variable may be left off, in which case store in `S10)
+                    // TODO Doesn't take max length or default into account
+                    // TODO Maybe need an AssignVariable parameter that tells it not to translate?  Otherwise user input will be translated
+                    string Input = "";
+                    Crt.ReadLn(out Input);
+                    if (tokens.Length >= 5)
+                    {
+                        AssignVariable(tokens[4], Input);
+                    }
+                    else
+                    {
+                        AssignVariable("`S10", Input);
+                    }
+                    return;
+                case "REPLACEALL": // @DO REPLACEALL <find> <replace> <in>
+                    AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
+                    return;
+                case "STRIP": // @DO STRIP <string variable> (really trim)
+                    AssignVariable(tokens[2], TranslateVariables(tokens[2]).Trim());
+                    return;
+                case "STRIPBAD": // @DO STRIPBAD <string variable> (strip illegal ` and replaces via badwords.dat)
+                    // TODO
+                    return;
+                case "TRIM": // @DO TRIM <file name> <number to trim to> (remove lines from file until less than number in length)
+                    string FileName = StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[2]));
+                    int MaxLines = Convert.ToInt32(TranslateVariables(tokens[3]));
+                    List<string> Lines = new List<string>();
+                    Lines.AddRange(FileUtils.FileReadAllLines(FileName));
+                    if (Lines.Count > MaxLines)
+                    {
+                        while (Lines.Count > MaxLines) Lines.RemoveAt(0);
+                        FileUtils.FileWriteAllLines(FileName, Lines.ToArray());
+                    }
+                    return;
+                case "UPCASE": // @DO UPCASE <string variable>
+                    AssignVariable(tokens[2], TranslateVariables(tokens[2]).ToUpper());
+                    return;
                 case "WRITE": // @DO WRITE next one line is written to the screen, no line wrap
                     _InDOWrite = true;
                     return;
                 default:
                     switch (tokens[2].ToUpper())
                     {
+                        case "-": // @DO <number to change> - <change with what>
+                            AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) - Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+                            return;
+                        case "ADD": // DO <string var> ADD <string var or text>
+                            AssignVariable(tokens[1], TranslateVariables(tokens[1] + string.Join(" ", tokens, 3, tokens.Length - 3)));
+                            return;
                         case "IS": // @DO <Number To Change> IS <Change With What>
                             AssignVariable(tokens[1], string.Join(" ", tokens, 3, tokens.Length - 3));
-                            break;
+                            return;
+                        case "RANDOM": // @DO <Varible to put # in> RANDOM <Highest number> <number to add to it>
+                            int Min = Convert.ToInt32(tokens[4]);
+                            int Max = Min + Convert.ToInt32(tokens[3]);
+                            AssignVariable(tokens[1], _R.Next(Min, Max).ToString());
+                            return;
                     }
                     break;
             }
@@ -282,7 +375,8 @@ namespace LORD2
                             case "@DISPLAYFILE": // @DISPLAYFILE <filename> <options> (options are NOPAUSE and NOSKIP, separated by space if both used)
                                 // TODO As with WRITEFILE, don't allow for ..\..\blah
                                 // TODO Handle variables as filename (ie `s02)
-                                Crt.Write(FileUtils.FileReadAllText(StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(Tokens[1]))));
+                                // TODO Handle NOPAUSE and NOSKIP parameters
+                                Ansi.Write(FileUtils.FileReadAllText(StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(Tokens[1]))));
                                 break;
                             case "@DO": // @DO has waaaaaay too many variants
                                 HandleDO(Tokens);
@@ -292,6 +386,9 @@ namespace LORD2
                                 break;
                             case "@IF": // @IF <Varible> <Math> <Thing the varible must be, or more or less then, or another varible>  (Possible math functions: EQUALS, MORE, LESS, NOT)
                                 bool Result = HandleIF(Tokens);
+
+                                // Check if it's an IF block, or inline IF
+                                // TODO This isn't ideal -- what if the next line is a blank or a comment or something
                                 if (script[LineNumber + 1].Trim().ToUpper().StartsWith("@BEGIN"))
                                 {
                                     if (!Result)
@@ -303,7 +400,7 @@ namespace LORD2
                                 }
                                 else
                                 {
-                                    Crt.WriteLn("TODO: " + Line);
+                                    if (Result) Crt.WriteLn("TODO: " + Line);
                                 }
                                 break;
                             case "@LABEL": // @LABEL <label name>
@@ -331,12 +428,12 @@ namespace LORD2
                         // TODO If we're outputting something, we might need to do something here
                         if (_InDOWrite)
                         {
-                            Crt.Write(LineTranslated);
+                            Ansi.Write(LineTranslated);
                             _InDOWrite = false;
                         }
                         else if (_InSHOW)
                         {
-                            Crt.WriteLn(LineTranslated);
+                            Ansi.Write(LineTranslated + "\r\n");
                         }
                         else if (_InWRITEFILE != "")
                         {
@@ -359,43 +456,47 @@ namespace LORD2
                 {
                     foreach (KeyValuePair<string, short> KVP in _GlobalI)
                     {
-                        input = Regex.Replace(input, KVP.Key, KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
                     }
                 }
                 if (inputUpper.Contains("`P"))
                 {
                     foreach (KeyValuePair<string, int> KVP in _GlobalP)
                     {
-                        input = Regex.Replace(input, KVP.Key, KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
                     }
                 }
                 if (inputUpper.Contains("`+"))
                 {
                     foreach (KeyValuePair<string, string> KVP in _GlobalPLUS)
                     {
-                        input = Regex.Replace(input, KVP.Key, KVP.Value, RegexOptions.IgnoreCase);
+                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
                     }
                 }
                 if (inputUpper.Contains("`S"))
                 {
                     foreach (KeyValuePair<string, string> KVP in _GlobalS)
                     {
-                        input = Regex.Replace(input, KVP.Key, KVP.Value, RegexOptions.IgnoreCase);
+                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
                     }
                 }
                 if (inputUpper.Contains("`T"))
                 {
                     foreach (KeyValuePair<string, byte> KVP in _GlobalT)
                     {
-                        input = Regex.Replace(input, KVP.Key, KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
                     }
                 }
                 if (inputUpper.Contains("`V"))
                 {
                     foreach (KeyValuePair<string, int> KVP in _GlobalV)
                     {
-                        input = Regex.Replace(input, KVP.Key, KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
                     }
+                }
+                foreach (KeyValuePair<string, string> KVP in _GlobalOther)
+                {
+                    input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
                 }
             }
 

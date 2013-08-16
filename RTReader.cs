@@ -26,11 +26,14 @@ namespace LORD2
         private static bool _InDOWrite = false;
         private static string _InGOTOHeader = "";
         private static int _InIFFalse = 999;
+        private static bool _InSAY = false;
         private static bool _InSHOW = false;
         private static bool _InSHOWLOCAL = false;
         private static string _InWRITEFILE = "";
         private static Random _R = new Random();
         private static Dictionary<string, RTRFile> _RefFiles = new Dictionary<string, RTRFile>(StringComparer.OrdinalIgnoreCase);
+        private static int _SavedX = 1;
+        private static int _SavedY = 1;
         private static int _Version = 2;
 
         static RTReader()
@@ -149,20 +152,58 @@ namespace LORD2
 
         private static void HandleCHOICE()
         {
-            // TODO
             // @CHOICE next lines until next @ command are choice options in listbox.  RESPONCE and RESPONSE hold result, `V01 defines initial selected index
+            /*The choice command is more useful now; you can now define *IF* type statements 
+            so a certain choice will only be there if a conditional statement is met.
+            For instance:
+            @CHOICE
+            Yes
+            No
+            =`p20 500 Hey, I have 500 exactly!
+            !`p20 500 Hey, I have anything BUT 500 exactly!
+            >`p20 500 Hey, I have MORE than 500!
+            <`p20 100 Hey, I have LESS than 100!
+            >`p20 100 <`p20 500 I have more then 100 and less than 500!
+            Also:  You can check the status of individual bits in a `T player byte.  The 
+            bit is true or false, like this:
+            +`t12 1 Hey! Byte 12's bit 1 is TRUE! (which is 1)
+            -`t12 3 Hey! Byte 12's bit 3 is FALSE! (which is 0)
+
+            The = > and < commands can be stacked as needed.  In the above example, if 
+            `p20 was 600, only options 1, 2, 4, and 5 would be available, and RESPONSE 
+            would be set to the correct option if one of those were selected.  For 
+            example, if `p20 was 600 and the user hit the selection:
+            "Hey, I have more than 500", RESPONSE would be set to 5.*/
+            
+            // TODO
             Crt.WriteLn("TODO @CHOICE");
             Ansi.Write(TranslateVariables(string.Join("\r\n", _InCHOICEOptions.ToArray())));
             Crt.ReadKey();
 
-            _GlobalWords["RESPONCE"] = "0";
-            _GlobalWords["RESPONSE"] = "0";
+            _GlobalWords["RESPONCE"] = "1";
+            _GlobalWords["RESPONSE"] = "1";
+        }
+
+        private static void HandleCLEAR(string[] tokens)
+        {
+            switch (tokens[1].ToUpper())
+            {
+                case "SCREEN":
+                    Crt.ClrScr();
+                    return;
+            }
+
+            Crt.WriteLn("TODO (hit a key): " + string.Join(" ", tokens));
+            Crt.ReadKey();
         }
 
         private static void HandleDO(string[] tokens)
         {
             switch (tokens[1].ToUpper())
             {
+                case "COPYTONAME": // @DO COPYTONAME store `S10 in `N
+                    _GlobalOther["`N"] = TranslateVariables("`S10");
+                    return;
                 case "GOTO": // @DO GOTO <header or label>
                     // TODO Need to handle header gotos
                     if (_CurrentSection.Labels.ContainsKey(tokens[2]))
@@ -336,7 +377,7 @@ namespace LORD2
                 else
                 {
                     // TODO Filter out comment lines, which should make the @IF followed by @BEGIN check more reliable, since @IF will never be followed by a comment if we filter it
-                    // TODO Need to keep track of @DO DISPLAY and @SHOW and @CHOICE statements though, so we don't filter out legitimate text!
+                    // TODO Need to keep track of @DO DISPLAY and @SHOW and @CHOICE and @SAY statements though, so we don't filter out legitimate text!
                     NewSection.Script.Add(Line);
                 }
             }
@@ -406,7 +447,13 @@ namespace LORD2
                     if (LineTrimmed.StartsWith("@"))
                     {
                         if (_InCHOICE) HandleCHOICE();
+                        if (_InSAY)
+                        {
+                            Crt.Window(1, 1, 80, 25);
+                            Crt.GotoXY(_SavedX, _SavedY);
+                        }
                         _InCHOICE = false;
+                        _InSAY = false;
                         _InSHOW = false;
                         _InSHOWLOCAL = false;
                         _InWRITEFILE = "";
@@ -420,6 +467,9 @@ namespace LORD2
                             case "@CHOICE": // @CHOICE next lines until next @ command are choice options in listbox.  RESPONCE and RESPONSE hold result, `V01 defines initial selected index
                                 _InCHOICEOptions.Clear();
                                 _InCHOICE = true;
+                                break;
+                            case "@CLEAR": // @CLEAR <screen or name or userscreen or text or picture or all> screen=entire screen, name=name line of game window, userscreen=user text (TODO which lines?), text=game text (@SAY window), picture=the picture, all=user text+picture+game text+name and redraws screen
+                                HandleCLEAR(Tokens);
                                 break;
                             case "@CLOSESCRIPT":
                                 return;
@@ -470,11 +520,24 @@ namespace LORD2
                             case "@KEY": // @KEY <bottom or top or nodisplay> does a [MORE] prompt centered on current line
                                 // TODO Handle positioning
                                 // TODO Also, does it erase after a keypress?
-                                Ansi.Write("                                     [MORE]");
+                                // @KEY = "  `1[`!MORE`1]`7" from current cursor position
+                                // @KEY BOTTOM = "                                   `!<MORE>`7" on line 24
+                                // @KEY TOP =    "                                       `![`1MORE`!]`7" on line 15
+                                Ansi.Write(TranslateVariables("                                   `!<MORE>`7"));
+                                // TODO Erase after drawing
                                 Crt.ReadKey();
                                 break;
                             case "@LABEL": // @LABEL <label name>
                                 // Ignore
+                                break;
+                            case "@NAME": // @NAME <new name>
+                                _GlobalOther["`N"] = TranslateVariables(string.Join(" ", Tokens, 1, Tokens.Length - 1));
+                                break;
+                            case "@SAY": // @SAY All text UNDER this will be put in the 'talk window' until a @ is hit.
+                                _SavedX = Crt.WhereX();
+                                _SavedY = Crt.WhereY();
+                                Crt.Window(33, 3, 33 + 19, 3 + 11);
+                                _InSAY = true;
                                 break;
                             case "@SHOW": // @SHOW following lines until next one starting with @ are output to screen
                                 _InSHOW = true;
@@ -508,6 +571,11 @@ namespace LORD2
                             // TODO Remotely
                             Ansi.Write(LineTranslated);
                             _InDOWrite = false;
+                        }
+                        else if (_InSAY)
+                        {
+                            // TODO Remotely
+                            Ansi.Write(LineTranslated);
                         }
                         else if (_InSHOW)
                         {

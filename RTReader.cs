@@ -19,11 +19,15 @@ namespace LORD2
         private static Dictionary<string, string> _GlobalS = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private static Dictionary<string, byte> _GlobalT = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
         private static Dictionary<string, Int32> _GlobalV = new Dictionary<string, Int32>(StringComparer.OrdinalIgnoreCase);
+        private static Dictionary<string, string> _GlobalWords = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private static int _InBEGINCount = 0;
+        private static bool _InCHOICE = false;
+        private static List<string> _InCHOICEOptions = new List<string>();
         private static bool _InDOWrite = false;
         private static string _InGOTOHeader = "";
         private static int _InIFFalse = 999;
         private static bool _InSHOW = false;
+        private static bool _InSHOWLOCAL = false;
         private static string _InWRITEFILE = "";
         private static Random _R = new Random();
         private static Dictionary<string, RTRFile> _RefFiles = new Dictionary<string, RTRFile>(StringComparer.OrdinalIgnoreCase);
@@ -76,6 +80,9 @@ namespace LORD2
             _GlobalOther.Add("`r7", Ansi.TextBackground(Crt.LightGray));
             _GlobalOther.Add("`c", Ansi.ClrScr() + "\r\n\r\n");
             _GlobalOther.Add("`k", "TODO MORE");
+            // TODO `b
+
+            _GlobalWords.Add("LOCAL", "5"); // TODO
         }
 
         private static void AssignVariable(string variable, string value)
@@ -140,6 +147,18 @@ namespace LORD2
             }
         }
 
+        private static void HandleCHOICE()
+        {
+            // TODO
+            // @CHOICE next lines until next @ command are choice options in listbox.  RESPONCE and RESPONSE hold result, `V01 defines initial selected index
+            Crt.WriteLn("TODO @CHOICE");
+            Ansi.Write(TranslateVariables(string.Join("\r\n", _InCHOICEOptions.ToArray())));
+            Crt.ReadKey();
+
+            _GlobalWords["RESPONCE"] = "0";
+            _GlobalWords["RESPONSE"] = "0";
+        }
+
         private static void HandleDO(string[] tokens)
         {
             switch (tokens[1].ToUpper())
@@ -187,11 +206,11 @@ namespace LORD2
                     string FileName = StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[2]));
                     int MaxLines = Convert.ToInt32(TranslateVariables(tokens[3]));
                     List<string> Lines = new List<string>();
-                    Lines.AddRange(FileUtils.FileReadAllLines(FileName));
+                    Lines.AddRange(FileUtils.FileReadAllLines(FileName, RMEncoding.Ansi));
                     if (Lines.Count > MaxLines)
                     {
                         while (Lines.Count > MaxLines) Lines.RemoveAt(0);
-                        FileUtils.FileWriteAllLines(FileName, Lines.ToArray());
+                        FileUtils.FileWriteAllLines(FileName, Lines.ToArray(), RMEncoding.Ansi);
                     }
                     return;
                 case "UPCASE": // @DO UPCASE <string variable>
@@ -292,7 +311,7 @@ namespace LORD2
             RTRSection NewSection = new RTRSection();
 
             // Loop through the file
-            string[] Lines = File.ReadAllLines(fileName);
+            string[] Lines = FileUtils.FileReadAllLines(fileName, RMEncoding.Ansi);
             foreach (string Line in Lines)
             {
                 string LineTrimmed = Line.Trim();
@@ -316,6 +335,8 @@ namespace LORD2
                 }
                 else
                 {
+                    // TODO Filter out comment lines, which should make the @IF followed by @BEGIN check more reliable, since @IF will never be followed by a comment if we filter it
+                    // TODO Need to keep track of @DO DISPLAY and @SHOW and @CHOICE statements though, so we don't filter out legitimate text!
                     NewSection.Script.Add(Line);
                 }
             }
@@ -338,13 +359,13 @@ namespace LORD2
         public static void RunSection(string fileName, string sectionName)
         {
             // TODO What happens if invalid file and/or section name is given
-            
+
             // Run the selected script
             _CurrentFile = _RefFiles[fileName];
             _CurrentSection = _CurrentFile.Sections[sectionName];
             _CurrentLineNumber = 0;
             RunScript(_CurrentSection.Script.ToArray());
-            
+
             // If we exit this script with _InGOTOHeader set, it means we want to GOTO a different section
             if (_InGOTOHeader != "")
             {
@@ -384,7 +405,10 @@ namespace LORD2
 
                     if (LineTrimmed.StartsWith("@"))
                     {
+                        if (_InCHOICE) HandleCHOICE();
+                        _InCHOICE = false;
                         _InSHOW = false;
+                        _InSHOWLOCAL = false;
                         _InWRITEFILE = "";
 
                         string[] Tokens = LineTrimmed.Split(' ');
@@ -393,13 +417,17 @@ namespace LORD2
                             case "@BEGIN":
                                 _InBEGINCount += 1;
                                 break;
+                            case "@CHOICE": // @CHOICE next lines until next @ command are choice options in listbox.  RESPONCE and RESPONSE hold result, `V01 defines initial selected index
+                                _InCHOICEOptions.Clear();
+                                _InCHOICE = true;
+                                break;
                             case "@CLOSESCRIPT":
                                 return;
                             case "@DISPLAYFILE": // @DISPLAYFILE <filename> <options> (options are NOPAUSE and NOSKIP, separated by space if both used)
                                 // TODO As with WRITEFILE, don't allow for ..\..\blah
                                 // TODO Handle variables as filename (ie `s02)
                                 // TODO Handle NOPAUSE and NOSKIP parameters
-                                Ansi.Write(FileUtils.FileReadAllText(StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(Tokens[1]))));
+                                Ansi.Write(FileUtils.FileReadAllText(StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(Tokens[1])), RMEncoding.Ansi));
                                 break;
                             case "@DO": // @DO has waaaaaay too many variants
                                 HandleDO(Tokens);
@@ -423,7 +451,20 @@ namespace LORD2
                                 }
                                 else
                                 {
-                                    if (Result) Crt.WriteLn("TODO: " + Line);
+                                    if (Result)
+                                    {
+                                        // TODO Everything in here is incredibly hackish, just want a working POC
+                                        string[] THEN = string.Join(" ", Tokens, 5, Tokens.Length - 5).Split(' ');
+                                        if (THEN[0].ToUpper() == "GOTO")
+                                        {
+                                            HandleDO(("@DO GOTO " + THEN[1]).Split(' '));
+                                        }
+                                        else
+                                        {
+                                            Crt.WriteLn("TODO (hit a key): " + Line);
+                                            Crt.ReadKey();
+                                        }
+                                    }
                                 }
                                 break;
                             case "@KEY": // @KEY <bottom or top or nodisplay> does a [MORE] prompt centered on current line
@@ -437,6 +478,9 @@ namespace LORD2
                                 break;
                             case "@SHOW": // @SHOW following lines until next one starting with @ are output to screen
                                 _InSHOW = true;
+                                break;
+                            case "@SHOWLOCAL": // Same as above, but output locally only
+                                _InSHOWLOCAL = true;
                                 break;
                             case "@VERSION": // @VERSION <Version the script needs>
                                 int RequiredVersion = Convert.ToInt32(Tokens[1]);
@@ -455,18 +499,28 @@ namespace LORD2
                     else
                     {
                         // TODO If we're outputting something, we might need to do something here
-                        if (_InDOWrite)
+                        if (_InCHOICE)
                         {
+                            _InCHOICEOptions.Add(Line);
+                        }
+                        else if (_InDOWrite)
+                        {
+                            // TODO Remotely
                             Ansi.Write(LineTranslated);
                             _InDOWrite = false;
                         }
                         else if (_InSHOW)
                         {
+                            // TODO Remotely
+                            Ansi.Write(LineTranslated + "\r\n");
+                        }
+                        else if (_InSHOWLOCAL)
+                        {
                             Ansi.Write(LineTranslated + "\r\n");
                         }
                         else if (_InWRITEFILE != "")
                         {
-                            FileUtils.FileAppendAllText(_InWRITEFILE, LineTranslated + Environment.NewLine);
+                            FileUtils.FileAppendAllText(_InWRITEFILE, LineTranslated + Environment.NewLine, RMEncoding.Ansi);
                         }
                     }
                 }
@@ -480,55 +534,65 @@ namespace LORD2
 
         private static string TranslateVariables(string input)
         {
-            if (input.Contains("`"))
-            {
-                string inputUpper = input.ToUpper();
+            string inputUpper = input.ToUpper();
 
-                if (inputUpper.Contains("`I"))
+            if (inputUpper.Contains("`I"))
+            {
+                foreach (KeyValuePair<string, short> KVP in _GlobalI)
                 {
-                    foreach (KeyValuePair<string, short> KVP in _GlobalI)
-                    {
-                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
-                    }
+                    input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
                 }
-                if (inputUpper.Contains("`P"))
+            }
+            if (inputUpper.Contains("`P"))
+            {
+                foreach (KeyValuePair<string, int> KVP in _GlobalP)
                 {
-                    foreach (KeyValuePair<string, int> KVP in _GlobalP)
-                    {
-                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
-                    }
+                    input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
                 }
-                if (inputUpper.Contains("`+"))
-                {
-                    foreach (KeyValuePair<string, string> KVP in _GlobalPLUS)
-                    {
-                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
-                    }
-                }
-                if (inputUpper.Contains("`S"))
-                {
-                    foreach (KeyValuePair<string, string> KVP in _GlobalS)
-                    {
-                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
-                    }
-                }
-                if (inputUpper.Contains("`T"))
-                {
-                    foreach (KeyValuePair<string, byte> KVP in _GlobalT)
-                    {
-                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
-                    }
-                }
-                if (inputUpper.Contains("`V"))
-                {
-                    foreach (KeyValuePair<string, int> KVP in _GlobalV)
-                    {
-                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
-                    }
-                }
-                foreach (KeyValuePair<string, string> KVP in _GlobalOther)
+            }
+            if (inputUpper.Contains("`+"))
+            {
+                foreach (KeyValuePair<string, string> KVP in _GlobalPLUS)
                 {
                     input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
+                }
+            }
+            if (inputUpper.Contains("`S"))
+            {
+                foreach (KeyValuePair<string, string> KVP in _GlobalS)
+                {
+                    input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
+                }
+            }
+            if (inputUpper.Contains("`T"))
+            {
+                foreach (KeyValuePair<string, byte> KVP in _GlobalT)
+                {
+                    input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                }
+            }
+            if (inputUpper.Contains("`V"))
+            {
+                foreach (KeyValuePair<string, int> KVP in _GlobalV)
+                {
+                    input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                }
+            }
+            foreach (KeyValuePair<string, string> KVP in _GlobalOther)
+            {
+                input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
+            }
+            foreach (KeyValuePair<string, string> KVP in _GlobalWords)
+            {
+                // TODO This isn't correct, since for example one of the global words is LOCAL, and so if a message says "my local calling area is 519" it'll be replaced with "my 5 calling area is 519"
+                // TODO It's good enough for now for me to test with though
+                if (input.ToUpper() == KVP.Key.ToUpper())
+                {
+                    input = KVP.Value;
+                }
+                else
+                {
+                    input = Regex.Replace(input, Regex.Escape(" " + KVP.Key + " "), KVP.Value, RegexOptions.IgnoreCase);
                 }
             }
 

@@ -10,7 +10,7 @@ namespace LORD2
         static void Main(string[] args)
         {
             //RTReader.DisplayRefFileSections();
-            RTReader.RunSection("RTWALL", "START");
+            RTReader.RunSection("RTNEWS02", "START");
             Crt.Write("Press any key to quit");
             Crt.ReadKey();
         }

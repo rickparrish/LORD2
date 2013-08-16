@@ -10,6 +10,7 @@ namespace LORD2
     public static class RTReader
     {
         private static int _CurrentLineNumber = 0;
+        private static RTRFile _CurrentFile = null;
         private static RTRSection _CurrentSection = null;
         private static Dictionary<string, Int16> _GlobalI = new Dictionary<string, Int16>(StringComparer.OrdinalIgnoreCase);
         private static Dictionary<string, string> _GlobalOther = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -20,11 +21,12 @@ namespace LORD2
         private static Dictionary<string, Int32> _GlobalV = new Dictionary<string, Int32>(StringComparer.OrdinalIgnoreCase);
         private static int _InBEGINCount = 0;
         private static bool _InDOWrite = false;
+        private static string _InGOTOHeader = "";
         private static int _InIFFalse = 999;
         private static bool _InSHOW = false;
         private static string _InWRITEFILE = "";
         private static Random _R = new Random();
-        private static Dictionary<string, Dictionary<string, RTRSection>> _RefFiles = new Dictionary<string, Dictionary<string, RTRSection>>(StringComparer.OrdinalIgnoreCase);
+        private static Dictionary<string, RTRFile> _RefFiles = new Dictionary<string, RTRFile>(StringComparer.OrdinalIgnoreCase);
         private static int _Version = 2;
 
         static RTReader()
@@ -128,10 +130,10 @@ namespace LORD2
         {
             Crt.ClrScr();
             Crt.WriteLn("DEBUG OUTPUT");
-            foreach (KeyValuePair<string, Dictionary<string, RTRSection>> RefFile in _RefFiles)
+            foreach (KeyValuePair<string, RTRFile> RefFile in _RefFiles)
             {
                 Crt.WriteLn("Ref File Name: " + RefFile.Key);
-                foreach (KeyValuePair<string, RTRSection> Section in RefFile.Value)
+                foreach (KeyValuePair<string, RTRSection> Section in RefFile.Value.Sections)
                 {
                     Crt.WriteLn("  - " + Section.Key + " (" + Section.Value.Script.Count.ToString() + " lines)");
                 }
@@ -148,9 +150,9 @@ namespace LORD2
                     {
                         _CurrentLineNumber = _CurrentSection.Labels[tokens[2]];
                     }
-                    else
+                    else if (_CurrentFile.Sections.ContainsKey(tokens[2]))
                     {
-                        Crt.WriteLn("TODO: " + string.Join(" ", tokens));
+                        _InGOTOHeader = tokens[2];
                     }
                     return;
                 case "NUMRETURN": // @DO NUMRETURN <int var> <string var>
@@ -283,11 +285,11 @@ namespace LORD2
         private static void LoadRefFile(string fileName)
         {
             // A place to store all the sections found in this file
-            Dictionary<string, RTRSection> Sections = new Dictionary<string, RTRSection>(StringComparer.OrdinalIgnoreCase);
+            RTRFile NewFile = new RTRFile();
 
             // Where to store the info for the section we're currently working on
-            string CurrentSectionName = "_HEADER";
-            RTRSection CurrentSection = new RTRSection();
+            string NewSectionName = "_HEADER";
+            RTRSection NewSection = new RTRSection();
 
             // Loop through the file
             string[] Lines = File.ReadAllLines(fileName);
@@ -299,29 +301,29 @@ namespace LORD2
                 if (LineTrimmed.StartsWith("@#"))
                 {
                     // Store section in dictionary
-                    Sections.Add(CurrentSectionName, CurrentSection);
+                    NewFile.Sections.Add(NewSectionName, NewSection);
 
                     // Get new section name (presumes only one word headers allowed, trims @# off start) and reset script block
-                    CurrentSectionName = Line.Trim().Split(' ')[0].Substring(2);
-                    CurrentSection = new RTRSection();
+                    NewSectionName = Line.Trim().Split(' ')[0].Substring(2);
+                    NewSection = new RTRSection();
                 }
                 else if (LineTrimmed.StartsWith("@LABEL "))
                 {
-                    CurrentSection.Script.Add(Line);
+                    NewSection.Script.Add(Line);
 
                     string[] Tokens = LineTrimmed.Split(' ');
-                    CurrentSection.Labels.Add(Tokens[1].ToUpper(), CurrentSection.Script.Count - 1);
+                    NewSection.Labels.Add(Tokens[1].ToUpper(), NewSection.Script.Count - 1);
                 }
                 else
                 {
-                    CurrentSection.Script.Add(Line);
+                    NewSection.Script.Add(Line);
                 }
             }
 
             // Store last open section in dictionary
-            Sections.Add(CurrentSectionName, CurrentSection);
+            NewFile.Sections.Add(NewSectionName, NewSection);
 
-            _RefFiles.Add(Path.GetFileNameWithoutExtension(fileName), Sections);
+            _RefFiles.Add(Path.GetFileNameWithoutExtension(fileName), NewFile);
         }
 
         private static void LoadRefFiles(string directoryName)
@@ -336,10 +338,20 @@ namespace LORD2
         public static void RunSection(string fileName, string sectionName)
         {
             // TODO What happens if invalid file and/or section name is given
-            Dictionary<string, RTRSection> RefFile = _RefFiles[fileName];
-            _CurrentSection = RefFile[sectionName];
-            string[] Lines = _CurrentSection.Script.ToArray();
-            RunScript(Lines);
+            
+            // Run the selected script
+            _CurrentFile = _RefFiles[fileName];
+            _CurrentSection = _CurrentFile.Sections[sectionName];
+            _CurrentLineNumber = 0;
+            RunScript(_CurrentSection.Script.ToArray());
+            
+            // If we exit this script with _InGOTOHeader set, it means we want to GOTO a different section
+            if (_InGOTOHeader != "")
+            {
+                string TempGOTOHeader = _InGOTOHeader;
+                _InGOTOHeader = "";
+                RunSection(fileName, TempGOTOHeader);
+            }
         }
 
         private static void RunScript(string[] script)
@@ -414,6 +426,12 @@ namespace LORD2
                                     if (Result) Crt.WriteLn("TODO: " + Line);
                                 }
                                 break;
+                            case "@KEY": // @KEY <bottom or top or nodisplay> does a [MORE] prompt centered on current line
+                                // TODO Handle positioning
+                                // TODO Also, does it erase after a keypress?
+                                Ansi.Write("                                     [MORE]");
+                                Crt.ReadKey();
+                                break;
                             case "@LABEL": // @LABEL <label name>
                                 // Ignore
                                 break;
@@ -452,6 +470,9 @@ namespace LORD2
                         }
                     }
                 }
+
+                // Check if we need to GOTO a header (and stop processing this script)
+                if (_InGOTOHeader != "") return;
 
                 _CurrentLineNumber += 1;
             }

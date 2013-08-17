@@ -30,6 +30,8 @@ namespace LORD2
         private static bool _InSAY = false;
         private static bool _InSHOW = false;
         private static bool _InSHOWLOCAL = false;
+        private static bool _InSHOWSCROLL = false;
+        private static List<string> _InSHOWSCROLLLines = new List<string>();
         private static string _InWRITEFILE = "";
         private static Random _R = new Random();
         private static Dictionary<string, RTRFile> _RefFiles = new Dictionary<string, RTRFile>(StringComparer.OrdinalIgnoreCase);
@@ -282,6 +284,13 @@ namespace LORD2
                         }
                     }
                     return;
+                case "MOVE": // @DO MOVE <x> <y> a 0 means current position
+                    int X = Convert.ToInt32(tokens[2]);
+                    int Y = Convert.ToInt32(tokens[3]);
+                    if (X == 0) X = Crt.WhereX();
+                    if (Y == 0) Y = Crt.WhereY();
+                    Crt.GotoXY(X, Y);
+                    return;
                 case "NUMRETURN": // @DO NUMRETURN <int var> <string var>
                     string Translated = TranslateVariables(tokens[3]);
                     string TranslatedWithoutNumbers = Regex.Replace(Translated, "[0-9]", "", RegexOptions.IgnoreCase);
@@ -421,6 +430,16 @@ namespace LORD2
             return false;
         }
 
+        private static void HandleSHOWSCROLL()
+        {
+            // TODO This should be a scroll window, not just a dump and pause
+            for (int i = 0; i < _InSHOWSCROLLLines.Count; i++)
+            {
+                Ansi.Write(_InSHOWSCROLLLines[i] + "\r\n");
+            }
+            Crt.ReadKey();
+        }
+
         private static void LoadRefFile(string fileName)
         {
             // A place to store all the sections found in this file
@@ -532,10 +551,12 @@ namespace LORD2
                             Crt.Window(1, 1, 80, 25);
                             Crt.GotoXY(_SavedX, _SavedY);
                         }
+                        if (_InSHOWSCROLL) HandleSHOWSCROLL();
                         _InCHOICE = false;
                         _InSAY = false;
                         _InSHOW = false;
                         _InSHOWLOCAL = false;
+                        _InSHOWSCROLL = false;
                         _InWRITEFILE = "";
 
                         string[] Tokens = LineTrimmed.Split(' ');
@@ -625,8 +646,16 @@ namespace LORD2
                                 Crt.Window(33, 3, 33 + 19, 3 + 11);
                                 _InSAY = true;
                                 break;
-                            case "@SHOW": // @SHOW following lines until next one starting with @ are output to screen
-                                _InSHOW = true;
+                            case "@SHOW": // @SHOW [scroll] following lines until next one starting with @ are output to screen.  If SCROLL parameter is given, text is shown in scrollable window
+                                if ((Tokens.Length > 1) && (Tokens[1].ToUpper() == "SCROLL"))
+                                {
+                                    _InSHOWSCROLLLines.Clear();
+                                    _InSHOWSCROLL = true;
+                                }
+                                else
+                                {
+                                    _InSHOW = true;
+                                }
                                 break;
                             case "@SHOWLOCAL": // Same as above, but output locally only
                                 _InSHOWLOCAL = true;
@@ -671,6 +700,10 @@ namespace LORD2
                         else if (_InSHOWLOCAL)
                         {
                             Ansi.Write(LineTranslated + "\r\n");
+                        }
+                        else if (_InSHOWSCROLL)
+                        {
+                            _InSHOWSCROLLLines.Add(LineTranslated);
                         }
                         else if (_InWRITEFILE != "")
                         {

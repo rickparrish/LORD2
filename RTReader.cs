@@ -296,18 +296,26 @@ namespace LORD2
                     string TranslatedWithoutNumbers = Regex.Replace(Translated, "[0-9]", "", RegexOptions.IgnoreCase);
                     AssignVariable(tokens[2], (Translated.Length - TranslatedWithoutNumbers.Length).ToString());
                     return;
+                case "READNUM": // @DO READNUM <MAX LENGTH> <DEFAULT> (stores in `v40)
+                    string Default = "";
+                    if (tokens.Length >= 4) Default = TranslateVariables(tokens[3]);
+                    
+                    string ReadNum = Door.Input(Default, CharacterMask.Numeric, '\0', Convert.ToInt32(TranslateVariables(tokens[2])), Convert.ToInt32(TranslateVariables(tokens[2])), 31);
+                    int AnswerInt = 0;
+                    if (!int.TryParse(ReadNum, out AnswerInt)) AnswerInt = 0;
+
+                    AssignVariable("`V40", AnswerInt.ToString());
+
+                    return;
                 case "READSTRING": // @DO READSTRING <MAX LENGTH> <DEFAULT> <variable TO PUT IT IN> (variable may be left off, in which case store in `S10)
-                    // TODO Doesn't take max length or default into account
-                    // TODO Maybe need an AssignVariable parameter that tells it not to translate?  Otherwise user input will be translated
-                    string Input = "";
-                    Crt.ReadLn(out Input);
+                    string ReadString = Door.Input(Regex.Replace(TranslateVariables(tokens[3]), "NIL", "", RegexOptions.IgnoreCase), CharacterMask.All, '\0', Convert.ToInt32(TranslateVariables(tokens[2])), Convert.ToInt32(TranslateVariables(tokens[2])), 31);
                     if (tokens.Length >= 5)
                     {
-                        AssignVariable(tokens[4], Input);
+                        AssignVariable(tokens[4], ReadString);
                     }
                     else
                     {
-                        AssignVariable("`S10", Input);
+                        AssignVariable("`S10", ReadString);
                     }
                     return;
                 case "REPLACEALL": // @DO REPLACEALL <find> <replace> <in>
@@ -611,6 +619,10 @@ namespace LORD2
                                         if (THEN[0].ToUpper() == "GOTO")
                                         {
                                             HandleDO(("@DO GOTO " + THEN[1]).Split(' '));
+                                        }
+                                        else if (THEN[0].StartsWith("`"))
+                                        {
+                                            HandleDO(("@DO " + string.Join(" ", THEN)).Split(' '));
                                         }
                                         else
                                         {

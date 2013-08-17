@@ -9,6 +9,8 @@ namespace LORD2
 {
     public static class RTReader
     {
+        private static Dictionary<string, Action<string[]>> _Commands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
+
         private static int _CurrentLineNumber = 0;
         private static RTRFile _CurrentFile = null;
         private static RTRSection _CurrentSection = null;
@@ -41,7 +43,58 @@ namespace LORD2
 
         static RTReader()
         {
-            // Initialize stuff
+            // Initialize the commands dictionary
+            _Commands.Add("@ADDCHAR", CommandADDCHAR);
+            _Commands.Add("@BEGIN", CommandBEGIN);
+            _Commands.Add("@BITSET", CommandBITSET);
+            _Commands.Add("@BUSY", CommandBUSY);
+            _Commands.Add("@BUSYMANAGER", CommandBUSYMANAGER);
+            _Commands.Add("@CHECKMAIL", CommandCHECKMAIL);
+            _Commands.Add("@CHOICE", CommandCHOICE);
+            _Commands.Add("@CHOOSEPLAYER", CommandCHOOSEPLAYER);
+            _Commands.Add("@CLEARBLOCK", CommandCLEARBLOCK);
+            _Commands.Add("@CLEAR", CommandCLEAR);
+            _Commands.Add("@CLOSESCRIPT", CommandCLOSESCRIPT);
+            _Commands.Add("@CONVERT_FILE_TO_ANSI", CommandCONVERT_FILE_TO_ANSI);
+            _Commands.Add("@CONVERT_FILE_TO_ASCII", CommandCONVERT_FILE_TO_ASCII);
+            _Commands.Add("@DATALOAD", CommandDATALOAD);
+            _Commands.Add("@DATANEWDAY", CommandDATANEWDAY);
+            _Commands.Add("@DATASAVE", CommandDATASAVE);
+            _Commands.Add("@DISPLAY", CommandDISPLAY);
+            _Commands.Add("@DISPLAYFILE", CommandDISPLAYFILE);
+            _Commands.Add("@DO", CommandDO);
+            _Commands.Add("@DRAWMAP", CommandDRAWMAP);
+            _Commands.Add("@DRAWPART", CommandDRAWPART);
+            _Commands.Add("@END", CommandEND);
+            _Commands.Add("@FIGHT", CommandFIGHT);
+            _Commands.Add("@HALT", CommandHALT);
+            _Commands.Add("@IF", CommandIF);
+            _Commands.Add("@ITEMEXIT", CommandITEMEXIT);
+            _Commands.Add("@KEY", CommandKEY);
+            _Commands.Add("@LABEL", CommandLABEL);
+            _Commands.Add("@LOADCURSOR", CommandLOADCURSOR);
+            _Commands.Add("@LOADMAP", CommandLOADMAP);
+            _Commands.Add("@LORDRANK", CommandLORDRANK);
+            _Commands.Add("@NAME", CommandNAME);
+            _Commands.Add("@OFFMAP", CommandOFFMAP);
+            _Commands.Add("@OVERHEADMAP", CommandOVERHEADMAP);
+            _Commands.Add("@PAUSEOFF", CommandPAUSEOFF);
+            _Commands.Add("@PAUSEON", CommandPAUSEON);
+            _Commands.Add("@READFILE", CommandREADFILE);
+            _Commands.Add("@ROUTINE", CommandROUTINE);
+            _Commands.Add("@RUN", CommandRUN);
+            _Commands.Add("@SAVECURSOR", CommandSAVECURSOR);
+            _Commands.Add("@SAVEGLOBALS", CommandSAVEGLOBALS);
+            _Commands.Add("@SAY", CommandSAY);
+            _Commands.Add("@SELLMANAGER", CommandSELLMANAGER);
+            _Commands.Add("@SHOW", CommandSHOW);
+            _Commands.Add("@SHOWLOCAL", CommandSHOWLOCAL);
+            _Commands.Add("@UPDATE", CommandUPDATE);
+            _Commands.Add("@VERSION", CommandVERSION);
+            _Commands.Add("@WHOISON", CommandWHOISON);
+            _Commands.Add("@WRITEFILE", CommandWRITEFILE);
+
+            // Load all the ref files in the current directory
             LoadRefFiles(ProcessUtils.StartupPath);
 
             // Init global variables
@@ -141,75 +194,57 @@ namespace LORD2
             }
         }
 
-        public static void DisplayRefFileSections()
+        private static void CommandADDCHAR(string[] tokens)
         {
-            Door.ClrScr();
-            Door.WriteLn("DEBUG OUTPUT");
-            foreach (KeyValuePair<string, RTRFile> RefFile in _RefFiles)
-            {
-                Door.WriteLn("Ref File Name: " + RefFile.Key);
-                foreach (KeyValuePair<string, RTRSection> Section in RefFile.Value.Sections)
-                {
-                    Door.WriteLn("  - " + Section.Key + " (" + Section.Value.Script.Count.ToString() + " lines)");
-                }
-            }
+            LogMissing(tokens);
         }
 
-        private static void HandleCHOICE()
+        private static void CommandBEGIN(string[] tokens)
         {
-            // @CHOICE next lines until next @ command are choice options in listbox.  RESPONCE and RESPONSE hold result, `V01 defines initial selected index
-            /*The choice command is more useful now; you can now define *IF* type statements 
-            so a certain choice will only be there if a conditional statement is met.
-            For instance:
-            @CHOICE
-            Yes
-            No
-            =`p20 500 Hey, I have 500 exactly!
-            !`p20 500 Hey, I have anything BUT 500 exactly!
-            >`p20 500 Hey, I have MORE than 500!
-            <`p20 100 Hey, I have LESS than 100!
-            >`p20 100 <`p20 500 I have more then 100 and less than 500!
-            Also:  You can check the status of individual bits in a `T player byte.  The 
-            bit is true or false, like this:
-            +`t12 1 Hey! Byte 12's bit 1 is TRUE! (which is 1)
-            -`t12 3 Hey! Byte 12's bit 3 is FALSE! (which is 0)
-
-            The = > and < commands can be stacked as needed.  In the above example, if 
-            `p20 was 600, only options 1, 2, 4, and 5 would be available, and RESPONSE 
-            would be set to the correct option if one of those were selected.  For 
-            example, if `p20 was 600 and the user hit the selection:
-            "Hey, I have more than 500", RESPONSE would be set to 5.*/
-
-            // Output options
-            Door.GotoXY(1, 16);
-            int FirstKey = 65;
-            for (int i = 0; i < _InCHOICEOptions.Count; i++)
-            {
-                Door.WriteLn(TranslateVariables("   `2(`0" + ((char)(FirstKey + i)).ToString() + "`2)`7 " + _InCHOICEOptions[i]));
-            }
-
-            // Get response
-            char Choice = '\0';
-            while (((byte)Choice < FirstKey) || ((byte)Choice > (FirstKey + _InCHOICEOptions.Count - 1)))
-            {
-                // TODO Door.ReadKey() is nullable
-                Choice = Door.ReadKey().ToString().ToUpper()[0];
-            }
-
-            _GlobalWords["RESPONCE"] = (Choice - 64).ToString();
-            _GlobalWords["RESPONSE"] = (Choice - 64).ToString();
+            _InBEGINCount += 1;
         }
 
-        private static void HandleCLEAR(string[] tokens)
+        private static void CommandBITSET(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandBUSY(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandBUSYMANAGER(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandCHECKMAIL(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandCHOICE(string[] tokens)
+        {
+            _InCHOICEOptions.Clear();
+            _InCHOICE = true;
+        }
+
+        private static void CommandCHOOSEPLAYER(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandCLEAR(string[] tokens)
         {
             // @CLEAR <screen or name or userscreen or text or picture or all>
             switch (tokens[1].ToUpper())
             {
                 case "ALL":
-                    HandleCLEAR("@CLEAR USERSCREEN".Split(' '));
-                    HandleCLEAR("@CLEAR PICTURE".Split(' '));
-                    HandleCLEAR("@CLEAR TEXT".Split(' '));
-                    HandleCLEAR("@CLEAR NAME".Split(' '));
+                    CommandCLEAR("@CLEAR USERSCREEN".Split(' '));
+                    CommandCLEAR("@CLEAR PICTURE".Split(' '));
+                    CommandCLEAR("@CLEAR TEXT".Split(' '));
+                    CommandCLEAR("@CLEAR NAME".Split(' '));
                     // TODO And redraws the screen
                     break;
                 case "NAME":
@@ -242,11 +277,59 @@ namespace LORD2
                     Door.GotoXY(78, 23);
                     break;
                 default:
-                    throw new ArgumentException(tokens[1], "Unexpected parameter to @CLEAR");
+                    LogMissing(tokens);
+                    break;
             }
         }
 
-        private static void HandleDO(string[] tokens)
+        private static void CommandCLEARBLOCK(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandCLOSESCRIPT(string[] tokens)
+        {
+            // TODO
+        }
+
+        private static void CommandCONVERT_FILE_TO_ANSI(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandCONVERT_FILE_TO_ASCII(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandDATALOAD(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandDATANEWDAY(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandDATASAVE(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandDISPLAY(string[] tokens)
+        {
+            Door.Write(TranslateVariables(string.Join("\r\n", _RefFiles[Path.GetFileNameWithoutExtension(tokens[3])].Sections[tokens[1]].Script.ToArray())));
+        }
+
+        private static void CommandDISPLAYFILE(string[] tokens)
+        {
+            // TODO As with WRITEFILE, don't allow for ..\..\blah
+            // TODO Handle NOPAUSE and NOSKIP parameters
+            Door.Write(FileUtils.FileReadAllText(StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[1])), RMEncoding.Ansi));
+        }
+
+        private static void CommandDO(string[] tokens)
         {
             switch (tokens[1].ToUpper())
             {
@@ -438,8 +521,34 @@ namespace LORD2
             Door.ReadKey();
         }
 
-        private static bool HandleIF(string[] tokens)
+        private static void CommandDRAWMAP(string[] tokens)
         {
+            LogMissing(tokens);
+        }
+
+        private static void CommandDRAWPART(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandEND(string[] tokens)
+        {
+            _InBEGINCount -= 1;
+        }
+
+        private static void CommandFIGHT(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandHALT(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandIF(string[] tokens)
+        {
+            bool Result = false;
             string Left = TranslateVariables(tokens[1]);
             string Right = TranslateVariables(tokens[3]);
             int LeftInt = 0;
@@ -451,53 +560,275 @@ namespace LORD2
                 case "IS": // @IF <Varible> IS <Thing the varible must be, or more or less then, or another varible>
                     if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
                     {
-                        return (LeftInt == RightInt);
+                        Result = (LeftInt == RightInt);
                     }
                     else
                     {
-                        return (Left == Right);
+                        Result = (Left == Right);
                     }
+                    break;
                 case "EXIST": // @IF <filename> EXIST <true or false>
                     string FileName = StringUtils.PathCombine(ProcessUtils.StartupPath, Left);
                     bool TrueFalse = Convert.ToBoolean(Right.ToUpper());
-                    return (File.Exists(FileName) == TrueFalse);
+                    Result = (File.Exists(FileName) == TrueFalse);
+                    break;
                 case "INSIDE": // @IF <Word or variable> INSIDE <Word or variable>
-                    return Right.ToUpper().Contains(Left.ToUpper());
+                    Result = Right.ToUpper().Contains(Left.ToUpper());
+                    break;
                 case "LESS": // @IF <Varible> LESS <Thing the varible must be, or more or less then, or another varible>
                     if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
                     {
-                        return (LeftInt < RightInt);
+                        Result = (LeftInt < RightInt);
                     }
                     else
                     {
                         throw new ArgumentException("@IF LESS arguments were not numeric");
                     }
+                    break;
                 case "MORE": // @IF <Varible> MORE <Thing the varible must be, or more or less then, or another varible>
                     if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
                     {
-                        return (LeftInt > RightInt);
+                        Result = (LeftInt > RightInt);
                     }
                     else
                     {
                         throw new ArgumentException("@IF MORE arguments were not numeric");
                     }
+                    break;
                 case "NOT": // @IF <Varible> NOT <Thing the varible must be, or more or less then, or another varible>
                     if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
                     {
-                        return (LeftInt != RightInt);
+                        Result = (LeftInt != RightInt);
                     }
                     else
                     {
-                        return (Left != Right);
+                        Result = (Left != Right);
                     }
+                    break;
+                default:
+                    LogMissing(tokens);
+                    break;
             }
 
-            Door.WriteLn("TODO (hit a key): " + string.Join(" ", tokens));
-            Door.ReadKey();
-            return false;
+            // Check if it's an IF block, or inline IF
+            if (string.Join(" ", tokens).ToUpper().Contains("THEN DO"))
+            {
+                // @BEGIN..@END coming, so skip it if our result was false
+                if (!Result) _InIFFalse = _InBEGINCount;
+            }
+            else
+            {
+                // Inline DO, so execute it
+                if (Result)
+                {
+                    int DOOffset = (tokens[5].ToUpper() == "THEN") ? 6 : 5;
+                    string[] DOtokens = ("@DO " + string.Join(" ", tokens, DOOffset, tokens.Length - DOOffset)).Split(' ');
+                    CommandDO(DOtokens);
+                }
+            }
         }
 
-        private static void HandleSHOWSCROLL()
+        private static void CommandITEMEXIT(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandKEY(string[] tokens)
+        {
+            // TODO Handle positioning
+            // TODO Also, does it erase after a keypress?
+            // @KEY = "  `1[`!MORE`1]`7" from current cursor position
+            // @KEY BOTTOM = "                                   `!<MORE>`7" on line 24
+            // @KEY TOP =    "                                       `![`1MORE`!]`7" on line 15
+            Door.Write(TranslateVariables("                                   `!<MORE>`7"));
+            // TODO Erase after drawing
+            Door.ReadKey();
+        }
+
+        private static void CommandLABEL(string[] tokens)
+        {
+            // Ignore
+        }
+
+        private static void CommandLOADCURSOR(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandLOADMAP(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandLORDRANK(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandNAME(string[] tokens)
+        {
+            // TODO Name.Length is going to include the ANSI sequences, so not be the correct length
+            string Name = TranslateVariables(string.Join(" ", tokens, 1, tokens.Length - 1));
+            if (Name.Length > 22) Name = Name.Substring(0, 22);
+            Door.GotoXY(55 + ((22 - Name.Length) / 2), 15);
+            Door.Write(Name);
+        }
+
+        private static void CommandOFFMAP(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandOVERHEADMAP(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandPAUSEOFF(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandPAUSEON(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandREADFILE(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandROUTINE(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandRUN(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandSAVECURSOR(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandSAVEGLOBALS(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandSAY(string[] tokens)
+        {
+            _InSAY = true;
+        }
+
+        private static void CommandSELLMANAGER(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandSHOW(string[] tokens)
+        {
+            if ((tokens.Length > 1) && (tokens[1].ToUpper() == "SCROLL"))
+            {
+                _InSHOWSCROLLLines.Clear();
+                _InSHOWSCROLL = true;
+            }
+            else
+            {
+                _InSHOW = true;
+            }
+        }
+
+        private static void CommandSHOWLOCAL(string[] tokens)
+        {
+            _InSHOWLOCAL = true;
+        }
+
+        private static void CommandUPDATE(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandVERSION(string[] tokens)
+        {
+            int RequiredVersion = Convert.ToInt32(tokens[1]);
+            if (RequiredVersion > _Version) throw new ArgumentOutOfRangeException("VERSION", "@VERSION requested version " + RequiredVersion + ", we only support version " + _Version);
+        }
+
+        private static void CommandWHOISON(string[] tokens)
+        {
+            LogMissing(tokens);
+        }
+
+        private static void CommandWRITEFILE(string[] tokens)
+        {
+            // TODO Strip out any invalid filename characters?  (so for example they can't say ..\..\..\..\windows\system32\important_file.ext)
+            _InWRITEFILE = StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[1]));
+        }
+
+        public static void DisplayRefFileSections()
+        {
+            Door.ClrScr();
+            Door.WriteLn("DEBUG OUTPUT");
+            foreach (KeyValuePair<string, RTRFile> RefFile in _RefFiles)
+            {
+                Door.WriteLn("Ref File Name: " + RefFile.Key);
+                foreach (KeyValuePair<string, RTRSection> Section in RefFile.Value.Sections)
+                {
+                    Door.WriteLn("  - " + Section.Key + " (" + Section.Value.Script.Count.ToString() + " lines)");
+                }
+            }
+        }
+
+        private static void EndCHOICE()
+        {
+            // @CHOICE next lines until next @ command are choice options in listbox.  RESPONCE and RESPONSE hold result, `V01 defines initial selected index
+            /*The choice command is more useful now; you can now define *IF* type statements 
+            so a certain choice will only be there if a conditional statement is met.
+            For instance:
+            @CHOICE
+            Yes
+            No
+            =`p20 500 Hey, I have 500 exactly!
+            !`p20 500 Hey, I have anything BUT 500 exactly!
+            >`p20 500 Hey, I have MORE than 500!
+            <`p20 100 Hey, I have LESS than 100!
+            >`p20 100 <`p20 500 I have more then 100 and less than 500!
+            Also:  You can check the status of individual bits in a `T player byte.  The 
+            bit is true or false, like this:
+            +`t12 1 Hey! Byte 12's bit 1 is TRUE! (which is 1)
+            -`t12 3 Hey! Byte 12's bit 3 is FALSE! (which is 0)
+
+            The = > and < commands can be stacked as needed.  In the above example, if 
+            `p20 was 600, only options 1, 2, 4, and 5 would be available, and RESPONSE 
+            would be set to the correct option if one of those were selected.  For 
+            example, if `p20 was 600 and the user hit the selection:
+            "Hey, I have more than 500", RESPONSE would be set to 5.*/
+
+            // Output options
+            Door.GotoXY(1, 16);
+            int FirstKey = 65;
+            for (int i = 0; i < _InCHOICEOptions.Count; i++)
+            {
+                Door.WriteLn(TranslateVariables("   `2(`0" + ((char)(FirstKey + i)).ToString() + "`2)`7 " + _InCHOICEOptions[i]));
+            }
+
+            // Get response
+            char Choice = '\0';
+            while (((byte)Choice < FirstKey) || ((byte)Choice > (FirstKey + _InCHOICEOptions.Count - 1)))
+            {
+                // TODO Door.ReadKey() is nullable
+                Choice = Door.ReadKey().ToString().ToUpper()[0];
+            }
+
+            _GlobalWords["RESPONCE"] = (Choice - 64).ToString();
+            _GlobalWords["RESPONSE"] = (Choice - 64).ToString();
+        }
+
+        private static void EndSHOWSCROLL()
         {
             // TODO This should be a scroll window, not just a dump and pause
             for (int i = 0; i < _InSHOWSCROLLLines.Count; i++)
@@ -562,6 +893,15 @@ namespace LORD2
             }
         }
 
+        private static void LogMissing(string[] tokens)
+        {
+            string Output = "TODO: " + string.Join(" ", tokens);
+            if (Output.Length > 80) Output = Output.Substring(0, 80);
+            Crt.FastWrite(Output, 1, 25, 31);
+            Crt.ReadKey();
+            Crt.FastWrite(new string(' ', 80), 1, 25, 0);
+        }
+
         public static void RunSection(string fileName, string sectionName)
         {
             // TODO What happens if invalid file and/or section name is given
@@ -590,7 +930,8 @@ namespace LORD2
                 string LineTranslated = TranslateVariables(Line);
                 string LineTrimmed = Line.Trim();
 
-                if (_InBEGINCount > _InIFFalse)
+                // TODO Broken
+                if (_InIFFalse < 999)
                 {
                     if (LineTrimmed.StartsWith("@"))
                     {
@@ -602,18 +943,17 @@ namespace LORD2
                                 break;
                             case "@END":
                                 _InBEGINCount -= 1;
+                                if (_InBEGINCount == _InIFFalse) _InIFFalse = 999;
                                 break;
                         }
                     }
                 }
                 else
                 {
-                    _InIFFalse = 999;
-
                     if (LineTrimmed.StartsWith("@"))
                     {
-                        if (_InCHOICE) HandleCHOICE();
-                        if (_InSHOWSCROLL) HandleSHOWSCROLL();
+                        if (_InCHOICE) EndCHOICE();
+                        if (_InSHOWSCROLL) EndSHOWSCROLL();
                         _InCHOICE = false;
                         _InSAY = false;
                         _InSHOW = false;
@@ -622,122 +962,13 @@ namespace LORD2
                         _InWRITEFILE = "";
 
                         string[] Tokens = LineTrimmed.Split(' ');
-                        switch (Tokens[0].ToUpper())
+                        if (_Commands.ContainsKey(Tokens[0]))
                         {
-                            case "@ADDCHAR": // @ADDCHAR adds a new character to TRADER.DAT
-                                // TODO
-                                break;
-                            case "@BEGIN":
-                                _InBEGINCount += 1;
-                                break;
-                            case "@CHOICE": // @CHOICE next lines until next @ command are choice options in listbox.  RESPONCE and RESPONSE hold result, `V01 defines initial selected index
-                                _InCHOICEOptions.Clear();
-                                _InCHOICE = true;
-                                break;
-                            case "@CLEAR": // @CLEAR <screen or name or userscreen or text or picture or all> 
-                                HandleCLEAR(Tokens);
-                                break;
-                            case "@CLOSESCRIPT":
-                                return;
-                            case "@DISPLAY": // @DISPLAY <this> IN <this file> <options>
-                                Door.Write(TranslateVariables(string.Join("\r\n", _RefFiles[Path.GetFileNameWithoutExtension(Tokens[3])].Sections[Tokens[1]].Script.ToArray())));
-                                break;
-                            case "@DISPLAYFILE": // @DISPLAYFILE <filename> <options> (options are NOPAUSE and NOSKIP, separated by space if both used)
-                                // TODO As with WRITEFILE, don't allow for ..\..\blah
-                                // TODO Handle NOPAUSE and NOSKIP parameters
-                                Door.Write(FileUtils.FileReadAllText(StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(Tokens[1])), RMEncoding.Ansi));
-                                break;
-                            case "@DO": // @DO has waaaaaay too many variants
-                                HandleDO(Tokens);
-                                break;
-                            case "@END":
-                                _InBEGINCount -= 1;
-                                break;
-                            case "@IF": // @IF <Varible> <Math> <Thing the varible must be, or more or less then, or another varible>  (Possible math functions: EQUALS, MORE, LESS, NOT)
-                                bool Result = HandleIF(Tokens);
-
-                                // Check if it's an IF block, or inline IF
-                                // TODO This isn't ideal -- what if the next line is a blank or a comment or something
-                                if (script[_CurrentLineNumber + 1].Trim().ToUpper().StartsWith("@BEGIN"))
-                                {
-                                    if (!Result)
-                                    {
-                                        _InIFFalse = _InBEGINCount;
-                                        _InBEGINCount += 1;
-                                        _CurrentLineNumber += 1;
-                                    }
-                                }
-                                else
-                                {
-                                    if (Result)
-                                    {
-                                        // TODO Everything in here is incredibly hackish, just want a working POC
-                                        string[] THEN = string.Join(" ", Tokens, 5, Tokens.Length - 5).Split(' ');
-                                        if (THEN[0].ToUpper() == "GOTO")
-                                        {
-                                            HandleDO(("@DO GOTO " + THEN[1]).Split(' '));
-                                        }
-                                        else if (THEN[0].StartsWith("`"))
-                                        {
-                                            HandleDO(("@DO " + string.Join(" ", THEN)).Split(' '));
-                                        }
-                                        else
-                                        {
-                                            Door.WriteLn("TODO (hit a key): " + Line);
-                                            Door.ReadKey();
-                                        }
-                                    }
-                                }
-                                break;
-                            case "@KEY": // @KEY <bottom or top or nodisplay> does a [MORE] prompt centered on current line
-                                // TODO Handle positioning
-                                // TODO Also, does it erase after a keypress?
-                                // @KEY = "  `1[`!MORE`1]`7" from current cursor position
-                                // @KEY BOTTOM = "                                   `!<MORE>`7" on line 24
-                                // @KEY TOP =    "                                       `![`1MORE`!]`7" on line 15
-                                Door.Write(TranslateVariables("                                   `!<MORE>`7"));
-                                // TODO Erase after drawing
-                                Door.ReadKey();
-                                break;
-                            case "@LABEL": // @LABEL <label name>
-                                // Ignore
-                                break;
-                            case "@NAME": // @NAME <new name> sets the name below the picture window on the right
-                                // TODO Name.Length is going to include the ANSI sequences, so not be the correct length
-                                string Name = TranslateVariables(string.Join(" ", Tokens, 1, Tokens.Length - 1));
-                                if (Name.Length > 22) Name = Name.Substring(0, 22);
-                                Door.GotoXY(55 + ((22 - Name.Length) / 2), 15);
-                                Door.Write(Name);
-                                break;
-                            case "@SAY": // @SAY All text UNDER this will be put in the 'talk window' until a @ is hit.
-                                _InSAY = true;
-                                break;
-                            case "@SHOW": // @SHOW [scroll] following lines until next one starting with @ are output to screen.  If SCROLL parameter is given, text is shown in scrollable window
-                                if ((Tokens.Length > 1) && (Tokens[1].ToUpper() == "SCROLL"))
-                                {
-                                    _InSHOWSCROLLLines.Clear();
-                                    _InSHOWSCROLL = true;
-                                }
-                                else
-                                {
-                                    _InSHOW = true;
-                                }
-                                break;
-                            case "@SHOWLOCAL": // Same as above, but output locally only
-                                _InSHOWLOCAL = true;
-                                break;
-                            case "@VERSION": // @VERSION <Version the script needs>
-                                int RequiredVersion = Convert.ToInt32(Tokens[1]);
-                                if (RequiredVersion > _Version) throw new ArgumentOutOfRangeException("VERSION", "@VERSION requested version " + RequiredVersion + ", we only support version " + _Version);
-                                break;
-                            case "@WRITEFILE": // @WRITEFILE <filename> following lines until next one starting with @ are output to file (append on existing, create on new)
-                                // TODO Strip out any invalid filename characters?  (so for example they can't say ..\..\..\..\windows\system32\important_file.ext)
-                                _InWRITEFILE = StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(Tokens[1]));
-                                break;
-                            default:
-                                Door.WriteLn("TODO (hit a key): " + LineTrimmed);
-                                Door.ReadKey();
-                                break;
+                            _Commands[Tokens[0]](Tokens);
+                        }
+                        else
+                        {
+                            LogMissing(Tokens);
                         }
                     }
                     else
@@ -763,7 +994,7 @@ namespace LORD2
                         }
                         else if (_InSHOWLOCAL)
                         {
-                            Crt.WriteLn(LineTranslated);
+                            Ansi.Write(LineTranslated + "\r\n");
                         }
                         else if (_InSHOWSCROLL)
                         {

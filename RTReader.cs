@@ -178,6 +178,7 @@ namespace LORD2
             "Hey, I have more than 500", RESPONSE would be set to 5.*/
 
             // Output options
+            Crt.GotoXY(1, 16);
             int FirstKey = 65;
             for (int i = 0; i < _InCHOICEOptions.Count; i++)
             {

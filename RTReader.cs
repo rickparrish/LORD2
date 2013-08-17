@@ -315,8 +315,18 @@ namespace LORD2
                 default:
                     switch (tokens[2].ToUpper())
                     {
+                        case "/": // @DO <number to change> / <change with what>
+                            // TODO How to round?
+                            AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) / Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+                            return;
+                        case "*": // @DO <number to change> * <change with what>
+                            AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) * Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+                            return;
                         case "-": // @DO <number to change> - <change with what>
                             AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) - Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+                            return;
+                        case "+": // @DO <number to change> + <change with what>
+                            AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) + Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
                             return;
                         case "ADD": // DO <string var> ADD <string var or text>
                             AssignVariable(tokens[1], TranslateVariables(tokens[1] + string.Join(" ", tokens, 3, tokens.Length - 3)));

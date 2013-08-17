@@ -174,7 +174,7 @@ namespace LORD2
             would be set to the correct option if one of those were selected.  For 
             example, if `p20 was 600 and the user hit the selection:
             "Hey, I have more than 500", RESPONSE would be set to 5.*/
-            
+
             // TODO
             Crt.WriteLn("TODO @CHOICE");
             Ansi.Write(TranslateVariables(string.Join("\r\n", _InCHOICEOptions.ToArray())));
@@ -186,10 +186,50 @@ namespace LORD2
 
         private static void HandleCLEAR(string[] tokens)
         {
+            // @CLEAR <screen or name or userscreen or text or picture or all> screen=entire screen, name=name line of game window, userscreen=user text (TODO which lines?), text=game text (@SAY window), picture=the picture, all=user text+picture+game text+name and redraws screen
+            // TODO None of these will work remotely
             switch (tokens[1].ToUpper())
             {
+                case "ALL":
+                    HandleCLEAR("@CLEAR USERSCREEN".Split(' '));
+                    HandleCLEAR("@CLEAR PICTURE".Split(' '));
+                    HandleCLEAR("@CLEAR TEXT".Split(' '));
+                    HandleCLEAR("@CLEAR NAME".Split(' '));
+                    // TODO And redraws the screen
+                    return;
+                case "NAME":
+                    _SavedX = Crt.WhereX();
+                    _SavedY = Crt.WhereY();
+                    Crt.GotoXY(54, 15);
+                    Ansi.Write(new string(' ', 23));
+                    Crt.GotoXY(_SavedX, _SavedY);
+                    return;
+                case "PICTURE":
+                    _SavedX = Crt.WhereX();
+                    _SavedY = Crt.WhereY();
+                    Crt.Window(55, 3, 76, 13);
+                    Crt.ClrScr();
+                    Crt.Window(1, 1, 80, 25);
+                    Crt.GotoXY(_SavedX, _SavedY);
+                    return;
                 case "SCREEN":
                     Crt.ClrScr();
+                    return;
+                case "TEXT":
+                    _SavedX = Crt.WhereX();
+                    _SavedY = Crt.WhereY();
+                    Crt.Window(33, 3, 33 + 19, 3 + 11);
+                    Crt.ClrScr();
+                    Crt.Window(1, 1, 80, 25);
+                    Crt.GotoXY(_SavedX, _SavedY);
+                    return;
+                case "USERSCREEN":
+                    _SavedX = Crt.WhereX();
+                    _SavedY = Crt.WhereY();
+                    Crt.Window(1, 16, 80, 23);
+                    Crt.ClrScr();
+                    Crt.Window(1, 1, 80, 25);
+                    Crt.GotoXY(_SavedX, _SavedY);
                     return;
             }
 

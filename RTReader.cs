@@ -86,7 +86,7 @@ namespace LORD2
             _GlobalOther.Add("`r7", Ansi.TextBackground(Crt.LightGray));
             _GlobalOther.Add("`c", Ansi.ClrScr() + "\r\n\r\n"); // TODO only `c works in RTReader, not `C -- bug, or should `C really not work?
             _GlobalOther.Add("`k", "TODO MORE");
-            // TODO `b
+            // TODO `b and `.
 
             _GlobalWords.Add("LOCAL", "5"); // TODO 5 = true
             _GlobalWords.Add("RESPONCE", "0");
@@ -574,6 +574,9 @@ namespace LORD2
                                 break;
                             case "@CLOSESCRIPT":
                                 return;
+                            case "@DISPLAY": // @DISPLAY <this> IN <this file> <options>
+                                Ansi.Write(TranslateVariables(string.Join("\r\n", _RefFiles[Path.GetFileNameWithoutExtension(Tokens[3])].Sections[Tokens[1]].Script.ToArray())));
+                                break;
                             case "@DISPLAYFILE": // @DISPLAYFILE <filename> <options> (options are NOPAUSE and NOSKIP, separated by space if both used)
                                 // TODO As with WRITEFILE, don't allow for ..\..\blah
                                 // TODO Handle NOPAUSE and NOSKIP parameters

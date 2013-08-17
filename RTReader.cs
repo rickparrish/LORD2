@@ -86,6 +86,8 @@ namespace LORD2
             // TODO `b
 
             _GlobalWords.Add("LOCAL", "5"); // TODO
+            _GlobalWords.Add("RESPONCE", "0");
+            _GlobalWords.Add("RESPONSE", "0");
         }
 
         private static void AssignVariable(string variable, string value)
@@ -175,13 +177,22 @@ namespace LORD2
             example, if `p20 was 600 and the user hit the selection:
             "Hey, I have more than 500", RESPONSE would be set to 5.*/
 
-            // TODO
-            Crt.WriteLn("TODO @CHOICE");
-            Ansi.Write(TranslateVariables(string.Join("\r\n", _InCHOICEOptions.ToArray())));
-            Crt.ReadKey();
+            // Output options
+            int FirstKey = 65;
+            for (int i = 0; i < _InCHOICEOptions.Count; i++)
+            {
+                Ansi.Write(TranslateVariables("   `2(`0" + ((char)(FirstKey + i)).ToString() + "`2)`7 " + _InCHOICEOptions[i] + "\r\n"));
+            }
 
-            _GlobalWords["RESPONCE"] = "1";
-            _GlobalWords["RESPONSE"] = "1";
+            // Get response
+            char Choice = '\0';
+            while (((byte)Choice < FirstKey) || ((byte)Choice > (FirstKey + _InCHOICEOptions.Count - 1)))
+            {
+                Choice = Crt.ReadKey().ToString().ToUpper()[0];
+            }
+
+            _GlobalWords["RESPONCE"] = (Choice - 64).ToString();
+            _GlobalWords["RESPONSE"] = (Choice - 64).ToString();
         }
 
         private static void HandleCLEAR(string[] tokens)

@@ -10,6 +10,7 @@ namespace LORD2
     public static class RTReader
     {
         private static Dictionary<string, Action<string[]>> _Commands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
+        private static Dictionary<string, Action<string[]>> _DOCommands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
 
         private static int _CurrentLineNumber = 0;
         private static RTRFile _CurrentFile = null;
@@ -37,8 +38,6 @@ namespace LORD2
         private static string _InWRITEFILE = "";
         private static Random _R = new Random();
         private static Dictionary<string, RTRFile> _RefFiles = new Dictionary<string, RTRFile>(StringComparer.OrdinalIgnoreCase);
-        private static int _SavedX = 1;
-        private static int _SavedY = 1;
         private static int _Version = 2;
 
         static RTReader()
@@ -94,6 +93,42 @@ namespace LORD2
             _Commands.Add("@WHOISON", CommandWHOISON);
             _Commands.Add("@WRITEFILE", CommandWRITEFILE);
 
+            // Initialize the @DO commands dictionary
+            // @DO <COMMAND> COMMANDS
+            _DOCommands.Add("ADDLOG", CommandDO_ADDLOG);
+            _DOCommands.Add("BEEP", CommandDO_BEEP);
+            _DOCommands.Add("COPYTONAME", CommandDO_COPYTONAME);
+            _DOCommands.Add("DELETE", CommandDO_DELETE);
+            _DOCommands.Add("FRONTPAD", CommandDO_FRONTPAD);
+            _DOCommands.Add("GETKEY", CommandDO_GETKEY);
+            _DOCommands.Add("GOTO", CommandDO_GOTO);
+            _DOCommands.Add("MOVE", CommandDO_MOVE);
+            _DOCommands.Add("MOVEBACK", CommandDO_MOVEBACK);
+            _DOCommands.Add("NUMRETURN", CommandDO_NUMRETURN);
+            _DOCommands.Add("PAD", CommandDO_PAD);
+            _DOCommands.Add("QUEBAR", CommandDO_QUEBAR);
+            _DOCommands.Add("READCHAR", CommandDO_READCHAR);
+            _DOCommands.Add("READNUM", CommandDO_READNUM);
+            _DOCommands.Add("READSPECIAL", CommandDO_READSPECIAL);
+            _DOCommands.Add("READSTRING", CommandDO_READSTRING);
+            _DOCommands.Add("REPLACE", CommandDO_REPLACE);
+            _DOCommands.Add("REPLACEALL", CommandDO_REPLACEALL);
+            _DOCommands.Add("SAYBAR", CommandDO_SAYBAR);
+            _DOCommands.Add("STRIP", CommandDO_STRIP);
+            _DOCommands.Add("STRIPALL", CommandDO_STRIPALL);
+            _DOCommands.Add("STRIPBAD", CommandDO_STRIPBAD);
+            _DOCommands.Add("TRIM", CommandDO_TRIM);
+            _DOCommands.Add("UPCASE", CommandDO_UPCASE);
+            _DOCommands.Add("WRITE", CommandDO_WRITE);
+            // @DO <SOMETHING> <COMMAND> COMMANDS
+            _DOCommands.Add("/", CommandDO_DIVIDE);
+            _DOCommands.Add("*", CommandDO_MULTIPLY);
+            _DOCommands.Add("+", CommandDO_ADD);
+            _DOCommands.Add("-", CommandDO_SUBTRACT);
+            _DOCommands.Add("ADD", CommandDO_ADD);
+            _DOCommands.Add("IS", CommandDO_IS);
+            _DOCommands.Add("RANDOM", CommandDO_RANDOM);
+
             // Load all the ref files in the current directory
             LoadRefFiles(ProcessUtils.StartupPath);
 
@@ -141,7 +176,7 @@ namespace LORD2
             _GlobalOther.Add("`k", "TODO MORE");
             // TODO `b and `.
 
-            _GlobalWords.Add("LOCAL", "5"); // TODO 5 = true
+            _GlobalWords.Add("LOCAL", (Door.Local() ? "5" : "0"));
             _GlobalWords.Add("RESPONCE", "0");
             _GlobalWords.Add("RESPONSE", "0");
         }
@@ -289,7 +324,7 @@ namespace LORD2
 
         private static void CommandCLOSESCRIPT(string[] tokens)
         {
-            // TODO
+            // TODO How do we end the script now?  New variable?
         }
 
         private static void CommandCONVERT_FILE_TO_ANSI(string[] tokens)
@@ -331,194 +366,292 @@ namespace LORD2
 
         private static void CommandDO(string[] tokens)
         {
-            switch (tokens[1].ToUpper())
+            if (_DOCommands.ContainsKey(tokens[1]))
             {
-                case "ADDLOG": // @DO ADDLOG the line under this will be added to LOGNOW.TXT
-                    // TODO
-                    break;
-                case "BEEP": // @DO BEEP beep locally
-                    // TODO
-                    break;
-                case "COPYTONAME": // @DO COPYTONAME store `S10 in `N
-                    _GlobalOther["`N"] = TranslateVariables("`S10");
-                    return;
-                case "DELETE": // @DO DELETE <filename> delete the given file
-                    // TODO
-                    break;
-                case "FRONTPAD": // @DO FRONTPAD <string variable> <length>
-                    // TODO
-                    break;
-                case "GETKEY": // @DO GETKEY <String variable to put it in> IF A KEY IS NOT CURRENTLY BEING PRESSED, STORE _ AS RESULT
-                    if (Door.KeyPressed())
-                    {
-                        AssignVariable(tokens[2], Door.ReadKey().ToString());
-                    }
-                    else
-                    {
-                        AssignVariable(tokens[2], "_");
-                    }
-                    return;
-                case "GOTO": // @DO GOTO <header or label>
-                    if (_CurrentFile.Sections.ContainsKey(tokens[2]))
-                    {
-                        // HEADER goto
-                        _InGOTOHeader = tokens[2];
-                    }
-                    else if (_CurrentSection.Labels.ContainsKey(tokens[2]))
-                    {
-                        // LABEL goto within current section
-                        _CurrentLineNumber = _CurrentSection.Labels[tokens[2]];
-                    }
-                    else
-                    {
-                        foreach (KeyValuePair<string, RTRSection> KVP in _CurrentFile.Sections)
-                        {
-                            if (KVP.Value.Labels.ContainsKey(tokens[2]))
-                            {
-                                // LABEL goto within a different section
-                                _InGOTOHeader = KVP.Key; // Section name
-                                _InGOTOLineNumber = KVP.Value.Labels[tokens[2]];
-                                break;
-                            }
-                        }
-                    }
-                    return;
-                case "MOVE": // @DO MOVE <x> <y> a 0 means current position
-                    int X = Convert.ToInt32(TranslateVariables(tokens[2]));
-                    int Y = Convert.ToInt32(TranslateVariables(tokens[3]));
-                    if ((X > 0) && (Y > 0))
-                    {
-                        Door.GotoXY(X, Y);
-                    }
-                    else if (X > 0)
-                    {
-                        Door.GotoX(X);
-                    }
-                    else if (Y > 0)
-                    {
-                        Door.GotoY(Y);
-                    }
-                    return;
-                case "MOVEBACK": // @DO MOVEBACK put player back to previous position
-                    // TODO
-                    break;
-                case "NUMRETURN": // @DO NUMRETURN <int var> <string var>
-                    string Translated = TranslateVariables(tokens[3]);
-                    string TranslatedWithoutNumbers = Regex.Replace(Translated, "[0-9]", "", RegexOptions.IgnoreCase);
-                    AssignVariable(tokens[2], (Translated.Length - TranslatedWithoutNumbers.Length).ToString());
-                    return;
-                case "PAD": // @DO PAD <string variable> <length>
-                    // TODO
-                    break;
-                case "QUEBAR": // @DO QUEBAR adds next line to saybar queue
-                    // TODO
-                    break;
-                case "READCHAR": // @DO READCHAR <string variable to put it in> 
-                    // TODO Door.ReadKey is nullable
-                    AssignVariable(tokens[2], Door.ReadKey().ToString());
-                    return;
-                case "READNUM": // @DO READNUM <MAX LENGTH> <DEFAULT> (stores in `v40)
-                    string Default = "";
-                    if (tokens.Length >= 4) Default = TranslateVariables(tokens[3]);
-
-                    string ReadNum = Door.Input(Default, CharacterMask.Numeric, '\0', Convert.ToInt32(TranslateVariables(tokens[2])), Convert.ToInt32(TranslateVariables(tokens[2])), 31);
-                    int AnswerInt = 0;
-                    if (!int.TryParse(ReadNum, out AnswerInt)) AnswerInt = 0;
-
-                    AssignVariable("`V40", AnswerInt.ToString());
-
-                    return;
-                case "READSPECIAL": // @DO READSPECIAL (String variable to put it in> <legal chars, 1st is default> prompt until one of legal chars is hit.  if enter is hit, it's same as hitting first char
-                    // TODO
-                    break;
-                case "READSTRING": // @DO READSTRING <MAX LENGTH> <DEFAULT> <variable TO PUT IT IN> (variable may be left off, in which case store in `S10)
-                    string ReadString = Door.Input(Regex.Replace(TranslateVariables(tokens[3]), "NIL", "", RegexOptions.IgnoreCase), CharacterMask.All, '\0', Convert.ToInt32(TranslateVariables(tokens[2])), Convert.ToInt32(TranslateVariables(tokens[2])), 31);
-                    if (tokens.Length >= 5)
-                    {
-                        AssignVariable(tokens[4], ReadString);
-                    }
-                    else
-                    {
-                        AssignVariable("`S10", ReadString);
-                    }
-                    return;
-                case "REPLACE": // @DO REPLACE <find> <replace> <in> replace first instance of FIND with REPLACE in IN
-                    // The following regex matches only the first instance of the word foo: (?<!foo.*)foo (from http://stackoverflow.com/a/148561/342378)
-                    // TODO Test that it does what it should
-                    AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), "(?<!" + Regex.Escape(TranslateVariables(tokens[2])) + ".*)" + Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
-                    return;
-                case "REPLACEALL": // @DO REPLACEALL <find> <replace> <in> replace all instances of FIND with REPLACE in IN
-                    AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
-                    return;
-                case "SAYBAR": // @DO SAYBAR same as DO QUEBAR, but displays immediately
-                    // TODO
-                    break;
-                case "STRIP": // @DO STRIP <string variable> (really trim)
-                    AssignVariable(tokens[2], TranslateVariables(tokens[2]).Trim());
-                    return;
-                case "STRIPALL": // @DO STRIPALL (strips out all ` codes, useful for passwords apparently)
-                    // TODO
-                    break;
-                case "STRIPBAD": // @DO STRIPBAD <string variable> (strip illegal ` and replaces via badwords.dat)
-                    // TODO
-                    break;
-                case "TRIM": // @DO TRIM <file name> <number to trim to> (remove lines from file until less than number in length)
-                    string FileName = StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[2]));
-                    int MaxLines = Convert.ToInt32(TranslateVariables(tokens[3]));
-                    List<string> Lines = new List<string>();
-                    Lines.AddRange(FileUtils.FileReadAllLines(FileName, RMEncoding.Ansi));
-                    if (Lines.Count > MaxLines)
-                    {
-                        while (Lines.Count > MaxLines) Lines.RemoveAt(0);
-                        FileUtils.FileWriteAllLines(FileName, Lines.ToArray(), RMEncoding.Ansi);
-                    }
-                    return;
-                case "UPCASE": // @DO UPCASE <string variable>
-                    AssignVariable(tokens[2], TranslateVariables(tokens[2]).ToUpper());
-                    return;
-                case "WRITE": // @DO WRITE next one line is written to the screen, no line wrap
-                    _InDOWrite = true;
-                    return;
-                default:
-                    if (tokens.Length >= 3)
-                    {
-                        switch (tokens[2].ToUpper())
-                        {
-                            case "/": // @DO <number to change> / <change with what>
-                                // TODO How to round?
-                                AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) / Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
-                                return;
-                            case "*": // @DO <number to change> * <change with what>
-                                AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) * Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
-                                return;
-                            case "-": // @DO <number to change> - <change with what>
-                                AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) - Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
-                                return;
-                            case "+": // @DO <number to change> + <change with what>
-                                AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) + Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
-                                return;
-                            case "ADD": // DO <string var> ADD <string var or text>
-                                AssignVariable(tokens[1], TranslateVariables(tokens[1] + string.Join(" ", tokens, 3, tokens.Length - 3)));
-                                return;
-                            case "IS": // @DO <Number To Change> IS <Change With What>
-                                // TODO @DO `s01 is getname 8
-                                // TODO @DO `p20 is deleted 8
-                                // TODO @DO <number variable> IS LENGTH <String variable>
-                                // TODO @DO <number variable> IS REALLENGTH <String variable>
-                                AssignVariable(tokens[1], string.Join(" ", tokens, 3, tokens.Length - 3));
-                                return;
-                            case "RANDOM": // @DO <Varible to put # in> RANDOM <Highest number> <number to add to it>
-                                int Min = Convert.ToInt32(tokens[4]);
-                                int Max = Min + Convert.ToInt32(tokens[3]);
-                                AssignVariable(tokens[1], _R.Next(Min, Max).ToString());
-                                return;
-                        }
-                    }
-                    break;
+                _DOCommands[tokens[1]](tokens);
             }
+            else if ((tokens.Length >= 3) && (_DOCommands.ContainsKey(tokens[2])))
+            {
+                _DOCommands[tokens[2]](tokens);
+            }
+            else
+            {
+                LogMissing(tokens);
+            }
+        }
 
-            Door.WriteLn("TODO (hit a key): " + string.Join(" ", tokens));
-            Door.ReadKey();
+        private static void CommandDO_ADD(string[] tokens)
+        {
+            if (tokens[2] == "+")
+            {
+                // @DO <number to change> + <change with what>
+                AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) + Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+            }
+            else if (tokens[2].ToUpper() == "ADD")
+            {
+                // DO <string var> ADD <string var or text>
+                AssignVariable(tokens[1], TranslateVariables(tokens[1] + string.Join(" ", tokens, 3, tokens.Length - 3)));
+            }
+            else
+            {
+                LogMissing(tokens);
+            }
+        }
+
+        private static void CommandDO_ADDLOG(string[] tokens)
+        {
+            // @DO ADDLOG the line under this will be added to LOGNOW.TXT
+            LogMissing(tokens);
+        }
+
+        private static void CommandDO_BEEP(string[] tokens)
+        {
+            // @DO BEEP beep locally
+            LogMissing(tokens);
+        }
+
+        private static void CommandDO_COPYTONAME(string[] tokens)
+        {
+            // @DO COPYTONAME store `S10 in `N
+            _GlobalOther["`N"] = TranslateVariables("`S10");
+        }
+
+        private static void CommandDO_DELETE(string[] tokens)
+        {
+            // @DO DELETE <filename> delete the given file
+            LogMissing(tokens);
+        }
+
+        private static void CommandDO_DIVIDE(string[] tokens)
+        {
+            // @DO <number to change> / <change with what>
+            // TODO How to round?
+            AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) / Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+        }
+
+        private static void CommandDO_FRONTPAD(string[] tokens)
+        {
+            // @DO FRONTPAD <string variable> <length>
+            LogMissing(tokens);
+        }
+
+        private static void CommandDO_GETKEY(string[] tokens)
+        {
+            // @DO GETKEY <String variable to put it in> IF A KEY IS NOT CURRENTLY BEING PRESSED, STORE _ AS RESULT
+            if (Door.KeyPressed())
+            {
+                AssignVariable(tokens[2], Door.ReadKey().ToString());
+            }
+            else
+            {
+                AssignVariable(tokens[2], "_");
+            }
+        }
+
+        private static void CommandDO_GOTO(string[] tokens)
+        {
+            // @DO GOTO <header or label>
+            if (_CurrentFile.Sections.ContainsKey(tokens[2]))
+            {
+                // HEADER goto
+                _InGOTOHeader = tokens[2];
+            }
+            else if (_CurrentSection.Labels.ContainsKey(tokens[2]))
+            {
+                // LABEL goto within current section
+                _CurrentLineNumber = _CurrentSection.Labels[tokens[2]];
+            }
+            else
+            {
+                foreach (KeyValuePair<string, RTRSection> KVP in _CurrentFile.Sections)
+                {
+                    if (KVP.Value.Labels.ContainsKey(tokens[2]))
+                    {
+                        // LABEL goto within a different section
+                        _InGOTOHeader = KVP.Key; // Section name
+                        _InGOTOLineNumber = KVP.Value.Labels[tokens[2]];
+                        break;
+                    }
+                }
+            }
+        }
+
+        private static void CommandDO_IS(string[] tokens)
+        {
+            // @DO <Number To Change> IS <Change With What>
+            // TODO @DO `s01 is getname 8
+            // TODO @DO `p20 is deleted 8
+            // TODO @DO <number variable> IS LENGTH <String variable>
+            // TODO @DO <number variable> IS REALLENGTH <String variable>
+            AssignVariable(tokens[1], string.Join(" ", tokens, 3, tokens.Length - 3));
+        }
+
+        private static void CommandDO_MOVE(string[] tokens)
+        {
+            // @DO MOVE <x> <y> a 0 means current position
+            int X = Convert.ToInt32(TranslateVariables(tokens[2]));
+            int Y = Convert.ToInt32(TranslateVariables(tokens[3]));
+            if ((X > 0) && (Y > 0))
+            {
+                Door.GotoXY(X, Y);
+            }
+            else if (X > 0)
+            {
+                Door.GotoX(X);
+            }
+            else if (Y > 0)
+            {
+                Door.GotoY(Y);
+            }
+        }
+
+        private static void CommandDO_MOVEBACK(string[] tokens)
+        {
+            // @DO MOVEBACK put player back to previous position
+            LogMissing(tokens);
+        }
+
+        private static void CommandDO_MULTIPLY(string[] tokens)
+        {
+            // @DO <number to change> * <change with what>
+            AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) * Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+        }
+
+        private static void CommandDO_NUMRETURN(string[] tokens)
+        {
+            // @DO NUMRETURN <int var> <string var>
+            string Translated = TranslateVariables(tokens[3]);
+            string TranslatedWithoutNumbers = Regex.Replace(Translated, "[0-9]", "", RegexOptions.IgnoreCase);
+            AssignVariable(tokens[2], (Translated.Length - TranslatedWithoutNumbers.Length).ToString());
+        }
+
+        private static void CommandDO_PAD(string[] tokens)
+        {
+            // @DO PAD <string variable> <length>
+            LogMissing(tokens);
+        }
+
+        private static void CommandDO_QUEBAR(string[] tokens)
+        {
+            // @DO QUEBAR adds next line to saybar queue
+            LogMissing(tokens);
+        }
+
+        private static void CommandDO_RANDOM(string[] tokens)
+        {
+            // @DO <Varible to put # in> RANDOM <Highest number> <number to add to it>
+            int Min = Convert.ToInt32(tokens[4]);
+            int Max = Min + Convert.ToInt32(tokens[3]);
+            AssignVariable(tokens[1], _R.Next(Min, Max).ToString());
+        }
+
+        private static void CommandDO_READCHAR(string[] tokens)
+        {
+            // @DO READCHAR <string variable to put it in> 
+            // TODO Door.ReadKey is nullable
+            AssignVariable(tokens[2], Door.ReadKey().ToString());
+        }
+
+        private static void CommandDO_READNUM(string[] tokens)
+        {
+            // @DO READNUM <MAX LENGTH> <DEFAULT> (stores in `v40)
+            string Default = "";
+            if (tokens.Length >= 4) Default = TranslateVariables(tokens[3]);
+
+            string ReadNum = Door.Input(Default, CharacterMask.Numeric, '\0', Convert.ToInt32(TranslateVariables(tokens[2])), Convert.ToInt32(TranslateVariables(tokens[2])), 31);
+            int AnswerInt = 0;
+            if (!int.TryParse(ReadNum, out AnswerInt)) AnswerInt = 0;
+
+            AssignVariable("`V40", AnswerInt.ToString());
+        }
+
+        private static void CommandDO_READSPECIAL(string[] tokens)
+        {
+            // @DO READSPECIAL (String variable to put it in> <legal chars, 1st is default> prompt until one of legal chars is hit.  if enter is hit, it's same as hitting first char
+            LogMissing(tokens);
+        }
+
+        private static void CommandDO_READSTRING(string[] tokens)
+        {
+            // @DO READSTRING <MAX LENGTH> <DEFAULT> <variable TO PUT IT IN> (variable may be left off, in which case store in `S10)
+            string ReadString = Door.Input(Regex.Replace(TranslateVariables(tokens[3]), "NIL", "", RegexOptions.IgnoreCase), CharacterMask.All, '\0', Convert.ToInt32(TranslateVariables(tokens[2])), Convert.ToInt32(TranslateVariables(tokens[2])), 31);
+            if (tokens.Length >= 5)
+            {
+                AssignVariable(tokens[4], ReadString);
+            }
+            else
+            {
+                AssignVariable("`S10", ReadString);
+            }
+        }
+
+        private static void CommandDO_REPLACE(string[] tokens)
+        {
+            // @DO REPLACE <find> <replace> <in> replace first instance of FIND with REPLACE in IN
+            // The following regex matches only the first instance of the word foo: (?<!foo.*)foo (from http://stackoverflow.com/a/148561/342378)
+            // TODO Test that it does what it should
+            AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), "(?<!" + Regex.Escape(TranslateVariables(tokens[2])) + ".*)" + Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
+        }
+
+        private static void CommandDO_REPLACEALL(string[] tokens)
+        {
+            // @DO REPLACEALL <find> <replace> <in> replace all instances of FIND with REPLACE in IN
+            AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
+        }
+
+        private static void CommandDO_SAYBAR(string[] tokens)
+        {
+            // @DO SAYBAR same as DO QUEBAR, but displays immediately
+            LogMissing(tokens);
+        }
+
+        private static void CommandDO_STRIP(string[] tokens)
+        {
+            // @DO STRIP <string variable> (really trim)
+            AssignVariable(tokens[2], TranslateVariables(tokens[2]).Trim());
+        }
+
+        private static void CommandDO_STRIPALL(string[] tokens)
+        {
+            // @DO STRIPALL (strips out all ` codes, useful for passwords apparently)
+        }
+
+        private static void CommandDO_STRIPBAD(string[] tokens)
+        {
+            // @DO STRIPBAD <string variable> (strip illegal ` and replaces via badwords.dat)
+            LogMissing(tokens);
+        }
+
+        private static void CommandDO_SUBTRACT(string[] tokens)
+        {
+            // @DO <number to change> - <change with what>
+            AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) - Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+        }
+
+        private static void CommandDO_TRIM(string[] tokens)
+        {
+            // @DO TRIM <file name> <number to trim to> (remove lines from file until less than number in length)
+            string FileName = StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[2]));
+            int MaxLines = Convert.ToInt32(TranslateVariables(tokens[3]));
+            List<string> Lines = new List<string>();
+            Lines.AddRange(FileUtils.FileReadAllLines(FileName, RMEncoding.Ansi));
+            if (Lines.Count > MaxLines)
+            {
+                while (Lines.Count > MaxLines) Lines.RemoveAt(0);
+                FileUtils.FileWriteAllLines(FileName, Lines.ToArray(), RMEncoding.Ansi);
+            }
+        }
+
+        private static void CommandDO_UPCASE(string[] tokens)
+        {
+            // @DO UPCASE <string variable>
+            AssignVariable(tokens[2], TranslateVariables(tokens[2]).ToUpper());
+        }
+
+        private static void CommandDO_WRITE(string[] tokens)
+        {
+            // @DO WRITE next one line is written to the screen, no line wrap
+            _InDOWrite = true;
         }
 
         private static void CommandDRAWMAP(string[] tokens)
@@ -895,7 +1028,7 @@ namespace LORD2
 
         private static void LogMissing(string[] tokens)
         {
-            string Output = "TODO: " + string.Join(" ", tokens);
+            string Output = "TODO (hit a key): " + string.Join(" ", tokens);
             if (Output.Length > 80) Output = Output.Substring(0, 80);
             Crt.FastWrite(Output, 1, 25, 31);
             Crt.ReadKey();
@@ -930,7 +1063,6 @@ namespace LORD2
                 string LineTranslated = TranslateVariables(Line);
                 string LineTrimmed = Line.Trim();
 
-                // TODO Broken
                 if (_InIFFalse < 999)
                 {
                     if (LineTrimmed.StartsWith("@"))

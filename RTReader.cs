@@ -285,8 +285,8 @@ namespace LORD2
                     }
                     return;
                 case "MOVE": // @DO MOVE <x> <y> a 0 means current position
-                    int X = Convert.ToInt32(tokens[2]);
-                    int Y = Convert.ToInt32(tokens[3]);
+                    int X = Convert.ToInt32(TranslateVariables(tokens[2]));
+                    int Y = Convert.ToInt32(TranslateVariables(tokens[3]));
                     if (X == 0) X = Crt.WhereX();
                     if (Y == 0) Y = Crt.WhereY();
                     Crt.GotoXY(X, Y);

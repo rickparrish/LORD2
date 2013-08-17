@@ -52,9 +52,9 @@ namespace LORD2
             for (int i = 1; i <= 99; i++) _GlobalT.Add("`T" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
             for (int i = 1; i <= 40; i++) _GlobalV.Add("`V" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
 
-            _GlobalOther.Add("`N", "SYSOP"); // TODO
+            _GlobalOther.Add("`N", Door.DropInfo.Alias);
             _GlobalOther.Add("`E", "ENEMY"); // TODO
-            _GlobalOther.Add("`G", "3"); // TODO 3 = ANSI
+            _GlobalOther.Add("`G", (Door.DropInfo.Emulation == DoorEmulationType.ANSI ? "3" : "0"));
             _GlobalOther.Add("`X", " ");
             _GlobalOther.Add("`D", "\x08");
             _GlobalOther.Add("`1", Ansi.TextColor(Crt.Blue));

@@ -9,10 +9,12 @@ namespace LORD2
     {
         static void Main(string[] args)
         {
+            Door.Startup(args);
             //RTReader.DisplayRefFileSections();
             RTReader.RunSection("RTNEWS02", "START");
             Crt.Write("Press any key to quit");
             Crt.ReadKey();
+            Door.Shutdown();
         }
     }
 }

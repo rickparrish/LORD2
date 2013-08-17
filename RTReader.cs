@@ -25,6 +25,7 @@ namespace LORD2
         private static List<string> _InCHOICEOptions = new List<string>();
         private static bool _InDOWrite = false;
         private static string _InGOTOHeader = "";
+        private static int _InGOTOLineNumber = 0;
         private static int _InIFFalse = 999;
         private static bool _InSAY = false;
         private static bool _InSHOW = false;
@@ -49,9 +50,9 @@ namespace LORD2
             for (int i = 1; i <= 99; i++) _GlobalT.Add("`T" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
             for (int i = 1; i <= 40; i++) _GlobalV.Add("`V" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
 
-            _GlobalOther.Add("`N", "TODO User Name");
-            _GlobalOther.Add("`E", "TODO Enemy Name");
-            _GlobalOther.Add("`G", "TODO Graphics Level");
+            _GlobalOther.Add("`N", "SYSOP"); // TODO
+            _GlobalOther.Add("`E", "ENEMY"); // TODO
+            _GlobalOther.Add("`G", "3"); // TODO 3 = ANSI
             _GlobalOther.Add("`X", " ");
             _GlobalOther.Add("`D", "\x08");
             _GlobalOther.Add("`1", Ansi.TextColor(Crt.Blue));
@@ -81,11 +82,11 @@ namespace LORD2
             _GlobalOther.Add("`r5", Ansi.TextBackground(Crt.Magenta));
             _GlobalOther.Add("`r6", Ansi.TextBackground(Crt.Brown));
             _GlobalOther.Add("`r7", Ansi.TextBackground(Crt.LightGray));
-            _GlobalOther.Add("`c", Ansi.ClrScr() + "\r\n\r\n");
+            _GlobalOther.Add("`c", Ansi.ClrScr() + "\r\n\r\n"); // TODO only `c works in RTReader, not `C -- bug, or should `C really not work?
             _GlobalOther.Add("`k", "TODO MORE");
             // TODO `b
 
-            _GlobalWords.Add("LOCAL", "5"); // TODO
+            _GlobalWords.Add("LOCAL", "5"); // TODO 5 = true
             _GlobalWords.Add("RESPONCE", "0");
             _GlobalWords.Add("RESPONSE", "0");
         }
@@ -198,7 +199,7 @@ namespace LORD2
 
         private static void HandleCLEAR(string[] tokens)
         {
-            // @CLEAR <screen or name or userscreen or text or picture or all> screen=entire screen, name=name line of game window, userscreen=user text (TODO which lines?), text=game text (@SAY window), picture=the picture, all=user text+picture+game text+name and redraws screen
+            // @CLEAR <screen or name or userscreen or text or picture or all>
             // TODO None of these will work remotely
             switch (tokens[1].ToUpper())
             {
@@ -257,14 +258,28 @@ namespace LORD2
                     _GlobalOther["`N"] = TranslateVariables("`S10");
                     return;
                 case "GOTO": // @DO GOTO <header or label>
-                    // TODO Need to handle header gotos
-                    if (_CurrentSection.Labels.ContainsKey(tokens[2]))
+                    if (_CurrentFile.Sections.ContainsKey(tokens[2]))
                     {
+                        // HEADER goto
+                        _InGOTOHeader = tokens[2];
+                    }
+                    else if (_CurrentSection.Labels.ContainsKey(tokens[2]))
+                    {
+                        // LABEL goto within current section
                         _CurrentLineNumber = _CurrentSection.Labels[tokens[2]];
                     }
-                    else if (_CurrentFile.Sections.ContainsKey(tokens[2]))
+                    else
                     {
-                        _InGOTOHeader = tokens[2];
+                        foreach (KeyValuePair<string, RTRSection> KVP in _CurrentFile.Sections)
+                        {
+                            if (KVP.Value.Labels.ContainsKey(tokens[2]))
+                            {
+                                // LABEL goto within a different section
+                                _InGOTOHeader = KVP.Key; // Section name
+                                _InGOTOLineNumber = KVP.Value.Labels[tokens[2]];
+                                break;
+                            }
+                        }
                     }
                     return;
                 case "NUMRETURN": // @DO NUMRETURN <int var> <string var>
@@ -343,7 +358,8 @@ namespace LORD2
                     break;
             }
 
-            Crt.WriteLn("TODO: " + string.Join(" ", tokens));
+            Crt.WriteLn("TODO (hit a key): " + string.Join(" ", tokens));
+            Crt.ReadKey();
         }
 
         private static bool HandleIF(string[] tokens)
@@ -400,7 +416,8 @@ namespace LORD2
                     }
             }
 
-            Crt.WriteLn("TODO: " + string.Join(" ", tokens));
+            Crt.WriteLn("TODO (hit a key): " + string.Join(" ", tokens));
+            Crt.ReadKey();
             return false;
         }
 
@@ -466,7 +483,8 @@ namespace LORD2
             // Run the selected script
             _CurrentFile = _RefFiles[fileName];
             _CurrentSection = _CurrentFile.Sections[sectionName];
-            _CurrentLineNumber = 0;
+            _CurrentLineNumber = _InGOTOLineNumber;
+            _InGOTOLineNumber = 0;
             RunScript(_CurrentSection.Script.ToArray());
 
             // If we exit this script with _InGOTOHeader set, it means we want to GOTO a different section
@@ -530,14 +548,13 @@ namespace LORD2
                                 _InCHOICEOptions.Clear();
                                 _InCHOICE = true;
                                 break;
-                            case "@CLEAR": // @CLEAR <screen or name or userscreen or text or picture or all> screen=entire screen, name=name line of game window, userscreen=user text (TODO which lines?), text=game text (@SAY window), picture=the picture, all=user text+picture+game text+name and redraws screen
+                            case "@CLEAR": // @CLEAR <screen or name or userscreen or text or picture or all> 
                                 HandleCLEAR(Tokens);
                                 break;
                             case "@CLOSESCRIPT":
                                 return;
                             case "@DISPLAYFILE": // @DISPLAYFILE <filename> <options> (options are NOPAUSE and NOSKIP, separated by space if both used)
                                 // TODO As with WRITEFILE, don't allow for ..\..\blah
-                                // TODO Handle variables as filename (ie `s02)
                                 // TODO Handle NOPAUSE and NOSKIP parameters
                                 Ansi.Write(FileUtils.FileReadAllText(StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(Tokens[1])), RMEncoding.Ansi));
                                 break;
@@ -620,11 +637,11 @@ namespace LORD2
                                 break;
                             case "@WRITEFILE": // @WRITEFILE <filename> following lines until next one starting with @ are output to file (append on existing, create on new)
                                 // TODO Strip out any invalid filename characters?  (so for example they can't say ..\..\..\..\windows\system32\important_file.ext)
-                                // TODO Handle variables as filename (ie `s02)
                                 _InWRITEFILE = StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(Tokens[1]));
                                 break;
                             default:
-                                Crt.WriteLn("TODO Unknown: " + LineTrimmed);
+                                Crt.WriteLn("TODO (hit a key): " + LineTrimmed);
+                                Crt.ReadKey();
                                 break;
                         }
                     }

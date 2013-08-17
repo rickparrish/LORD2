@@ -143,14 +143,14 @@ namespace LORD2
 
         public static void DisplayRefFileSections()
         {
-            Crt.ClrScr();
-            Crt.WriteLn("DEBUG OUTPUT");
+            Door.ClrScr();
+            Door.WriteLn("DEBUG OUTPUT");
             foreach (KeyValuePair<string, RTRFile> RefFile in _RefFiles)
             {
-                Crt.WriteLn("Ref File Name: " + RefFile.Key);
+                Door.WriteLn("Ref File Name: " + RefFile.Key);
                 foreach (KeyValuePair<string, RTRSection> Section in RefFile.Value.Sections)
                 {
-                    Crt.WriteLn("  - " + Section.Key + " (" + Section.Value.Script.Count.ToString() + " lines)");
+                    Door.WriteLn("  - " + Section.Key + " (" + Section.Value.Script.Count.ToString() + " lines)");
                 }
             }
         }
@@ -181,18 +181,19 @@ namespace LORD2
             "Hey, I have more than 500", RESPONSE would be set to 5.*/
 
             // Output options
-            Crt.GotoXY(1, 16);
+            Door.GotoXY(1, 16);
             int FirstKey = 65;
             for (int i = 0; i < _InCHOICEOptions.Count; i++)
             {
-                Ansi.Write(TranslateVariables("   `2(`0" + ((char)(FirstKey + i)).ToString() + "`2)`7 " + _InCHOICEOptions[i] + "\r\n"));
+                Door.WriteLn(TranslateVariables("   `2(`0" + ((char)(FirstKey + i)).ToString() + "`2)`7 " + _InCHOICEOptions[i]));
             }
 
             // Get response
             char Choice = '\0';
             while (((byte)Choice < FirstKey) || ((byte)Choice > (FirstKey + _InCHOICEOptions.Count - 1)))
             {
-                Choice = Crt.ReadKey().ToString().ToUpper()[0];
+                // TODO Door.ReadKey() is nullable
+                Choice = Door.ReadKey().ToString().ToUpper()[0];
             }
 
             _GlobalWords["RESPONCE"] = (Choice - 64).ToString();
@@ -202,7 +203,6 @@ namespace LORD2
         private static void HandleCLEAR(string[] tokens)
         {
             // @CLEAR <screen or name or userscreen or text or picture or all>
-            // TODO None of these will work remotely
             switch (tokens[1].ToUpper())
             {
                 case "ALL":
@@ -211,53 +211,69 @@ namespace LORD2
                     HandleCLEAR("@CLEAR TEXT".Split(' '));
                     HandleCLEAR("@CLEAR NAME".Split(' '));
                     // TODO And redraws the screen
-                    return;
+                    break;
                 case "NAME":
-                    _SavedX = Crt.WhereX();
-                    _SavedY = Crt.WhereY();
-                    Crt.GotoXY(54, 15);
-                    Ansi.Write(new string(' ', 23));
-                    Crt.GotoXY(_SavedX, _SavedY);
-                    return;
+                    Door.GotoXY(55, 15);
+                    Door.Write(new string(' ', 22));
+                    break;
                 case "PICTURE":
-                    _SavedX = Crt.WhereX();
-                    _SavedY = Crt.WhereY();
-                    Crt.Window(55, 3, 76, 13);
-                    Crt.ClrScr();
-                    Crt.Window(1, 1, 80, 25);
-                    Crt.GotoXY(_SavedX, _SavedY);
-                    return;
+                    for (int y = 3; y <= 13; y++)
+                    {
+                        Door.GotoXY(55, y);
+                        Door.Write(new string(' ', 22));
+                    }
+                    break;
                 case "SCREEN":
-                    Crt.ClrScr();
-                    return;
+                    Door.ClrScr();
+                    break;
                 case "TEXT":
-                    _SavedX = Crt.WhereX();
-                    _SavedY = Crt.WhereY();
-                    Crt.Window(33, 3, 33 + 19, 3 + 11);
-                    Crt.ClrScr();
-                    Crt.Window(1, 1, 80, 25);
-                    Crt.GotoXY(_SavedX, _SavedY);
-                    return;
+                    for (int y = 3; y <= 13; y++)
+                    {
+                        Door.GotoXY(32, y);
+                        Door.Write(new string(' ', 22));
+                    }
+                    break;
                 case "USERSCREEN":
-                    _SavedX = Crt.WhereX();
-                    _SavedY = Crt.WhereY();
-                    Crt.Window(1, 16, 80, 23);
-                    Crt.ClrScr();
-                    Crt.Window(1, 1, 80, 25);
-                    Crt.GotoXY(_SavedX, _SavedY);
-                    return;
+                    for (int y = 16; y <= 23; y++)
+                    {
+                        Door.GotoXY(1, y);
+                        Door.Write(new string(' ', 80));
+                    }
+                    Door.GotoXY(78, 23);
+                    break;
+                default:
+                    throw new ArgumentException(tokens[1], "Unexpected parameter to @CLEAR");
             }
-
-            Crt.WriteLn("TODO (hit a key): " + string.Join(" ", tokens));
-            Crt.ReadKey();
         }
 
         private static void HandleDO(string[] tokens)
         {
             switch (tokens[1].ToUpper())
             {
+                case "ADDLOG": // @DO ADDLOG the line under this will be added to LOGNOW.TXT
+                    // TODO
+                    break;
+                case "BEEP": // @DO BEEP beep locally
+                    // TODO
+                    break;
                 case "COPYTONAME": // @DO COPYTONAME store `S10 in `N
                     _GlobalOther["`N"] = TranslateVariables("`S10");
+                    return;
+                case "DELETE": // @DO DELETE <filename> delete the given file
+                    // TODO
+                    break;
+                case "FRONTPAD": // @DO FRONTPAD <string variable> <length>
+                    // TODO
+                    break;
+                case "GETKEY": // @DO GETKEY <String variable to put it in> IF A KEY IS NOT CURRENTLY BEING PRESSED, STORE _ AS RESULT
+                    if (Door.KeyPressed())
+                    {
+                        AssignVariable(tokens[2], Door.ReadKey().ToString());
+                    }
+                    else
+                    {
+                        AssignVariable(tokens[2], "_");
+                    }
                     return;
                 case "GOTO": // @DO GOTO <header or label>
                     if (_CurrentFile.Sections.ContainsKey(tokens[2]))
@@ -287,19 +303,41 @@ namespace LORD2
                 case "MOVE": // @DO MOVE <x> <y> a 0 means current position
                     int X = Convert.ToInt32(TranslateVariables(tokens[2]));
                     int Y = Convert.ToInt32(TranslateVariables(tokens[3]));
-                    if (X == 0) X = Crt.WhereX();
-                    if (Y == 0) Y = Crt.WhereY();
-                    Crt.GotoXY(X, Y);
+                    if ((X > 0) && (Y > 0))
+                    {
+                        Door.GotoXY(X, Y);
+                    }
+                    else if (X > 0)
+                    {
+                        Door.GotoX(X);
+                    }
+                    else if (Y > 0)
+                    {
+                        Door.GotoY(Y);
+                    }
                     return;
+                case "MOVEBACK": // @DO MOVEBACK put player back to previous position
+                    // TODO
+                    break;
                 case "NUMRETURN": // @DO NUMRETURN <int var> <string var>
                     string Translated = TranslateVariables(tokens[3]);
                     string TranslatedWithoutNumbers = Regex.Replace(Translated, "[0-9]", "", RegexOptions.IgnoreCase);
                     AssignVariable(tokens[2], (Translated.Length - TranslatedWithoutNumbers.Length).ToString());
                     return;
+                case "PAD": // @DO PAD <string variable> <length>
+                    // TODO
+                    break;
+                case "QUEBAR": // @DO QUEBAR adds next line to saybar queue
+                    // TODO
+                    break;
+                case "READCHAR": // @DO READCHAR <string variable to put it in> 
+                    // TODO Door.ReadKey is nullable
+                    AssignVariable(tokens[2], Door.ReadKey().ToString());
+                    return;
                 case "READNUM": // @DO READNUM <MAX LENGTH> <DEFAULT> (stores in `v40)
                     string Default = "";
                     if (tokens.Length >= 4) Default = TranslateVariables(tokens[3]);
-                    
+
                     string ReadNum = Door.Input(Default, CharacterMask.Numeric, '\0', Convert.ToInt32(TranslateVariables(tokens[2])), Convert.ToInt32(TranslateVariables(tokens[2])), 31);
                     int AnswerInt = 0;
                     if (!int.TryParse(ReadNum, out AnswerInt)) AnswerInt = 0;
@@ -307,6 +345,9 @@ namespace LORD2
                     AssignVariable("`V40", AnswerInt.ToString());
 
                     return;
+                case "READSPECIAL": // @DO READSPECIAL (String variable to put it in> <legal chars, 1st is default> prompt until one of legal chars is hit.  if enter is hit, it's same as hitting first char
+                    // TODO
+                    break;
                 case "READSTRING": // @DO READSTRING <MAX LENGTH> <DEFAULT> <variable TO PUT IT IN> (variable may be left off, in which case store in `S10)
                     string ReadString = Door.Input(Regex.Replace(TranslateVariables(tokens[3]), "NIL", "", RegexOptions.IgnoreCase), CharacterMask.All, '\0', Convert.ToInt32(TranslateVariables(tokens[2])), Convert.ToInt32(TranslateVariables(tokens[2])), 31);
                     if (tokens.Length >= 5)
@@ -318,15 +359,26 @@ namespace LORD2
                         AssignVariable("`S10", ReadString);
                     }
                     return;
-                case "REPLACEALL": // @DO REPLACEALL <find> <replace> <in>
+                case "REPLACE": // @DO REPLACE <find> <replace> <in> replace first instance of FIND with REPLACE in IN
+                    // The following regex matches only the first instance of the word foo: (?<!foo.*)foo (from http://stackoverflow.com/a/148561/342378)
+                    // TODO Test that it does what it should
+                    AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), "(?<!" + Regex.Escape(TranslateVariables(tokens[2])) + ".*)" + Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
+                    return;
+                case "REPLACEALL": // @DO REPLACEALL <find> <replace> <in> replace all instances of FIND with REPLACE in IN
                     AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
                     return;
+                case "SAYBAR": // @DO SAYBAR same as DO QUEBAR, but displays immediately
+                    // TODO
+                    break;
                 case "STRIP": // @DO STRIP <string variable> (really trim)
                     AssignVariable(tokens[2], TranslateVariables(tokens[2]).Trim());
                     return;
+                case "STRIPALL": // @DO STRIPALL (strips out all ` codes, useful for passwords apparently)
+                    // TODO
+                    break;
                 case "STRIPBAD": // @DO STRIPBAD <string variable> (strip illegal ` and replaces via badwords.dat)
                     // TODO
-                    return;
+                    break;
                 case "TRIM": // @DO TRIM <file name> <number to trim to> (remove lines from file until less than number in length)
                     string FileName = StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[2]));
                     int MaxLines = Convert.ToInt32(TranslateVariables(tokens[3]));
@@ -345,38 +397,45 @@ namespace LORD2
                     _InDOWrite = true;
                     return;
                 default:
-                    switch (tokens[2].ToUpper())
+                    if (tokens.Length >= 3)
                     {
-                        case "/": // @DO <number to change> / <change with what>
-                            // TODO How to round?
-                            AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) / Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
-                            return;
-                        case "*": // @DO <number to change> * <change with what>
-                            AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) * Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
-                            return;
-                        case "-": // @DO <number to change> - <change with what>
-                            AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) - Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
-                            return;
-                        case "+": // @DO <number to change> + <change with what>
-                            AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) + Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
-                            return;
-                        case "ADD": // DO <string var> ADD <string var or text>
-                            AssignVariable(tokens[1], TranslateVariables(tokens[1] + string.Join(" ", tokens, 3, tokens.Length - 3)));
-                            return;
-                        case "IS": // @DO <Number To Change> IS <Change With What>
-                            AssignVariable(tokens[1], string.Join(" ", tokens, 3, tokens.Length - 3));
-                            return;
-                        case "RANDOM": // @DO <Varible to put # in> RANDOM <Highest number> <number to add to it>
-                            int Min = Convert.ToInt32(tokens[4]);
-                            int Max = Min + Convert.ToInt32(tokens[3]);
-                            AssignVariable(tokens[1], _R.Next(Min, Max).ToString());
-                            return;
+                        switch (tokens[2].ToUpper())
+                        {
+                            case "/": // @DO <number to change> / <change with what>
+                                // TODO How to round?
+                                AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) / Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+                                return;
+                            case "*": // @DO <number to change> * <change with what>
+                                AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) * Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+                                return;
+                            case "-": // @DO <number to change> - <change with what>
+                                AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) - Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+                                return;
+                            case "+": // @DO <number to change> + <change with what>
+                                AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) + Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+                                return;
+                            case "ADD": // DO <string var> ADD <string var or text>
+                                AssignVariable(tokens[1], TranslateVariables(tokens[1] + string.Join(" ", tokens, 3, tokens.Length - 3)));
+                                return;
+                            case "IS": // @DO <Number To Change> IS <Change With What>
+                                // TODO @DO `s01 is getname 8
+                                // TODO @DO `p20 is deleted 8
+                                // TODO @DO <number variable> IS LENGTH <String variable>
+                                // TODO @DO <number variable> IS REALLENGTH <String variable>
+                                AssignVariable(tokens[1], string.Join(" ", tokens, 3, tokens.Length - 3));
+                                return;
+                            case "RANDOM": // @DO <Varible to put # in> RANDOM <Highest number> <number to add to it>
+                                int Min = Convert.ToInt32(tokens[4]);
+                                int Max = Min + Convert.ToInt32(tokens[3]);
+                                AssignVariable(tokens[1], _R.Next(Min, Max).ToString());
+                                return;
+                        }
                     }
                     break;
             }
 
-            Crt.WriteLn("TODO (hit a key): " + string.Join(" ", tokens));
-            Crt.ReadKey();
+            Door.WriteLn("TODO (hit a key): " + string.Join(" ", tokens));
+            Door.ReadKey();
         }
 
         private static bool HandleIF(string[] tokens)
@@ -433,8 +492,8 @@ namespace LORD2
                     }
             }
 
-            Crt.WriteLn("TODO (hit a key): " + string.Join(" ", tokens));
-            Crt.ReadKey();
+            Door.WriteLn("TODO (hit a key): " + string.Join(" ", tokens));
+            Door.ReadKey();
             return false;
         }
 
@@ -443,9 +502,9 @@ namespace LORD2
             // TODO This should be a scroll window, not just a dump and pause
             for (int i = 0; i < _InSHOWSCROLLLines.Count; i++)
             {
-                Ansi.Write(_InSHOWSCROLLLines[i] + "\r\n");
+                Door.WriteLn(_InSHOWSCROLLLines[i]);
             }
-            Crt.ReadKey();
+            Door.ReadKey();
         }
 
         private static void LoadRefFile(string fileName)
@@ -554,11 +613,6 @@ namespace LORD2
                     if (LineTrimmed.StartsWith("@"))
                     {
                         if (_InCHOICE) HandleCHOICE();
-                        if (_InSAY)
-                        {
-                            Crt.Window(1, 1, 80, 25);
-                            Crt.GotoXY(_SavedX, _SavedY);
-                        }
                         if (_InSHOWSCROLL) HandleSHOWSCROLL();
                         _InCHOICE = false;
                         _InSAY = false;
@@ -570,6 +624,9 @@ namespace LORD2
                         string[] Tokens = LineTrimmed.Split(' ');
                         switch (Tokens[0].ToUpper())
                         {
+                            case "@ADDCHAR": // @ADDCHAR adds a new character to TRADER.DAT
+                                // TODO
+                                break;
                             case "@BEGIN":
                                 _InBEGINCount += 1;
                                 break;
@@ -583,12 +640,12 @@ namespace LORD2
                             case "@CLOSESCRIPT":
                                 return;
                             case "@DISPLAY": // @DISPLAY <this> IN <this file> <options>
-                                Ansi.Write(TranslateVariables(string.Join("\r\n", _RefFiles[Path.GetFileNameWithoutExtension(Tokens[3])].Sections[Tokens[1]].Script.ToArray())));
+                                Door.Write(TranslateVariables(string.Join("\r\n", _RefFiles[Path.GetFileNameWithoutExtension(Tokens[3])].Sections[Tokens[1]].Script.ToArray())));
                                 break;
                             case "@DISPLAYFILE": // @DISPLAYFILE <filename> <options> (options are NOPAUSE and NOSKIP, separated by space if both used)
                                 // TODO As with WRITEFILE, don't allow for ..\..\blah
                                 // TODO Handle NOPAUSE and NOSKIP parameters
-                                Ansi.Write(FileUtils.FileReadAllText(StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(Tokens[1])), RMEncoding.Ansi));
+                                Door.Write(FileUtils.FileReadAllText(StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(Tokens[1])), RMEncoding.Ansi));
                                 break;
                             case "@DO": // @DO has waaaaaay too many variants
                                 HandleDO(Tokens);
@@ -626,8 +683,8 @@ namespace LORD2
                                         }
                                         else
                                         {
-                                            Crt.WriteLn("TODO (hit a key): " + Line);
-                                            Crt.ReadKey();
+                                            Door.WriteLn("TODO (hit a key): " + Line);
+                                            Door.ReadKey();
                                         }
                                     }
                                 }
@@ -638,9 +695,9 @@ namespace LORD2
                                 // @KEY = "  `1[`!MORE`1]`7" from current cursor position
                                 // @KEY BOTTOM = "                                   `!<MORE>`7" on line 24
                                 // @KEY TOP =    "                                       `![`1MORE`!]`7" on line 15
-                                Ansi.Write(TranslateVariables("                                   `!<MORE>`7"));
+                                Door.Write(TranslateVariables("                                   `!<MORE>`7"));
                                 // TODO Erase after drawing
-                                Crt.ReadKey();
+                                Door.ReadKey();
                                 break;
                             case "@LABEL": // @LABEL <label name>
                                 // Ignore
@@ -648,17 +705,11 @@ namespace LORD2
                             case "@NAME": // @NAME <new name> sets the name below the picture window on the right
                                 // TODO Name.Length is going to include the ANSI sequences, so not be the correct length
                                 string Name = TranslateVariables(string.Join(" ", Tokens, 1, Tokens.Length - 1));
-                                if (Name.Length > 23) Name = Name.Substring(0, 23);
-                                _SavedX = Crt.WhereX();
-                                _SavedY = Crt.WhereY();
-                                Crt.GotoXY(54 + ((23 - Name.Length) / 2), 15);
-                                Ansi.Write(Name);
-                                Crt.GotoXY(_SavedX, _SavedY);
+                                if (Name.Length > 22) Name = Name.Substring(0, 22);
+                                Door.GotoXY(55 + ((22 - Name.Length) / 2), 15);
+                                Door.Write(Name);
                                 break;
                             case "@SAY": // @SAY All text UNDER this will be put in the 'talk window' until a @ is hit.
-                                _SavedX = Crt.WhereX();
-                                _SavedY = Crt.WhereY();
-                                Crt.Window(33, 3, 33 + 19, 3 + 11);
                                 _InSAY = true;
                                 break;
                             case "@SHOW": // @SHOW [scroll] following lines until next one starting with @ are output to screen.  If SCROLL parameter is given, text is shown in scrollable window
@@ -684,8 +735,8 @@ namespace LORD2
                                 _InWRITEFILE = StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(Tokens[1]));
                                 break;
                             default:
-                                Crt.WriteLn("TODO (hit a key): " + LineTrimmed);
-                                Crt.ReadKey();
+                                Door.WriteLn("TODO (hit a key): " + LineTrimmed);
+                                Door.ReadKey();
                                 break;
                         }
                     }
@@ -698,23 +749,21 @@ namespace LORD2
                         }
                         else if (_InDOWrite)
                         {
-                            // TODO Remotely
-                            Ansi.Write(LineTranslated);
+                            Door.Write(LineTranslated);
                             _InDOWrite = false;
                         }
                         else if (_InSAY)
                         {
-                            // TODO Remotely
-                            Ansi.Write(LineTranslated);
+                            // TODO SHould be in TEXT window
+                            Door.Write(LineTranslated);
                         }
                         else if (_InSHOW)
                         {
-                            // TODO Remotely
-                            Ansi.Write(LineTranslated + "\r\n");
+                            Door.WriteLn(LineTranslated);
                         }
                         else if (_InSHOWLOCAL)
                         {
-                            Ansi.Write(LineTranslated + "\r\n");
+                            Crt.WriteLn(LineTranslated);
                         }
                         else if (_InSHOWSCROLL)
                         {

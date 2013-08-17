@@ -530,8 +530,15 @@ namespace LORD2
                             case "@LABEL": // @LABEL <label name>
                                 // Ignore
                                 break;
-                            case "@NAME": // @NAME <new name>
-                                _GlobalOther["`N"] = TranslateVariables(string.Join(" ", Tokens, 1, Tokens.Length - 1));
+                            case "@NAME": // @NAME <new name> sets the name below the picture window on the right
+                                // TODO Name.Length is going to include the ANSI sequences, so not be the correct length
+                                string Name = TranslateVariables(string.Join(" ", Tokens, 1, Tokens.Length - 1));
+                                if (Name.Length > 23) Name = Name.Substring(0, 23);
+                                _SavedX = Crt.WhereX();
+                                _SavedY = Crt.WhereY();
+                                Crt.GotoXY(54 + ((23 - Name.Length) / 2), 15);
+                                Ansi.Write(Name);
+                                Crt.GotoXY(_SavedX, _SavedY);
                                 break;
                             case "@SAY": // @SAY All text UNDER this will be put in the 'talk window' until a @ is hit.
                                 _SavedX = Crt.WhereX();

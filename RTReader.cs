@@ -47,7 +47,7 @@ namespace LORD2
             _Commands.Add("@BEGIN", CommandBEGIN);
             _Commands.Add("@BITSET", CommandBITSET);
             _Commands.Add("@BUSY", CommandBUSY);
-            _Commands.Add("@BUSYMANAGER", CommandBUSYMANAGER);
+            _Commands.Add("@BUYMANAGER", CommandBUYMANAGER);
             _Commands.Add("@CHECKMAIL", CommandCHECKMAIL);
             _Commands.Add("@CHOICE", CommandCHOICE);
             _Commands.Add("@CHOOSEPLAYER", CommandCHOOSEPLAYER);
@@ -56,9 +56,11 @@ namespace LORD2
             _Commands.Add("@CLOSESCRIPT", CommandCLOSESCRIPT);
             _Commands.Add("@CONVERT_FILE_TO_ANSI", CommandCONVERT_FILE_TO_ANSI);
             _Commands.Add("@CONVERT_FILE_TO_ASCII", CommandCONVERT_FILE_TO_ASCII);
+            _Commands.Add("@COPYFILE", CommandCOPYFILE);
             _Commands.Add("@DATALOAD", CommandDATALOAD);
             _Commands.Add("@DATANEWDAY", CommandDATANEWDAY);
             _Commands.Add("@DATASAVE", CommandDATASAVE);
+            _Commands.Add("@DECLARE", CommandDECLARE);
             _Commands.Add("@DISPLAY", CommandDISPLAY);
             _Commands.Add("@DISPLAYFILE", CommandDISPLAYFILE);
             _Commands.Add("@DO", CommandDO);
@@ -66,29 +68,39 @@ namespace LORD2
             _Commands.Add("@DRAWPART", CommandDRAWPART);
             _Commands.Add("@END", CommandEND);
             _Commands.Add("@FIGHT", CommandFIGHT);
+            _Commands.Add("@GRAPHICS", CommandGRAPHICS);
             _Commands.Add("@HALT", CommandHALT);
             _Commands.Add("@IF", CommandIF);
             _Commands.Add("@ITEMEXIT", CommandITEMEXIT);
             _Commands.Add("@KEY", CommandKEY);
             _Commands.Add("@LABEL", CommandLABEL);
             _Commands.Add("@LOADCURSOR", CommandLOADCURSOR);
+            _Commands.Add("@LOADGLOBALS", CommandLOADGLOBALS);
             _Commands.Add("@LOADMAP", CommandLOADMAP);
+            _Commands.Add("@LOADWORLD", CommandLOADWORLD);
             _Commands.Add("@LORDRANK", CommandLORDRANK);
+            _Commands.Add("@MOREMAP", CommandMOREMAP);
             _Commands.Add("@NAME", CommandNAME);
+            _Commands.Add("@NOCHECK", CommandNOCHECK);
             _Commands.Add("@OFFMAP", CommandOFFMAP);
             _Commands.Add("@OVERHEADMAP", CommandOVERHEADMAP);
             _Commands.Add("@PAUSEOFF", CommandPAUSEOFF);
             _Commands.Add("@PAUSEON", CommandPAUSEON);
+            _Commands.Add("@PROGNAME", CommandPROGNAME);
+            _Commands.Add("@RANK", CommandRANK);
             _Commands.Add("@READFILE", CommandREADFILE);
             _Commands.Add("@ROUTINE", CommandROUTINE);
             _Commands.Add("@RUN", CommandRUN);
             _Commands.Add("@SAVECURSOR", CommandSAVECURSOR);
             _Commands.Add("@SAVEGLOBALS", CommandSAVEGLOBALS);
+            _Commands.Add("@SAVEWORLD", CommandSAVEWORLD);
             _Commands.Add("@SAY", CommandSAY);
             _Commands.Add("@SELLMANAGER", CommandSELLMANAGER);
             _Commands.Add("@SHOW", CommandSHOW);
             _Commands.Add("@SHOWLOCAL", CommandSHOWLOCAL);
+            _Commands.Add("@STATBAR", CommandSTATBAR);
             _Commands.Add("@UPDATE", CommandUPDATE);
+            _Commands.Add("@UPDATE_UPDATE", CommandUPDATE_UPDATE);
             _Commands.Add("@VERSION", CommandVERSION);
             _Commands.Add("@WHOISON", CommandWHOISON);
             _Commands.Add("@WRITEFILE", CommandWRITEFILE);
@@ -117,6 +129,7 @@ namespace LORD2
             _DOCommands.Add("STRIP", CommandDO_STRIP);
             _DOCommands.Add("STRIPALL", CommandDO_STRIPALL);
             _DOCommands.Add("STRIPBAD", CommandDO_STRIPBAD);
+            _DOCommands.Add("STRIPCODE", CommandDO_STRIPCODE);
             _DOCommands.Add("TRIM", CommandDO_TRIM);
             _DOCommands.Add("UPCASE", CommandDO_UPCASE);
             _DOCommands.Add("WRITE", CommandDO_WRITE);
@@ -139,6 +152,7 @@ namespace LORD2
             for (int i = 1; i <= 10; i++) _GlobalS.Add("`S" + StringUtils.PadLeft(i.ToString(), '0', 2), "");
             for (int i = 1; i <= 99; i++) _GlobalT.Add("`T" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
             for (int i = 1; i <= 40; i++) _GlobalV.Add("`V" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
+            // TODO Some need to be tied to player variables?
 
             _GlobalOther.Add("`N", Door.DropInfo.Alias);
             _GlobalOther.Add("`E", "ENEMY"); // TODO
@@ -231,6 +245,12 @@ namespace LORD2
 
         private static void CommandADDCHAR(string[] tokens)
         {
+            /* @ADDCHAR
+                This command adds a new character to the TRADER.DAT file.  This command is 
+                used in the @#newplayer routine in gametxt.ref.  Make sure you do an 
+                @READSTRING, @DO COPYTONAME, set appropriate variables including the player's 
+                X and Y coordinates and map block number before issuing this command.  Failure 
+                to do this can result in a corrupted TRADER.DAT file. */
             LogMissing(tokens);
         }
 
@@ -241,16 +261,28 @@ namespace LORD2
 
         private static void CommandBITSET(string[] tokens)
         {
+            /* @BITSET <`tX> <bit> <Y>
+                Sets a certain bit in byte variable X to value Y.  Y must be 0 or 1.  This lets you 
+                have 8 yes/no variables to each byte variable. */
             LogMissing(tokens);
         }
 
         private static void CommandBUSY(string[] tokens)
         {
+            /* @BUSY
+                This makes the player appear 'red' to other players currently playing.  It 
+                also tells the Lord II engine to run @#busy in gametxt.ref if a player logs on 
+                and someone is attacking him or giving him an item. */
             LogMissing(tokens);
         }
 
-        private static void CommandBUSYMANAGER(string[] tokens)
+        private static void CommandBUYMANAGER(string[] tokens)
         {
+            /* @BUYMANAGER
+                <item number>
+                <item number>
+                <ect until next @ at beginning of string is hit>
+                This command offers items for sale at the price set in items.dat */
             LogMissing(tokens);
         }
 
@@ -261,21 +293,76 @@ namespace LORD2
 
         private static void CommandCHOICE(string[] tokens)
         {
+            /* NOTE: `V01 is the default option */
+            /* TODO ALSO:  Check the CHOICE command, you can check a bit there too, like this:
+                +`t12 1 Hey, byte 12 bit 1 is TRUE! 
+                -`t12 1 Hey, byte 12 bit 1 is FALSE! */
+            /* @CHOICE
+                <A choice>
+                <another choice>
+                <ect..When a @ is found in the beginning of a choice it quits>
+                This gives the user a choice using a lightbar.
+                The responce is put into varible RESPONCE.  This may also be spelled RESPONSE. 
+                To set which choice the cursor starts on, put that number into `V01.
+                ** EXAMPLE OF @CHOICE COMMAND **
+                @DO `V01 IS 1 ;which choice should be highlighted when they start
+                (now the actual choice command)
+                @CHOICE
+                Yes   <- Defaults to this, since it's 1
+                No
+                I don't know
+                Who cares
+                @IF RESPONCE IS 3 THEN DO
+                  @BEGIN
+                  @DO `P01 IS RESPONCE
+                  @SHOW
+
+                You chose `P01!, silly boy!
+
+                  @END
+                The choice command is more useful now; you can now define *IF* type statements 
+                so a certain choice will only be there if a conditional statement is met.
+                For instance:
+                @CHOICE
+                Yes
+                No
+                =`p20 500 Hey, I have 500 exactly!
+                !`p20 500 Hey, I have anything BUT 500 exactly!
+                >`p20 500 Hey, I have MORE than 500!
+                <`p20 100 Hey, I have LESS than 100!
+                >`p20 100 <`p20 500 I have more then 100 and less than 500!
+                Also:  You can check the status of individual bits in a `T player byte.  The 
+                bit is true or false, like this:
+                +`t12 1 Hey! Byte 12's bit 1 is TRUE! (which is 1)
+                -`t12 3 Hey! Byte 12's bit 3 is FALSE! (which is 0)
+
+                The = > and < commands can be stacked as needed.  In the above example, if 
+                `p20 was 600, only options 1, 2, 4, and 5 would be available, and RESPONSE 
+                would be set to the correct option if one of those were selected.  For 
+                example, if `p20 was 600 and the user hit the selection:
+                "Hey, I have more than 500", RESPONSE would be set to 5. */         
+
             _InCHOICEOptions.Clear();
             _InCHOICE = true;
         }
 
         private static void CommandCHOOSEPLAYER(string[] tokens)
         {
+            /* @CHOOSEPLAYER `p20
+                This will prompt user for another players name - its the standard 'full or 
+                partial name' prompt, with a 'you mean this guy?'.  It returns the players # 
+                or 0 if none.  If the player isn't found it will display "No one by that name 
+                lives 'round here" and return 0. */
             LogMissing(tokens);
         }
 
         private static void CommandCLEAR(string[] tokens)
         {
-            // @CLEAR <screen or name or userscreen or text or picture or all>
             switch (tokens[1].ToUpper())
             {
                 case "ALL":
+                    /* @CLEAR ALL
+                        This clears user text, picture, game text, name and redraws screen. */
                     CommandCLEAR("@CLEAR USERSCREEN".Split(' '));
                     CommandCLEAR("@CLEAR PICTURE".Split(' '));
                     CommandCLEAR("@CLEAR TEXT".Split(' '));
@@ -283,10 +370,14 @@ namespace LORD2
                     // TODO And redraws the screen
                     break;
                 case "NAME":
+                    /* @CLEAR NAME
+                        This deletes the name line of the game window. */
                     Door.GotoXY(55, 15);
                     Door.Write(new string(' ', 22));
                     break;
                 case "PICTURE":
+                    /* @CLEAR PICTURE
+                        This clears the picture. */
                     for (int y = 3; y <= 13; y++)
                     {
                         Door.GotoXY(55, y);
@@ -294,9 +385,13 @@ namespace LORD2
                     }
                     break;
                 case "SCREEN":
+                    /* @CLEAR SCREEN
+                        This command clears the entire screen. */
                     Door.ClrScr();
                     break;
                 case "TEXT":
+                    /* @CLEAR TEXT
+                        This clears game text. */
                     for (int y = 3; y <= 13; y++)
                     {
                         Door.GotoXY(32, y);
@@ -304,6 +399,8 @@ namespace LORD2
                     }
                     break;
                 case "USERSCREEN":
+                    /* @CLEAR USERSCREEN
+                        This clears user text. */
                     for (int y = 16; y <= 23; y++)
                     {
                         Door.GotoXY(1, y);
@@ -319,48 +416,90 @@ namespace LORD2
 
         private static void CommandCLEARBLOCK(string[] tokens)
         {
+            /* @CLEARBLOCK <x> <y>
+                This clears lines quick.  <x> is the first line you want to clear. <y> is the 
+                last line you want to clear.  Example:  @clear block 20 24   This would clear 
+                4 lines starting at line 20. */
             LogMissing(tokens);
         }
 
         private static void CommandCLOSESCRIPT(string[] tokens)
         {
+            /* @CLOSESCRIPT 
+                This closes the script and returns command to the L2 movement system. */
             // TODO How do we end the script now?  New variable?
         }
 
         private static void CommandCONVERT_FILE_TO_ANSI(string[] tokens)
         {
+            /* @CONVERT_FILE_TO_ANSI <input file> <output file>
+                Converts a text file of Sethansi (whatever) to regular ansi.  This is good for 
+                a final score output. */
             LogMissing(tokens);
         }
 
         private static void CommandCONVERT_FILE_TO_ASCII(string[] tokens)
         {
+            /* @CONVERT_FILE_TO_ASCII <input file> <output file>
+                Converts a text file of Sethansi (whatever) to regular ascii, ie, no colors at 
+                all. */
+            LogMissing(tokens);
+        }
+
+        private static void CommandCOPYFILE(string[] tokens)
+        {
+            /* @COPYFILE <input filename> <output filename>
+                This command copies a <input filename to <output filename>.           */
             LogMissing(tokens);
         }
 
         private static void CommandDATALOAD(string[] tokens)
         {
+            /* @DATALOAD <filename> <record (1 to 200)> <`p variable to put it in> : This loads
+                a long integer by # from a datafile.  If the file doesn't exist, it is created
+                and all 200 long integers are set to 0.
+                NOTE: You should specify an extension (usually .IDF) */
             LogMissing(tokens);
         }
 
         private static void CommandDATANEWDAY(string[] tokens)
         {
+            /* @DATANEWDAY <filename> :  If it is the NEXT day since this function was
+                called, all records in <filename> will be set to 0.  Check EXAMPLE.REF in the 
+                LORD II archive for an example of how this works.
+                NOTE: You should specify an extension (usually .IDF) */
             LogMissing(tokens);
         }
 
         private static void CommandDATASAVE(string[] tokens)
         {
+            /* @DATASAVE <filename> <record (1 to 200)> <value to make it> : This SAVES
+                a long integer by # to a datafile.  If the file doesn't exist, it is created
+                and all 200 long integers (except the one referenced) are set to 0.  The 
+                record that is referenced will be set to the value of the 3rd parameter.
+                NOTE: You should specify an extension (usually .IDF) */
             LogMissing(tokens);
+        }
+
+        private static void CommandDECLARE(string[] obj)
+        {
+            /* @DECLARE <Label/header name> <offset in decimal format> */
+            // Ignore, these commands were inserted by REFINDEX, but not used here
         }
 
         private static void CommandDISPLAY(string[] tokens)
         {
+            /* @DISPLAY <this> IN <this file> <options>
+                This is used to display a certain part of a file.  This is compatible with the 
+                LORDTXT.DAT format. */
             Door.Write(TranslateVariables(string.Join("\r\n", _RefFiles[Path.GetFileNameWithoutExtension(tokens[3])].Sections[tokens[1]].Script.ToArray())));
         }
 
         private static void CommandDISPLAYFILE(string[] tokens)
         {
-            // TODO As with WRITEFILE, don't allow for ..\..\blah
-            // TODO Handle NOPAUSE and NOSKIP parameters
+            /* TODO @DISPLAYFILE <filename> <options> 
+                This display an entire file.  Possible options are:  NOPAUSE and NOSKIP.  Put a
+                space between options if you use both. */
             Door.Write(FileUtils.FileReadAllText(StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[1])), RMEncoding.Ansi));
         }
 
@@ -382,14 +521,13 @@ namespace LORD2
 
         private static void CommandDO_ADD(string[] tokens)
         {
+            /* @DO <Number To Change> <How To Change It> <Change With What> */
             if (tokens[2] == "+")
             {
-                // @DO <number to change> + <change with what>
                 AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) + Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
             }
             else if (tokens[2].ToUpper() == "ADD")
             {
-                // DO <string var> ADD <string var or text>
                 AssignVariable(tokens[1], TranslateVariables(tokens[1] + string.Join(" ", tokens, 3, tokens.Length - 3)));
             }
             else
@@ -400,47 +538,67 @@ namespace LORD2
 
         private static void CommandDO_ADDLOG(string[] tokens)
         {
-            // @DO ADDLOG the line under this will be added to LOGNOW.TXT
+            /* @DO addlog
+                The line UNDER this command is added to the 'lognow.txt' file. */
             LogMissing(tokens);
         }
 
         private static void CommandDO_BEEP(string[] tokens)
         {
-            // @DO BEEP beep locally
+            /* @DO BEEP
+                Makes a weird beep noise, locally only */
             LogMissing(tokens);
         }
 
         private static void CommandDO_COPYTONAME(string[] tokens)
         {
-            // @DO COPYTONAME store `S10 in `N
+            /* @DO COPYTONAME  
+                This will put whatever is in `S10 into `N.  (name)  This is a good way to 
+                allow a player to change his name or to get the name a new player wants to go 
+                by.  It is also useful in the @#newplayer routine to get the alias the player 
+                wants to go by in the game. */
             _GlobalOther["`N"] = TranslateVariables("`S10");
         }
 
         private static void CommandDO_DELETE(string[] tokens)
         {
-            // @DO DELETE <filename> delete the given file
+            /* @DO DELETE <file name>
+                This command deletes the file specified by <file name>.  The file name must be 
+                a valid DOS file name.  There can be no spaces. */
             LogMissing(tokens);
         }
 
         private static void CommandDO_DIVIDE(string[] tokens)
         {
-            // @DO <number to change> / <change with what>
-            // TODO How to round?
-            AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) / Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+            /* @DO <Number To Change> <How To Change It> <Change With What> */
+            AssignVariable(tokens[1], Math.Truncate(Convert.ToDouble(TranslateVariables(tokens[1])) / Convert.ToDouble(TranslateVariables(tokens[3]))).ToString());
         }
 
         private static void CommandDO_FRONTPAD(string[] tokens)
         {
-            // @DO FRONTPAD <string variable> <length>
+            /* @DO FRONTPAD <string variable> <length>
+                This adds spaces to the front of the string until the string is as long as 
+                <length>. */
             LogMissing(tokens);
         }
 
         private static void CommandDO_GETKEY(string[] tokens)
         {
-            // @DO GETKEY <String variable to put it in> IF A KEY IS NOT CURRENTLY BEING PRESSED, STORE _ AS RESULT
+            /* @DO GETKEY <String variable to put it in>
+                This command is useful, *IF* a key IS CURRENTLY being pressed, it puts that 
+                key into the string variable.  Otherwise, it puts a '_' in to signal no key was 
+                pressed.  This is a good way to stop a loop. */
             if (Door.KeyPressed())
             {
-                AssignVariable(tokens[2], Door.ReadKey().ToString());
+                char? Ch = Door.ReadKey();
+                if (Ch == null)
+                {
+                    AssignVariable(tokens[2], "_");
+                }
+                else
+                {
+                    AssignVariable(tokens[2], Ch.ToString());
+                }
             }
             else
             {
@@ -450,7 +608,8 @@ namespace LORD2
 
         private static void CommandDO_GOTO(string[] tokens)
         {
-            // @DO GOTO <header or label>
+            /* @DO GOTO <header or label>
+                Passes control of the script to the header or label specified. */
             if (_CurrentFile.Sections.ContainsKey(tokens[2]))
             {
                 // HEADER goto
@@ -478,17 +637,24 @@ namespace LORD2
 
         private static void CommandDO_IS(string[] tokens)
         {
-            // @DO <Number To Change> IS <Change With What>
-            // TODO @DO `s01 is getname 8
-            // TODO @DO `p20 is deleted 8
-            // TODO @DO <number variable> IS LENGTH <String variable>
-            // TODO @DO <number variable> IS REALLENGTH <String variable>
+            /* @DO <Number To Change> <How To Change It> <Change With What> */
+            /* TODO @DO `s01 is getname 8
+                This would get the name of player 8 and put it in `s01.  This only works with 
+                `s variables.  The account number can be a `p variable. */
+            /* TODO @DO `p20 is deleted 8
+                Puts 1 (player is deleted) or 0 (player is not deleted) in `p20.  This only 
+                works with `p variables.  The account number can be a `p variable. */
+            /* TODO @DO <number variable> IS LENGTH <String variable>
+                Gets length, smart way. */
+            /* TODO @DO <number variable> IS REALLENGTH <String variable>
+                Gets length dumb way. (includes '`' codes without deciphering them.) */
             AssignVariable(tokens[1], string.Join(" ", tokens, 3, tokens.Length - 3));
         }
 
         private static void CommandDO_MOVE(string[] tokens)
         {
-            // @DO MOVE <x> <y> a 0 means current position
+            /* @DO MOVE <X> <Y> : This moves the curser.  (like GOTOXY in TP) Enter 0 for
+                a number will default to 'current location'. */
             int X = Convert.ToInt32(TranslateVariables(tokens[2]));
             int Y = Convert.ToInt32(TranslateVariables(tokens[3]));
             if ((X > 0) && (Y > 0))
@@ -507,19 +673,24 @@ namespace LORD2
 
         private static void CommandDO_MOVEBACK(string[] tokens)
         {
-            // @DO MOVEBACK put player back to previous position
+            /* @DO moveback
+                This moves the player back to where he moved from.  This is good for when a 
+                player pushes against a treasure chest or such, and you don't want them to 
+                appear inside of it when they are done. */
             LogMissing(tokens);
         }
 
         private static void CommandDO_MULTIPLY(string[] tokens)
         {
-            // @DO <number to change> * <change with what>
+            /* @DO <Number To Change> <How To Change It> <Change With What> */
             AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) * Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
         }
 
         private static void CommandDO_NUMRETURN(string[] tokens)
         {
-            // @DO NUMRETURN <int var> <string var>
+            /* @DO NUMRETURN <int var> <string var>
+                Undocumented.  Seems to return the number of integers in the given string
+                Example "123test456" returns 6 because there are 6 numbers */
             string Translated = TranslateVariables(tokens[3]);
             string TranslatedWithoutNumbers = Regex.Replace(Translated, "[0-9]", "", RegexOptions.IgnoreCase);
             AssignVariable(tokens[2], (Translated.Length - TranslatedWithoutNumbers.Length).ToString());
@@ -527,19 +698,25 @@ namespace LORD2
 
         private static void CommandDO_PAD(string[] tokens)
         {
-            // @DO PAD <string variable> <length>
+            /* @DO PAD <string variable> <length>
+                This adds spaces to the end of the string until string is as long as <length>. */
             LogMissing(tokens);
         }
 
         private static void CommandDO_QUEBAR(string[] tokens)
         {
-            // @DO QUEBAR adds next line to saybar queue
+            /* @DO quebar
+                <message>
+                This adds a message to the saybar que.  This will ensure that the message is 
+                displayed at it's proper time instead of immediately. */
             LogMissing(tokens);
         }
 
         private static void CommandDO_RANDOM(string[] tokens)
         {
-            // @DO <Varible to put # in> RANDOM <Highest number> <number to add to it>
+            /* @DO <Varible to put # in> RANDOM <Highest number> <number to add to it>
+                RANDOM 5 1 will pick a number between 0 (inclusive) and 5 (exclusive) and add 1 to it, resulting in 1-5
+                RANDOM 100 200 will pick a number between 0 (inclusive) and 100 (exclusive) and add 200 to it, resulting in 200-299 */
             int Min = Convert.ToInt32(tokens[4]);
             int Max = Min + Convert.ToInt32(tokens[3]);
             AssignVariable(tokens[1], _R.Next(Min, Max).ToString());
@@ -547,14 +724,27 @@ namespace LORD2
 
         private static void CommandDO_READCHAR(string[] tokens)
         {
-            // @DO READCHAR <string variable to put it in> 
-            // TODO Door.ReadKey is nullable
-            AssignVariable(tokens[2], Door.ReadKey().ToString());
+            /* @DO READCHAR <string variable to put it in> 
+                Waits for a key to be pressed.  This uses DV and Windows time slicing while 
+                waiting.  `S10 doesn't seem to work with this command.  All the other `S 
+                variables do though. */
+            char? Ch = Door.ReadKey();
+            if (Ch == null)
+            {
+                AssignVariable(tokens[2], "\0");
+            }
+            else
+            {
+                AssignVariable(tokens[2], Ch.ToString());
+            }
         }
 
         private static void CommandDO_READNUM(string[] tokens)
         {
-            // @DO READNUM <MAX LENGTH> <DEFAULT> (stores in `v40)
+            /* @DO READNUM <MAX LENGTH> <DEFAULT> (Optional: <FOREGROUND COLOR> <BACKGROUND COLOR>
+                The number is put into `V40.
+                The READNUM procedure is a very nice string editer to get a number in. It
+                supports arrow keys and such. */
             string Default = "";
             if (tokens.Length >= 4) Default = TranslateVariables(tokens[3]);
 
@@ -567,13 +757,29 @@ namespace LORD2
 
         private static void CommandDO_READSPECIAL(string[] tokens)
         {
-            // @DO READSPECIAL (String variable to put it in> <legal chars, 1st is default> prompt until one of legal chars is hit.  if enter is hit, it's same as hitting first char
+            /* @DO READSPECIAL (String variable to put it in> <legal chars, 1st is default>
+                Example:
+                @do write
+                Would you like to kill the monster? Y/N :
+                @DO READSPECIAL `s01 YN
+                if `s01 is Y then do
+                 @begin
+                 @show
+                You killed him!
+                 @end
+                The above would ONLY allow the person to hit Y or N - if he hit ENTER, it
+                would be the same as hitting Y, because that was listed first.   */
             LogMissing(tokens);
         }
 
         private static void CommandDO_READSTRING(string[] tokens)
         {
-            // @DO READSTRING <MAX LENGTH> <DEFAULT> <variable TO PUT IT IN> (variable may be left off, in which case store in `S10)
+            /* @DO READSTRING <MAX LENGTH> <DEFAULT> <variable TO PUT IT IN>
+                Get a string.  Uses same string editer as READNUM.
+                Note:  You can only use the `S01 through `S10 vars for READSTRING.  You can 
+                also use these vars for the default.  (or `N)  Use NIL if you want the default 
+                to be nothing.  (if no variable to put it in is specified, it will be put into `S10 
+                for compatibilty with old .REF's) */
             string ReadString = Door.Input(Regex.Replace(TranslateVariables(tokens[3]), "NIL", "", RegexOptions.IgnoreCase), CharacterMask.All, '\0', Convert.ToInt32(TranslateVariables(tokens[2])), Convert.ToInt32(TranslateVariables(tokens[2])), 31);
             if (tokens.Length >= 5)
             {
@@ -587,7 +793,8 @@ namespace LORD2
 
         private static void CommandDO_REPLACE(string[] tokens)
         {
-            // @DO REPLACE <find> <replace> <in> replace first instance of FIND with REPLACE in IN
+            /* @REPLACE <X> <Y> <in `S10>
+                Replaces X with Y in an `s variable. */
             // The following regex matches only the first instance of the word foo: (?<!foo.*)foo (from http://stackoverflow.com/a/148561/342378)
             // TODO Test that it does what it should
             AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), "(?<!" + Regex.Escape(TranslateVariables(tokens[2])) + ".*)" + Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
@@ -595,42 +802,62 @@ namespace LORD2
 
         private static void CommandDO_REPLACEALL(string[] tokens)
         {
-            // @DO REPLACEALL <find> <replace> <in> replace all instances of FIND with REPLACE in IN
+            /* @REPLACEALL <X> <Y> <in `S10>:
+                Same as above but replaces all instances. */
             AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
         }
 
         private static void CommandDO_SAYBAR(string[] tokens)
         {
-            // @DO SAYBAR same as DO QUEBAR, but displays immediately
+            /* @DO saybar
+                <message>
+                This is like @do quebar except it displays the message instantly without
+                taking into consideration that a message might have just been displayed.  This 
+                will overwrite any current message on the saybar unconditionally. */
             LogMissing(tokens);
         }
 
         private static void CommandDO_STRIP(string[] tokens)
         {
-            // @DO STRIP <string variable> (really trim)
+            /* @DO STRIP <string variable>
+                This strips beginning and end spaces of a string. */
             AssignVariable(tokens[2], TranslateVariables(tokens[2]).Trim());
         }
 
         private static void CommandDO_STRIPALL(string[] tokens)
         {
-            // @DO STRIPALL (strips out all ` codes, useful for passwords apparently)
+            /* @DO STRIPALL
+                This command strips out all ` codes.  This is good for passwords, etc. */
+            LogMissing(tokens);
         }
 
         private static void CommandDO_STRIPBAD(string[] tokens)
         {
-            // @DO STRIPBAD <string variable> (strip illegal ` and replaces via badwords.dat)
+            /* @DO STRIPBAD
+                This strips out illegal ` codes, and replaces badwords with the standard 
+                badword.dat file. */
+            LogMissing(tokens);
+        }
+
+        private static void CommandDO_STRIPCODE(string[] tokens)
+        {
+            /* @STRIPCODE <any `s variable>
+                This will remove ALL ` codes from a string. */
             LogMissing(tokens);
         }
 
         private static void CommandDO_SUBTRACT(string[] tokens)
         {
-            // @DO <number to change> - <change with what>
+            /* @DO <Number To Change> <How To Change It> <Change With What> */
             AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) - Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
         }
 
         private static void CommandDO_TRIM(string[] tokens)
         {
-            // @DO TRIM <file name> <number to trim to> (remove lines from file until less than number in length)
+            /* @DO TRIM <file name> <number to trim to>
+                This nifty command makes text file larger than <number to trim to> get 
+                smaller.  (It deletes lines from the top until the file is correct # of lines, 
+                if smaller than <number to trim to>, it doesn't change the file) */
             string FileName = StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[2]));
             int MaxLines = Convert.ToInt32(TranslateVariables(tokens[3]));
             List<string> Lines = new List<string>();
@@ -644,23 +871,36 @@ namespace LORD2
 
         private static void CommandDO_UPCASE(string[] tokens)
         {
-            // @DO UPCASE <string variable>
+            /* @DO UPCASE <string variable>
+                This makes a string all capitals. */
             AssignVariable(tokens[2], TranslateVariables(tokens[2]).ToUpper());
         }
 
         private static void CommandDO_WRITE(string[] tokens)
         {
-            // @DO WRITE next one line is written to the screen, no line wrap
+            /* @DO WRITE
+                <Stuff to write>
+                Same thing as regular @SHOW, but does only one line, without a line feed.  
+                Used with @DO MOVE this is good for putting prompts, right in front of READNUM 
+                and READSTRING's.
+                NOTE:  You can use variables mixed with text, ansi and color codes in the 
+                <stuff to write> part.  Works this way with most stuff. */
             _InDOWrite = true;
         }
 
         private static void CommandDRAWMAP(string[] tokens)
         {
+            /* @DRAWMAP
+                This draws the current map the user is on.  This command does NOT update the 
+                screen.  See the @update command below concerning updating the scren. */
             LogMissing(tokens);
         }
 
         private static void CommandDRAWPART(string[] tokens)
         {
+            /* @DRAWPART <x> <y>
+                This command will draw one block of the current map as defined by <x> and <y> 
+                with whatever is supposed to be there, including any people. */
             LogMissing(tokens);
         }
 
@@ -671,26 +911,121 @@ namespace LORD2
 
         private static void CommandFIGHT(string[] tokens)
         {
+            /* @FIGHT  : Causes the L2 engine to go into fight mode.
+                <Monster name>
+                <String said when you see him>
+                <Power Move Kill String>
+                <Weapon 1|strength>
+                <Weapon 2|strength or NONE|NONE>
+                <Weapon 3|strength or NONE|NONE>
+                <Weapon 4|strength or NONE|NONE>      
+                <Weapon 5|strength or NONE|NONE>
+                <Defense>
+                <Experience Points rewarded for victory>
+                <Gold rewarded for victory>
+                <Hitpoints the monster has>
+                <REFFILENAME|REFNAME or NONE|NONE> player victory
+                <REFFILENAME|REFNAME or NONE|NONE> player defeat
+                <REFFILENAME|REFNAME or NONE|NONE> player runs
+
+                As with any of the other commands you may have comment lines and inline 
+                comments within this command.
+                It is also important to note here that while this can be in a standard routine 
+                it will not execute until after the script has completed execution and the 
+                player returned to the map screen.  This is usually used for the random fights 
+                as players walk around.  Below is an example of how it is used in this way.  
+                In the map attributes (edited by pressing z while editing a screen in the 
+                world editor of L2CFG) you specify a fight file name and a fight ref name.  
+                The ref name is the routine the L2 engine calls.  Let's say your ref name is 
+                fight.  The file name can be anything you choose so long as the following 
+                routine is in that file.  The following routine shows how random fighting is 
+                accomplished:
+
+                @#fight
+                @do `p20 random 6 1
+                @do goto monster`p20
+                @#monster1
+                @fight
+                ;name
+                Tiny Scorpion
+                ;string said when you see him
+                Something crawls up your leg...
+                ;power move kill string
+                You laugh as the tiny thing burns in the sand.
+                ;sex - 1 is male, 2 is female, 3 is it
+                3
+                ;weapon and strength for the weapon, up to 5
+                stings you|44
+                pinches you|25
+                NONE|NONE
+                NONE|NONE
+                NONE|NONE
+                ;defense
+                15
+                ;gold reward
+                89
+                ;experience
+                54
+                ;hit points
+                64
+                ;if win: ref file|name or NONE
+                NONE|NONE
+                ;if lose: ref file|name or NONE
+                GAMETXT.REF|DIE
+                ;if runs: ref file|name or NONE
+                NONE|NONE
+                @#monster2
+                @fight
+                (parameters for fight command until you have as many monster commands as the 
+                highest random number
+
+                You might also have a hotspot defined that calls a routine that will be a 
+                fight.  Make sure you DON'T clear the screen.  It won't hurt anything if you 
+                do, but it won't look very good. */
+            LogMissing(tokens);
+        }
+
+        private static void CommandGRAPHICS(string[] tokens)
+        {
+            /* @GRAPHICS IS <Num> 
+                3 or more enable remote ANSI.  If you never wanted to send ANSI, you could set 
+                this to 1. You will probably never touch this one. */
             LogMissing(tokens);
         }
 
         private static void CommandHALT(string[] tokens)
         {
+            /* @HALT <error level>
+                This command closes the door and returns the specified error level. */
             LogMissing(tokens);
         }
 
         private static void CommandIF(string[] tokens)
         {
+            /* @IF <Varible> <Math> <Thing the varible must be, or more or less then, or
+                another varible>  (Possible math functions: EQUALS, MORE, LESS, NOT) */
+            /* TODO You can also use @if checkdupe `S10 is TRUE(or FALSE) then do
+                                 @begin
+                                   code to execute
+                                 @end
+                This will check all the accounts for a name as specified in `S10.  If a match 
+                is found, then checkdupe will be true.  Othewise checkdupe will be false.  `S10
+                is used for example only.  `S10 can be substituted for any of the `S variables. */
             bool Result = false;
             string Left = TranslateVariables(tokens[1]);
             string Right = TranslateVariables(tokens[3]);
             int LeftInt = 0;
             int RightInt = 0;
 
+            /* TODO @IF bitcheck `t12 1 1 then do
+                  @BEGIN
+                  @SHOW
+                  Yeah!  Bit 1 of t12 is TRUE!!! Yay.
+                  @END */
             switch (tokens[2].ToUpper())
             {
-                case "EQUALS": // @IF <Varible> EQUALS <Thing the varible must be, or more or less then, or another varible>
-                case "IS": // @IF <Varible> IS <Thing the varible must be, or more or less then, or another varible>
+                case "EQUALS": 
+                case "IS": 
                     if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
                     {
                         Result = (LeftInt == RightInt);
@@ -700,15 +1035,19 @@ namespace LORD2
                         Result = (Left == Right);
                     }
                     break;
-                case "EXIST": // @IF <filename> EXIST <true or false>
+                case "EXIST": 
+                    /* Undocumented.  Checks if given file exists */
                     string FileName = StringUtils.PathCombine(ProcessUtils.StartupPath, Left);
                     bool TrueFalse = Convert.ToBoolean(Right.ToUpper());
                     Result = (File.Exists(FileName) == TrueFalse);
                     break;
-                case "INSIDE": // @IF <Word or variable> INSIDE <Word or variable>
+                case "INSIDE":
+                    /* @IF <Word or variable> INSIDE <Word or variable>
+                        This allows you to search a string for something inside of it.  Not case 
+                        sensitive. */
                     Result = Right.ToUpper().Contains(Left.ToUpper());
                     break;
-                case "LESS": // @IF <Varible> LESS <Thing the varible must be, or more or less then, or another varible>
+                case "LESS": 
                     if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
                     {
                         Result = (LeftInt < RightInt);
@@ -718,7 +1057,7 @@ namespace LORD2
                         throw new ArgumentException("@IF LESS arguments were not numeric");
                     }
                     break;
-                case "MORE": // @IF <Varible> MORE <Thing the varible must be, or more or less then, or another varible>
+                case "MORE": 
                     if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
                     {
                         Result = (LeftInt > RightInt);
@@ -728,7 +1067,7 @@ namespace LORD2
                         throw new ArgumentException("@IF MORE arguments were not numeric");
                     }
                     break;
-                case "NOT": // @IF <Varible> NOT <Thing the varible must be, or more or less then, or another varible>
+                case "NOT": 
                     if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
                     {
                         Result = (LeftInt != RightInt);
@@ -763,11 +1102,24 @@ namespace LORD2
 
         private static void CommandITEMEXIT(string[] tokens)
         {
+            /* @ITEMEXIT
+                This tells the item editor to automatically return the player to the map 
+                screen after the item is used.  It is up to you to use the @drawmap and 
+                @update commands as usual though. */
             LogMissing(tokens);
         }
 
         private static void CommandKEY(string[] tokens)
         {
+            /* @KEY 
+                Does a [MORE] prompt, centered on current line. */
+            /* @KEY BOTTOM
+                This does <MORE> prompt at user text window. */
+            /* @KEY NODISPLAY
+                Waits for keypress without saying anything. */
+            /* @KEY TOP
+                This does <MORE> prompt at game text window. */
+
             // TODO Handle positioning
             // TODO Also, does it erase after a keypress?
             // @KEY = "  `1[`!MORE`1]`7" from current cursor position
@@ -780,21 +1132,72 @@ namespace LORD2
 
         private static void CommandLABEL(string[] tokens)
         {
-            // Ignore
+            /* @LABEL <label name>
+                Mark a spot where @DO GOTO <label name> can be used */
+            // Ignore, nothing to do here
         }
 
         private static void CommandLOADCURSOR(string[] tokens)
         {
+            /* @LOADCURSOR
+                This command restores the cursor to the position before the last @SAVECURSOR 
+                was issued.  This is good for creative graphics and text positioning with a 
+                minimum of calculations.  See @SAVECURSOR below. */
+            LogMissing(tokens);
+        }
+
+        private static void CommandLOADGLOBALS(string[] tokens)
+        {
+            /* @LOADGLOBALS
+                This command loads the last value of all global variables as existed when the 
+                last @SAVEGLOBALS command was issued.  See @SAVEGLOBALS below. */
             LogMissing(tokens);
         }
 
         private static void CommandLOADMAP(string[] tokens)
         {
+            /* @LOADMAP <map #>
+                This is a very handy command.  It lets you change someones map location in a 
+                ref file.  This is the 'block #' not the physical map location, so it could be 
+                1 to 1600.  Be sure it exists in l2cfg.exe.  If the map block does not exist, 
+                The L2 engine will display a runtime error and close the door.   Be SURE to 
+                change the map variable too!!  Using this and changing the X and Y coordinates 
+                effectivly lets you do a 'warp' from a .ref file. */
+            LogMissing(tokens);
+        }
+
+        private static void CommandLOADWORLD(string[] tokens)
+        {
+            /* @LOADWORLD
+                This command loads globals and world data.  It has never been used but is 
+                included just in case it becomes necessary to do this.  See @SAVEWORLD below. */
             LogMissing(tokens);
         }
 
         private static void CommandLORDRANK(string[] tokens)
         {
+            /* @LORDRANK <filename> <`p variable to rank by>
+                This command produces a file as specified by <filename>.  It uses the `p 
+                variable specified for the order of the ranking.  This parameter must be a 
+                number without the `p.  The file that is created contains no headers and is 
+                not deleted before writing.  If a file of the same name already exists, the 
+                procedure will append the file.  The following table is the column numbers
+                where @LORDRANK places the ranking information.
+                  COLUMN     STAT
+                  1          Sex if female
+                  3          Name
+                  37         Stat to rank by (right justified) (Usually Experience)
+                  42         Level 
+                  48         Status 
+                  60         Alignment
+                  65         Quests completed */
+            LogMissing(tokens);
+        }
+
+        private static void CommandMOREMAP(string[] tokens)
+        {
+            /* @MOREMAP
+                The line UNDER this will be the new <more> prompt.  30 characters maximum. */
             LogMissing(tokens);
         }
 
@@ -803,62 +1206,156 @@ namespace LORD2
             // TODO Name.Length is going to include the ANSI sequences, so not be the correct length
             string Name = TranslateVariables(string.Join(" ", tokens, 1, tokens.Length - 1));
             if (Name.Length > 22) Name = Name.Substring(0, 22);
-            Door.GotoXY(55 + ((22 - Name.Length) / 2), 15);
+            Door.GotoXY(55 + Convert.ToInt32(Math.Truncate((22 - Name.Length) / 2.0)), 15);
             Door.Write(Name);
+        }
+
+        private static void CommandNOCHECK(string[] obj)
+        {
+            /* @NOCHECK
+                Tell the original RTReader to stop scanning for sections/labels
+                Not implemented here, we always scan all files in their entirety */
+            // Ignore
         }
 
         private static void CommandOFFMAP(string[] tokens)
         {
+            /* @OFFMAP
+                This takes the player's symbol off the map.  This makes the player appear to 
+                disappear to other players currently playing.  This is usful to make it look
+                like they actually went into the hut, building, ect. */
             LogMissing(tokens);
         }
 
         private static void CommandOVERHEADMAP(string[] tokens)
         {
+            /* @OVERHEADMAP
+                This command displays the visible portion of the map as defined in the world 
+                editor of L2CFG.  All maps marked as no show and all unused maps will be 
+                blue signifying ocean.  No marks or legend will be written on the map.  This 
+                is your responsibility.  If you wish to mark the map you must do this in 
+                help.ref under the @#M routine.  Be sure to include a legend so people have 
+                some reference concerning what the marks mean. */
             LogMissing(tokens);
         }
 
         private static void CommandPAUSEOFF(string[] tokens)
         {
+            /* @PAUSEOFF
+                This turns the 24 line pause off so you can show long ansis etc and it won't 
+                pause every 24 lines. */
             LogMissing(tokens);
         }
 
         private static void CommandPAUSEON(string[] tokens)
         {
+            /* @PAUSEON
+                Just the opposite of the above command.  This turns the pause back on. */
+            LogMissing(tokens);
+        }
+
+        private static void CommandPROGNAME(string[] tokens)
+        {
+            /* @PROGNAME
+                The line UNDER this will be the status bar name of the game. */
+            LogMissing(tokens);
+        }
+
+        private static void CommandRANK(string[] tokens)
+        {
+            /* @RANK <filename> <`p variable to rank by> <procedure to format the ranking>
+                This command is the same as above with the exception it uses a procedure to 
+                format the ranking.  This procedure needs to be in the same file as the @RANK 
+                command.  It is preferable to use the @LORDRANK command rather than this one,
+                if feasible.  This one works, but @LORDRANK uses a preset formatting
+                procedure and is therefore quicker.  There may be occasion, however, if you
+                write your own world to use this command rather than @LORDRANK. */
             LogMissing(tokens);
         }
 
         private static void CommandREADFILE(string[] tokens)
         {
+            /* @READFILE <file name>
+                <variable to read into>
+                <variable to read into>
+                <Ect until next @ at beginning of string is hit>
+                This works just like @WRITEFILE.  You can use String and Number variables, 
+                just be warned if a number variable attempts to read a string, you will always 
+                get 0.
+                NOTE:  @READFILE is a smart procedure - It will not run-time error or 
+                anything, even if you try to read past the end of the file. It simply won't 
+                change the variables if the file isn't long enough. */
             LogMissing(tokens);
         }
 
         private static void CommandROUTINE(string[] tokens)
         {
+            /* @ROUTINE <Header or label name> IN <Filename of .REF file>
+                The @ROUTINE command is useful - You can use it jump to a completely new .REF 
+                file - when it's finished there, instead of closing the script, it will load 
+                back up the original .REF file and continue where it left off.  One note.  I 
+                have found that @ROUTINE cannot be nested.  That is if you use an @ROUTINE 
+                command inside of a routine called by @ROUTINE, the reader cannot return to 
+                the first procedure that ran @ROUTINE. */
             LogMissing(tokens);
         }
 
         private static void CommandRUN(string[] tokens)
         {
+            /* @RUN <Header or label name> IN <Filename of .REF file>
+                Same thing as ROUTINE, but doesn't come back to the original .REF. */
             LogMissing(tokens);
         }
 
         private static void CommandSAVECURSOR(string[] tokens)
         {
+            /* @SAVECURSOR
+                This command saves the current cursor positioning for later retrieval. */
             LogMissing(tokens);
         }
 
         private static void CommandSAVEGLOBALS(string[] tokens)
         {
+            /* @SAVEGLOBALS
+                This command saves the current global variables for later retrieval */
+            LogMissing(tokens);
+        }
+
+        private static void CommandSAVEWORLD(string[] tokens)
+        {
+            /* @SAVEWORLD
+                This command saves stats and world data.  The only use yet is right after 
+                @#maint is called to save random stats set for that day and such. */
             LogMissing(tokens);
         }
 
         private static void CommandSAY(string[] tokens)
         {
+            /* @SAY
+                All text UNDER this will be put in the 'talk window' until a @ is hit. */
             _InSAY = true;
         }
 
         private static void CommandSELLMANAGER(string[] tokens)
         {
+            /* @SELLMANAGER
+                This command presents a menu of the player's current inventory.  The player 
+                can then sell his items at 1/2 the price in items.dat.  Any item that has the 
+                "Can be sold" field in the items.dat file set to 'no' will be greyed and if 
+                the player chooses that item a box will appear saying "They don't seem 
+                interested in that".  It is highly recommended that there be a routine such as
+                @clear screen
+                @do write
+                `cSo what do you want to sell?
+                @SELLMANAGER
+                OR
+                @clear screen
+                @show
+                `cSo what do you want to sell
+                @SELLMANAGER
+                The `c is included so that there will be two carriage returns issued.  This is 
+                important for cosmetic purposes only.  I have found that if the @sellmanager
+                is issued at the top of the screen, the boxes don't dissapear as they should. */
             LogMissing(tokens);
         }
 
@@ -866,11 +1363,16 @@ namespace LORD2
         {
             if ((tokens.Length > 1) && (tokens[1].ToUpper() == "SCROLL"))
             {
+                /* @SHOW SCROLL          
+                    Same thing, but puts all the text in a nifty scroll window. (scroll window has 
+                    commands line Next Screen, Previous Screen, Start, and End. */
                 _InSHOWSCROLLLines.Clear();
                 _InSHOWSCROLL = true;
             }
             else
             {
+                /* @SHOW           
+                    Shows following text/ansi.  Stops when a @ is hit on beginning of line. */
                 _InSHOW = true;
             }
         }
@@ -880,13 +1382,34 @@ namespace LORD2
             _InSHOWLOCAL = true;
         }
 
+        private static void CommandSTATBAR(string[] tokens)
+        {
+            /* @STATBAR
+                This draws the statbar. */
+            LogMissing(tokens);
+        }
+
         private static void CommandUPDATE(string[] tokens)
         {
+            /* @UPDATE
+                Draws all the people on the screen. */
+            LogMissing(tokens);
+        }
+
+        private static void CommandUPDATE_UPDATE(string[] tokens)
+        {
+            /* @UPDATE_UPDATE
+                This command writes current player data to UPDATE.TMP file.  This is useful 
+                when you just can't wait until the script is finished for some reason. */
             LogMissing(tokens);
         }
 
         private static void CommandVERSION(string[] tokens)
         {
+            /* @VERSION  <Version it needs>  
+                For instance, you would put @VERSION 2 for this version of RTREADER.  (002) If 
+                it is run on Version 1, (could happen) a window will pop up warning the person 
+                he had better get the latest version. */
             int RequiredVersion = Convert.ToInt32(tokens[1]);
             if (RequiredVersion > _Version) throw new ArgumentOutOfRangeException("VERSION", "@VERSION requested version " + RequiredVersion + ", we only support version " + _Version);
         }
@@ -898,7 +1421,15 @@ namespace LORD2
 
         private static void CommandWRITEFILE(string[] tokens)
         {
-            // TODO Strip out any invalid filename characters?  (so for example they can't say ..\..\..\..\windows\system32\important_file.ext)
+            /* @WRITEFILE <file name>
+                <Thing to write>
+                <Thing to write>
+                <ect until next @ at beginning of string is hit>
+                <Thing to write> can be a varible, (string or num) or it can be a word you 
+                write - or a combination of the two.
+                Note:  @WRITEFILE appends the lines if the file exists, otherwise it creates 
+                it.  File locking techniques are used. */
+            // TODO Safe file names
             _InWRITEFILE = StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[1]));
         }
 
@@ -918,28 +1449,54 @@ namespace LORD2
 
         private static void EndCHOICE()
         {
-            // @CHOICE next lines until next @ command are choice options in listbox.  RESPONCE and RESPONSE hold result, `V01 defines initial selected index
-            /*The choice command is more useful now; you can now define *IF* type statements 
-            so a certain choice will only be there if a conditional statement is met.
-            For instance:
-            @CHOICE
-            Yes
-            No
-            =`p20 500 Hey, I have 500 exactly!
-            !`p20 500 Hey, I have anything BUT 500 exactly!
-            >`p20 500 Hey, I have MORE than 500!
-            <`p20 100 Hey, I have LESS than 100!
-            >`p20 100 <`p20 500 I have more then 100 and less than 500!
-            Also:  You can check the status of individual bits in a `T player byte.  The 
-            bit is true or false, like this:
-            +`t12 1 Hey! Byte 12's bit 1 is TRUE! (which is 1)
-            -`t12 3 Hey! Byte 12's bit 3 is FALSE! (which is 0)
+            /* NOTE: `V01 is the default option */
+            /* TODO ALSO:  Check the CHOICE command, you can check a bit there too, like this:
+                +`t12 1 Hey, byte 12 bit 1 is TRUE! 
+                -`t12 1 Hey, byte 12 bit 1 is FALSE! */
+            /* @CHOICE
+                <A choice>
+                <another choice>
+                <ect..When a @ is found in the beginning of a choice it quits>
+                This gives the user a choice using a lightbar.
+                The responce is put into varible RESPONCE.  This may also be spelled RESPONSE. 
+                To set which choice the cursor starts on, put that number into `V01.
+                ** EXAMPLE OF @CHOICE COMMAND **
+                @DO `V01 IS 1 ;which choice should be highlighted when they start
+                (now the actual choice command)
+                @CHOICE
+                Yes   <- Defaults to this, since it's 1
+                No
+                I don't know
+                Who cares
+                @IF RESPONCE IS 3 THEN DO
+                  @BEGIN
+                  @DO `P01 IS RESPONCE
+                  @SHOW
 
-            The = > and < commands can be stacked as needed.  In the above example, if 
-            `p20 was 600, only options 1, 2, 4, and 5 would be available, and RESPONSE 
-            would be set to the correct option if one of those were selected.  For 
-            example, if `p20 was 600 and the user hit the selection:
-            "Hey, I have more than 500", RESPONSE would be set to 5.*/
+                You chose `P01!, silly boy!
+
+                  @END
+                The choice command is more useful now; you can now define *IF* type statements 
+                so a certain choice will only be there if a conditional statement is met.
+                For instance:
+                @CHOICE
+                Yes
+                No
+                =`p20 500 Hey, I have 500 exactly!
+                !`p20 500 Hey, I have anything BUT 500 exactly!
+                >`p20 500 Hey, I have MORE than 500!
+                <`p20 100 Hey, I have LESS than 100!
+                >`p20 100 <`p20 500 I have more then 100 and less than 500!
+                Also:  You can check the status of individual bits in a `T player byte.  The 
+                bit is true or false, like this:
+                +`t12 1 Hey! Byte 12's bit 1 is TRUE! (which is 1)
+                -`t12 3 Hey! Byte 12's bit 3 is FALSE! (which is 0)
+
+                The = > and < commands can be stacked as needed.  In the above example, if 
+                `p20 was 600, only options 1, 2, 4, and 5 would be available, and RESPONSE 
+                would be set to the correct option if one of those were selected.  For 
+                example, if `p20 was 600 and the user hit the selection:
+                "Hey, I have more than 500", RESPONSE would be set to 5. */         
 
             // Output options
             Door.GotoXY(1, 16);
@@ -950,15 +1507,22 @@ namespace LORD2
             }
 
             // Get response
-            char Choice = '\0';
-            while (((byte)Choice < FirstKey) || ((byte)Choice > (FirstKey + _InCHOICEOptions.Count - 1)))
+            char? Ch = '\0';
+            while (((byte)Ch < FirstKey) || ((byte)Ch > (FirstKey + _InCHOICEOptions.Count - 1)))
             {
-                // TODO Door.ReadKey() is nullable
-                Choice = Door.ReadKey().ToString().ToUpper()[0];
+                Ch = Door.ReadKey();
+                if (Ch == null)
+                {
+                    Ch = '\0';
+                }
+                else
+                {
+                    Ch = char.ToUpper((char)Ch);
+                }
             }
 
-            _GlobalWords["RESPONCE"] = (Choice - 64).ToString();
-            _GlobalWords["RESPONSE"] = (Choice - 64).ToString();
+            _GlobalWords["RESPONCE"] = (Ch - 64).ToString();
+            _GlobalWords["RESPONSE"] = (Ch - 64).ToString();
         }
 
         private static void EndSHOWSCROLL()
@@ -1005,8 +1569,6 @@ namespace LORD2
                 }
                 else
                 {
-                    // TODO Filter out comment lines, which should make the @IF followed by @BEGIN check more reliable, since @IF will never be followed by a comment if we filter it
-                    // TODO Need to keep track of @DO DISPLAY and @SHOW and @CHOICE and @SAY statements though, so we don't filter out legitimate text!
                     NewSection.Script.Add(Line);
                 }
             }
@@ -1105,7 +1667,6 @@ namespace LORD2
                     }
                     else
                     {
-                        // TODO If we're outputting something, we might need to do something here
                         if (_InCHOICE)
                         {
                             _InCHOICEOptions.Add(Line);

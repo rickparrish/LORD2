@@ -340,7 +340,7 @@ namespace LORD2
                 `p20 was 600, only options 1, 2, 4, and 5 would be available, and RESPONSE 
                 would be set to the correct option if one of those were selected.  For 
                 example, if `p20 was 600 and the user hit the selection:
-                "Hey, I have more than 500", RESPONSE would be set to 5. */         
+                "Hey, I have more than 500", RESPONSE would be set to 5. */
 
             _InCHOICEOptions.Clear();
             _InCHOICE = true;
@@ -492,7 +492,7 @@ namespace LORD2
             /* @DISPLAY <this> IN <this file> <options>
                 This is used to display a certain part of a file.  This is compatible with the 
                 LORDTXT.DAT format. */
-            Door.Write(TranslateVariables(string.Join("\r\n", _RefFiles[Path.GetFileNameWithoutExtension(tokens[3])].Sections[tokens[1]].Script.ToArray())));
+            Door.WriteLn(TranslateVariables(string.Join("\r\n", _RefFiles[Path.GetFileNameWithoutExtension(tokens[3])].Sections[tokens[1]].Script.ToArray())));
         }
 
         private static void CommandDISPLAYFILE(string[] tokens)
@@ -1024,8 +1024,8 @@ namespace LORD2
                   @END */
             switch (tokens[2].ToUpper())
             {
-                case "EQUALS": 
-                case "IS": 
+                case "EQUALS":
+                case "IS":
                     if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
                     {
                         Result = (LeftInt == RightInt);
@@ -1035,7 +1035,7 @@ namespace LORD2
                         Result = (Left == Right);
                     }
                     break;
-                case "EXIST": 
+                case "EXIST":
                     /* Undocumented.  Checks if given file exists */
                     string FileName = StringUtils.PathCombine(ProcessUtils.StartupPath, Left);
                     bool TrueFalse = Convert.ToBoolean(Right.ToUpper());
@@ -1047,7 +1047,7 @@ namespace LORD2
                         sensitive. */
                     Result = Right.ToUpper().Contains(Left.ToUpper());
                     break;
-                case "LESS": 
+                case "LESS":
                     if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
                     {
                         Result = (LeftInt < RightInt);
@@ -1057,7 +1057,7 @@ namespace LORD2
                         throw new ArgumentException("@IF LESS arguments were not numeric");
                     }
                     break;
-                case "MORE": 
+                case "MORE":
                     if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
                     {
                         Result = (LeftInt > RightInt);
@@ -1067,7 +1067,7 @@ namespace LORD2
                         throw new ArgumentException("@IF MORE arguments were not numeric");
                     }
                     break;
-                case "NOT": 
+                case "NOT":
                     if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
                     {
                         Result = (LeftInt != RightInt);
@@ -1111,23 +1111,49 @@ namespace LORD2
 
         private static void CommandKEY(string[] tokens)
         {
-            /* @KEY 
-                Does a [MORE] prompt, centered on current line. */
-            /* @KEY BOTTOM
-                This does <MORE> prompt at user text window. */
-            /* @KEY NODISPLAY
-                Waits for keypress without saying anything. */
-            /* @KEY TOP
-                This does <MORE> prompt at game text window. */
+            // Save text attribute
+            int SavedAttr = Crt.TextAttr;
 
-            // TODO Handle positioning
-            // TODO Also, does it erase after a keypress?
-            // @KEY = "  `1[`!MORE`1]`7" from current cursor position
-            // @KEY BOTTOM = "                                   `!<MORE>`7" on line 24
-            // @KEY TOP =    "                                       `![`1MORE`!]`7" on line 15
-            Door.Write(TranslateVariables("                                   `!<MORE>`7"));
-            // TODO Erase after drawing
-            Door.ReadKey();
+            if (tokens.Length == 1)
+            {
+                /* @KEY 
+                    Does a [MORE] prompt, centered on current line.
+                    NOTE: Actually indents two lines, not centered */
+                Door.Write(TranslateVariables("  `1[`!MORE`1]"));
+                Door.ReadKey();
+                Door.Write("\b\b\b\b\b\b\b\b        \b\b\b\b\b\b\b\b");
+            }
+            else if (tokens[1].ToUpper() == "BOTTOM")
+            {
+                /* @KEY BOTTOM
+                    This does <MORE> prompt at user text window. */
+                Door.GotoXY(35, 24);
+                Door.Write(TranslateVariables("`!<MORE>"));
+                Door.ReadKey();
+                Door.Write("\b\b\b\b\b\b      \b\b\b\b\b\b");
+            }
+            else if (tokens[1].ToUpper() == "NODISPLAY")
+            {
+                /* @KEY NODISPLAY
+                    Waits for keypress without saying anything. */
+                Door.ReadKey();
+            }
+            else if (tokens[1].ToUpper() == "TOP")
+            {
+                /* @KEY TOP
+                    This does <MORE> prompt at game text window. */
+                Door.GotoXY(40, 15);
+                Door.Write(TranslateVariables("`![`1MORE`!]"));
+                Door.ReadKey();
+                Door.Write("\b\b\b\b\b\b      \b\b\b\b\b\b");
+            }
+            else
+            {
+                LogMissing(tokens);
+            }
+
+            // Restore text attribute
+            Door.Write(Ansi.TextAttr(SavedAttr));
         }
 
         private static void CommandLABEL(string[] tokens)
@@ -1496,7 +1522,7 @@ namespace LORD2
                 `p20 was 600, only options 1, 2, 4, and 5 would be available, and RESPONSE 
                 would be set to the correct option if one of those were selected.  For 
                 example, if `p20 was 600 and the user hit the selection:
-                "Hey, I have more than 500", RESPONSE would be set to 5. */         
+                "Hey, I have more than 500", RESPONSE would be set to 5. */
 
             // Output options
             Door.GotoXY(1, 16);

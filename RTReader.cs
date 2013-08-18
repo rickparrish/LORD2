@@ -288,6 +288,8 @@ namespace LORD2
 
         private static void CommandCHECKMAIL(string[] tokens)
         {
+            /* @CHECKMAIL
+                Undocumented.  Will need to determine what this does */
             LogMissing(tokens);
         }
 
@@ -1229,6 +1231,8 @@ namespace LORD2
 
         private static void CommandNAME(string[] tokens)
         {
+            /* @NAME <name to put under picture>
+                Undocumented. Puts a name under the picture window */
             // TODO Name.Length is going to include the ANSI sequences, so not be the correct length
             string Name = TranslateVariables(string.Join(" ", tokens, 1, tokens.Length - 1));
             if (Name.Length > 22) Name = Name.Substring(0, 22);
@@ -1405,6 +1409,8 @@ namespace LORD2
 
         private static void CommandSHOWLOCAL(string[] tokens)
         {
+            /* @SHOWLOCAL
+                Undocumented.  Same as @SHOW, but only outputs to local window */
             _InSHOWLOCAL = true;
         }
 
@@ -1442,6 +1448,8 @@ namespace LORD2
 
         private static void CommandWHOISON(string[] tokens)
         {
+            /* @WHOISON
+                Undocumented.  Will need to find out what this does */
             LogMissing(tokens);
         }
 
@@ -1457,20 +1465,6 @@ namespace LORD2
                 it.  File locking techniques are used. */
             // TODO Safe file names
             _InWRITEFILE = StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[1]));
-        }
-
-        public static void DisplayRefFileSections()
-        {
-            Door.ClrScr();
-            Door.WriteLn("DEBUG OUTPUT");
-            foreach (KeyValuePair<string, RTRFile> RefFile in _RefFiles)
-            {
-                Door.WriteLn("Ref File Name: " + RefFile.Key);
-                foreach (KeyValuePair<string, RTRSection> Section in RefFile.Value.Sections)
-                {
-                    Door.WriteLn("  - " + Section.Key + " (" + Section.Value.Script.Count.ToString() + " lines)");
-                }
-            }
         }
 
         private static void EndCHOICE()

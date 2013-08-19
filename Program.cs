@@ -12,10 +12,9 @@ namespace LORD2
         {
             Door.Startup(args);
 
-            // If new player, call newplayer in gametxt.ref
-            // If player exists, call startgame in gametxt.ref
             RTReader RTR = new RTReader();
-            RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
+            if (!PlayerExists()) RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
+            if (PlayerExists()) RTR.RunSection("GAMETXT.REF", "STARTGAME");
             
             if (Debugger.IsAttached)
             {
@@ -24,6 +23,12 @@ namespace LORD2
             }
             
             Door.Shutdown();
+        }
+
+        static bool PlayerExists()
+        {
+            // TODO Check if TRADER.DAT contains Door.DropInfo.Alias
+            return false; // TODO
         }
     }
 }

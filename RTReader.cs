@@ -190,11 +190,14 @@ namespace LORD2
             _GlobalOther.Add("`r7", Ansi.TextBackground(Crt.LightGray));
             _GlobalOther.Add("`c", Ansi.ClrScr() + "\r\n\r\n"); // TODO only `c works in RTReader, not `C -- bug, or should `C really not work?
             _GlobalOther.Add("`k", "TODO MORE");
-            // TODO `b and `.
+            // TODO `b and `. and `|
 
             _GlobalWords.Add("LOCAL", (Door.Local() ? "5" : "0"));
+            _GlobalWords.Add("MAP", "155");
             _GlobalWords.Add("RESPONCE", "0");
             _GlobalWords.Add("RESPONSE", "0");
+            _GlobalWords.Add("SEX", "0"); // Male
+            _GlobalWords.Add("SEXMALE", "1"); // True for male
         }
 
         private void AssignVariable(string variable, string value)
@@ -242,6 +245,21 @@ namespace LORD2
             if (_GlobalV.ContainsKey(variable))
             {
                 _GlobalV[variable] = Convert.ToInt32(values[0]);
+            }
+            // TODO Not sure if these should be assigned this way, but let's try it for now
+            if (_GlobalWords.ContainsKey(variable))
+            {
+                _GlobalWords[variable] = value;
+
+                // TODO Probably a better way to handle this
+                if (variable.ToUpper() == "SEX")
+                {
+                    _GlobalWords["SEXMALE"] = Math.Abs(Convert.ToInt32(value) - 1).ToString();
+                }
+                else if (variable.ToUpper() == "SEXMALE")
+                {
+                    _GlobalWords["SEX"] = Math.Abs(Convert.ToInt32(value) - 1).ToString();
+                }
             }
         }
 
@@ -1028,6 +1046,9 @@ namespace LORD2
             int LeftInt = 0;
             int RightInt = 0;
 
+            // TODO This is to try to detect unknown variables in the variable position (if the before and after translation are the same, it's probably an unknown variable)
+            if (tokens[1] == Left) LogMissing(tokens);
+
             /* TODO @IF bitcheck `t12 1 1 then do
                   @BEGIN
                   @SHOW
@@ -1059,6 +1080,7 @@ namespace LORD2
                     Result = Right.ToUpper().Contains(Left.ToUpper());
                     break;
                 case "LESS":
+                case "<":
                     if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
                     {
                         Result = (LeftInt < RightInt);
@@ -1069,6 +1091,7 @@ namespace LORD2
                     }
                     break;
                 case "MORE":
+                case ">":
                     if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
                     {
                         Result = (LeftInt > RightInt);

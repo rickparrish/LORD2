@@ -271,6 +271,21 @@ namespace LORD2
                 @READSTRING, @DO COPYTONAME, set appropriate variables including the player's 
                 X and Y coordinates and map block number before issuing this command.  Failure 
                 to do this can result in a corrupted TRADER.DAT file. */
+
+            // TODO These things happened when a new game was created and new player added:
+            // TIME.DAT created (contains a single "1") (played again second day, now "2")
+            // STIME.DAT created (contains 2039) (played again second day, now 2040) (it's YYYY+MM+DD (ie 2013+08+19=2040))
+            // UPDATE.TMP created (7 bytes)
+
+            // WORLD.DAT created (6239 bytes)
+            // LOGNOW.TXT created (random news entry, not related to new user)
+            // L2TREE.DAT created (contains "Turgon throws horses") (now "Barak eats water")
+            // TRADER.DAT created (1193 bytes)
+
+            // TODO Second user added
+            // UPDATE.TMP now 14 bytes
+            // TRADER.DAT now 2386 bytes
+
             LogMissing(tokens);
         }
 

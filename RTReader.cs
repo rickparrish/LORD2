@@ -38,7 +38,7 @@ namespace LORD2
         private static string _InWRITEFILE = "";
         private static Random _R = new Random();
         private static Dictionary<string, RTRFile> _RefFiles = new Dictionary<string, RTRFile>(StringComparer.OrdinalIgnoreCase);
-        private static int _Version = 2;
+        private static int _Version = 99;
 
         static RTReader()
         {
@@ -1121,7 +1121,7 @@ namespace LORD2
                 /* @KEY 
                     Does a [MORE] prompt, centered on current line.
                     NOTE: Actually indents two lines, not centered */
-                Door.Write(TranslateVariables("  `1[`!MORE`1]"));
+                Door.Write(TranslateVariables("  `2<`0MORE`2>"));
                 Door.ReadKey();
                 Door.Write("\b\b\b\b\b\b\b\b        \b\b\b\b\b\b\b\b");
             }
@@ -1130,7 +1130,7 @@ namespace LORD2
                 /* @KEY BOTTOM
                     This does <MORE> prompt at user text window. */
                 Door.GotoXY(35, 24);
-                Door.Write(TranslateVariables("`!<MORE>"));
+                Door.Write(TranslateVariables("`2<`0MORE`2>"));
                 Door.ReadKey();
                 Door.Write("\b\b\b\b\b\b      \b\b\b\b\b\b");
             }
@@ -1145,7 +1145,7 @@ namespace LORD2
                 /* @KEY TOP
                     This does <MORE> prompt at game text window. */
                 Door.GotoXY(40, 15);
-                Door.Write(TranslateVariables("`![`1MORE`!]"));
+                Door.Write(TranslateVariables("`2<`0MORE`2>"));
                 Door.ReadKey();
                 Door.Write("\b\b\b\b\b\b      \b\b\b\b\b\b");
             }
@@ -1519,11 +1519,12 @@ namespace LORD2
                 "Hey, I have more than 500", RESPONSE would be set to 5. */
 
             // Output options
-            Door.GotoXY(1, 16);
             int FirstKey = 65;
             for (int i = 0; i < _InCHOICEOptions.Count; i++)
             {
-                Door.WriteLn(TranslateVariables("   `2(`0" + ((char)(FirstKey + i)).ToString() + "`2)`7 " + _InCHOICEOptions[i]));
+                // TODO LORD2 is light-bar only, no letter to pick with.  
+                //      Just highlight selected item with dark blue background (with of selected text, not of longest text)
+                Door.WriteLn(TranslateVariables("`2(`0" + ((char)(FirstKey + i)).ToString() + "`2)`2 " + _InCHOICEOptions[i]));
             }
 
             // Get response
@@ -1611,8 +1612,7 @@ namespace LORD2
         private static void LogMissing(string[] tokens)
         {
             string Output = "TODO (hit a key): " + string.Join(" ", tokens);
-            if (Output.Length > 80) Output = Output.Substring(0, 80);
-            Crt.FastWrite(Output, 1, 25, 31);
+            Crt.FastWrite(StringUtils.PadRight(Output, ' ', 80), 1, 25, 31);
             Crt.ReadKey();
             Crt.FastWrite(new string(' ', 80), 1, 25, 0);
         }
@@ -1620,6 +1620,7 @@ namespace LORD2
         public static void RunSection(string fileName, string sectionName)
         {
             // TODO What happens if invalid file and/or section name is given
+            // [blink red]** [white]ERROR : [dark green]File [light green]rtnews02.ref [dark green]not found. [blink red]**
 
             // Run the selected script
             _CurrentFile = _RefFiles[fileName];

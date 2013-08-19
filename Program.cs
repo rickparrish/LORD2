@@ -12,6 +12,8 @@ namespace LORD2
         {
             Door.Startup(args);
 
+            // If new player, call newplayer in gametxt.ref
+            // If player exists, call startgame in gametxt.ref
             RTReader.RunSection("RTNEWS02", "START");
             
             if (Debugger.IsAttached)

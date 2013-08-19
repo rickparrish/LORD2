@@ -7,40 +7,42 @@ using System.Text.RegularExpressions;
 
 namespace LORD2
 {
-    public static class RTReader
+    public class RTReader
     {
-        private static Dictionary<string, Action<string[]>> _Commands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
-        private static Dictionary<string, Action<string[]>> _DOCommands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, Action<string[]>> _Commands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, Action<string[]>> _DOCommands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
 
-        private static int _CurrentLineNumber = 0;
-        private static RTRFile _CurrentFile = null;
-        private static RTRSection _CurrentSection = null;
-        private static Dictionary<string, Int16> _GlobalI = new Dictionary<string, Int16>(StringComparer.OrdinalIgnoreCase);
-        private static Dictionary<string, string> _GlobalOther = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private static Dictionary<string, Int32> _GlobalP = new Dictionary<string, Int32>(StringComparer.OrdinalIgnoreCase);
-        private static Dictionary<string, string> _GlobalPLUS = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private static Dictionary<string, string> _GlobalS = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private static Dictionary<string, byte> _GlobalT = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
-        private static Dictionary<string, Int32> _GlobalV = new Dictionary<string, Int32>(StringComparer.OrdinalIgnoreCase);
-        private static Dictionary<string, string> _GlobalWords = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private static int _InBEGINCount = 0;
-        private static bool _InCHOICE = false;
-        private static List<string> _InCHOICEOptions = new List<string>();
-        private static bool _InDOWrite = false;
-        private static string _InGOTOHeader = "";
-        private static int _InGOTOLineNumber = 0;
-        private static int _InIFFalse = 999;
-        private static bool _InSAY = false;
-        private static bool _InSHOW = false;
-        private static bool _InSHOWLOCAL = false;
-        private static bool _InSHOWSCROLL = false;
-        private static List<string> _InSHOWSCROLLLines = new List<string>();
-        private static string _InWRITEFILE = "";
-        private static Random _R = new Random();
-        private static Dictionary<string, RTRFile> _RefFiles = new Dictionary<string, RTRFile>(StringComparer.OrdinalIgnoreCase);
-        private static int _Version = 99;
+        private int _CurrentLineNumber = 0;
+        private RTRFile _CurrentFile = null;
+        private RTRSection _CurrentSection = null;
+        private Dictionary<string, Int16> _GlobalI = new Dictionary<string, Int16>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, string> _GlobalOther = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, Int32> _GlobalP = new Dictionary<string, Int32>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, string> _GlobalPLUS = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, string> _GlobalS = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, byte> _GlobalT = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, Int32> _GlobalV = new Dictionary<string, Int32>(StringComparer.OrdinalIgnoreCase);
+        private Dictionary<string, string> _GlobalWords = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        private int _InBEGINCount = 0;
+        private bool _InCHOICE = false;
+        private List<string> _InCHOICEOptions = new List<string>();
+        private bool _InCLOSESCRIPT = false;
+        private bool _InDOWrite = false;
+        private string _InGOTOHeader = "";
+        private int _InGOTOLineNumber = 0;
+        private int _InHALT = int.MinValue;
+        private int _InIFFalse = 999;
+        private bool _InSAY = false;
+        private bool _InSHOW = false;
+        private bool _InSHOWLOCAL = false;
+        private bool _InSHOWSCROLL = false;
+        private List<string> _InSHOWSCROLLLines = new List<string>();
+        private string _InWRITEFILE = "";
+        private Random _R = new Random();
+        private Dictionary<string, RTRFile> _RefFiles = new Dictionary<string, RTRFile>(StringComparer.OrdinalIgnoreCase);
+        private int _Version = 99;
 
-        static RTReader()
+        public RTReader()
         {
             // Initialize the commands dictionary
             _Commands.Add("@ADDCHAR", CommandADDCHAR);
@@ -195,7 +197,7 @@ namespace LORD2
             _GlobalWords.Add("RESPONSE", "0");
         }
 
-        private static void AssignVariable(string variable, string value)
+        private void AssignVariable(string variable, string value)
         {
             // Split while we still have the raw input string (in case we're doing a LENGTH operation)
             string[] values = value.Split(' ');
@@ -243,7 +245,7 @@ namespace LORD2
             }
         }
 
-        private static void CommandADDCHAR(string[] tokens)
+        private void CommandADDCHAR(string[] tokens)
         {
             /* @ADDCHAR
                 This command adds a new character to the TRADER.DAT file.  This command is 
@@ -254,12 +256,12 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandBEGIN(string[] tokens)
+        private void CommandBEGIN(string[] tokens)
         {
             _InBEGINCount += 1;
         }
 
-        private static void CommandBITSET(string[] tokens)
+        private void CommandBITSET(string[] tokens)
         {
             /* @BITSET <`tX> <bit> <Y>
                 Sets a certain bit in byte variable X to value Y.  Y must be 0 or 1.  This lets you 
@@ -267,7 +269,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandBUSY(string[] tokens)
+        private void CommandBUSY(string[] tokens)
         {
             /* @BUSY
                 This makes the player appear 'red' to other players currently playing.  It 
@@ -276,7 +278,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandBUYMANAGER(string[] tokens)
+        private void CommandBUYMANAGER(string[] tokens)
         {
             /* @BUYMANAGER
                 <item number>
@@ -286,14 +288,14 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandCHECKMAIL(string[] tokens)
+        private void CommandCHECKMAIL(string[] tokens)
         {
             /* @CHECKMAIL
                 Undocumented.  Will need to determine what this does */
             LogMissing(tokens);
         }
 
-        private static void CommandCHOICE(string[] tokens)
+        private void CommandCHOICE(string[] tokens)
         {
             /* NOTE: `V01 is the default option */
             /* TODO ALSO:  Check the CHOICE command, you can check a bit there too, like this:
@@ -348,7 +350,7 @@ namespace LORD2
             _InCHOICE = true;
         }
 
-        private static void CommandCHOOSEPLAYER(string[] tokens)
+        private void CommandCHOOSEPLAYER(string[] tokens)
         {
             /* @CHOOSEPLAYER `p20
                 This will prompt user for another players name - its the standard 'full or 
@@ -358,7 +360,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandCLEAR(string[] tokens)
+        private void CommandCLEAR(string[] tokens)
         {
             switch (tokens[1].ToUpper())
             {
@@ -416,7 +418,7 @@ namespace LORD2
             }
         }
 
-        private static void CommandCLEARBLOCK(string[] tokens)
+        private void CommandCLEARBLOCK(string[] tokens)
         {
             /* @CLEARBLOCK <x> <y>
                 This clears lines quick.  <x> is the first line you want to clear. <y> is the 
@@ -425,14 +427,14 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandCLOSESCRIPT(string[] tokens)
+        private void CommandCLOSESCRIPT(string[] tokens)
         {
             /* @CLOSESCRIPT 
                 This closes the script and returns command to the L2 movement system. */
-            // TODO How do we end the script now?  New variable?
+            _InCLOSESCRIPT = true;
         }
 
-        private static void CommandCONVERT_FILE_TO_ANSI(string[] tokens)
+        private void CommandCONVERT_FILE_TO_ANSI(string[] tokens)
         {
             /* @CONVERT_FILE_TO_ANSI <input file> <output file>
                 Converts a text file of Sethansi (whatever) to regular ansi.  This is good for 
@@ -440,7 +442,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandCONVERT_FILE_TO_ASCII(string[] tokens)
+        private void CommandCONVERT_FILE_TO_ASCII(string[] tokens)
         {
             /* @CONVERT_FILE_TO_ASCII <input file> <output file>
                 Converts a text file of Sethansi (whatever) to regular ascii, ie, no colors at 
@@ -448,14 +450,14 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandCOPYFILE(string[] tokens)
+        private void CommandCOPYFILE(string[] tokens)
         {
             /* @COPYFILE <input filename> <output filename>
                 This command copies a <input filename to <output filename>.           */
             LogMissing(tokens);
         }
 
-        private static void CommandDATALOAD(string[] tokens)
+        private void CommandDATALOAD(string[] tokens)
         {
             /* @DATALOAD <filename> <record (1 to 200)> <`p variable to put it in> : This loads
                 a long integer by # from a datafile.  If the file doesn't exist, it is created
@@ -464,7 +466,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandDATANEWDAY(string[] tokens)
+        private void CommandDATANEWDAY(string[] tokens)
         {
             /* @DATANEWDAY <filename> :  If it is the NEXT day since this function was
                 called, all records in <filename> will be set to 0.  Check EXAMPLE.REF in the 
@@ -473,7 +475,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandDATASAVE(string[] tokens)
+        private void CommandDATASAVE(string[] tokens)
         {
             /* @DATASAVE <filename> <record (1 to 200)> <value to make it> : This SAVES
                 a long integer by # to a datafile.  If the file doesn't exist, it is created
@@ -483,13 +485,13 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandDECLARE(string[] obj)
+        private void CommandDECLARE(string[] obj)
         {
             /* @DECLARE <Label/header name> <offset in decimal format> */
             // Ignore, these commands were inserted by REFINDEX, but not used here
         }
 
-        private static void CommandDISPLAY(string[] tokens)
+        private void CommandDISPLAY(string[] tokens)
         {
             /* @DISPLAY <this> IN <this file> <options>
                 This is used to display a certain part of a file.  This is compatible with the 
@@ -497,7 +499,7 @@ namespace LORD2
             Door.WriteLn(TranslateVariables(string.Join("\r\n", _RefFiles[Path.GetFileNameWithoutExtension(tokens[3])].Sections[tokens[1]].Script.ToArray())));
         }
 
-        private static void CommandDISPLAYFILE(string[] tokens)
+        private void CommandDISPLAYFILE(string[] tokens)
         {
             /* TODO @DISPLAYFILE <filename> <options> 
                 This display an entire file.  Possible options are:  NOPAUSE and NOSKIP.  Put a
@@ -505,7 +507,7 @@ namespace LORD2
             Door.Write(FileUtils.FileReadAllText(StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[1])), RMEncoding.Ansi));
         }
 
-        private static void CommandDO(string[] tokens)
+        private void CommandDO(string[] tokens)
         {
             if (_DOCommands.ContainsKey(tokens[1]))
             {
@@ -521,7 +523,7 @@ namespace LORD2
             }
         }
 
-        private static void CommandDO_ADD(string[] tokens)
+        private void CommandDO_ADD(string[] tokens)
         {
             /* @DO <Number To Change> <How To Change It> <Change With What> */
             if (tokens[2] == "+")
@@ -538,21 +540,21 @@ namespace LORD2
             }
         }
 
-        private static void CommandDO_ADDLOG(string[] tokens)
+        private void CommandDO_ADDLOG(string[] tokens)
         {
             /* @DO addlog
                 The line UNDER this command is added to the 'lognow.txt' file. */
             LogMissing(tokens);
         }
 
-        private static void CommandDO_BEEP(string[] tokens)
+        private void CommandDO_BEEP(string[] tokens)
         {
             /* @DO BEEP
                 Makes a weird beep noise, locally only */
             LogMissing(tokens);
         }
 
-        private static void CommandDO_COPYTONAME(string[] tokens)
+        private void CommandDO_COPYTONAME(string[] tokens)
         {
             /* @DO COPYTONAME  
                 This will put whatever is in `S10 into `N.  (name)  This is a good way to 
@@ -562,7 +564,7 @@ namespace LORD2
             _GlobalOther["`N"] = TranslateVariables("`S10");
         }
 
-        private static void CommandDO_DELETE(string[] tokens)
+        private void CommandDO_DELETE(string[] tokens)
         {
             /* @DO DELETE <file name>
                 This command deletes the file specified by <file name>.  The file name must be 
@@ -570,13 +572,13 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandDO_DIVIDE(string[] tokens)
+        private void CommandDO_DIVIDE(string[] tokens)
         {
             /* @DO <Number To Change> <How To Change It> <Change With What> */
             AssignVariable(tokens[1], Math.Truncate(Convert.ToDouble(TranslateVariables(tokens[1])) / Convert.ToDouble(TranslateVariables(tokens[3]))).ToString());
         }
 
-        private static void CommandDO_FRONTPAD(string[] tokens)
+        private void CommandDO_FRONTPAD(string[] tokens)
         {
             /* @DO FRONTPAD <string variable> <length>
                 This adds spaces to the front of the string until the string is as long as 
@@ -584,7 +586,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandDO_GETKEY(string[] tokens)
+        private void CommandDO_GETKEY(string[] tokens)
         {
             /* @DO GETKEY <String variable to put it in>
                 This command is useful, *IF* a key IS CURRENTLY being pressed, it puts that 
@@ -608,7 +610,7 @@ namespace LORD2
             }
         }
 
-        private static void CommandDO_GOTO(string[] tokens)
+        private void CommandDO_GOTO(string[] tokens)
         {
             /* @DO GOTO <header or label>
                 Passes control of the script to the header or label specified. */
@@ -637,7 +639,7 @@ namespace LORD2
             }
         }
 
-        private static void CommandDO_IS(string[] tokens)
+        private void CommandDO_IS(string[] tokens)
         {
             /* @DO <Number To Change> <How To Change It> <Change With What> */
             /* TODO @DO `s01 is getname 8
@@ -653,7 +655,7 @@ namespace LORD2
             AssignVariable(tokens[1], string.Join(" ", tokens, 3, tokens.Length - 3));
         }
 
-        private static void CommandDO_MOVE(string[] tokens)
+        private void CommandDO_MOVE(string[] tokens)
         {
             /* @DO MOVE <X> <Y> : This moves the curser.  (like GOTOXY in TP) Enter 0 for
                 a number will default to 'current location'. */
@@ -673,7 +675,7 @@ namespace LORD2
             }
         }
 
-        private static void CommandDO_MOVEBACK(string[] tokens)
+        private void CommandDO_MOVEBACK(string[] tokens)
         {
             /* @DO moveback
                 This moves the player back to where he moved from.  This is good for when a 
@@ -682,13 +684,13 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandDO_MULTIPLY(string[] tokens)
+        private void CommandDO_MULTIPLY(string[] tokens)
         {
             /* @DO <Number To Change> <How To Change It> <Change With What> */
             AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) * Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
         }
 
-        private static void CommandDO_NUMRETURN(string[] tokens)
+        private void CommandDO_NUMRETURN(string[] tokens)
         {
             /* @DO NUMRETURN <int var> <string var>
                 Undocumented.  Seems to return the number of integers in the given string
@@ -698,14 +700,14 @@ namespace LORD2
             AssignVariable(tokens[2], (Translated.Length - TranslatedWithoutNumbers.Length).ToString());
         }
 
-        private static void CommandDO_PAD(string[] tokens)
+        private void CommandDO_PAD(string[] tokens)
         {
             /* @DO PAD <string variable> <length>
                 This adds spaces to the end of the string until string is as long as <length>. */
             LogMissing(tokens);
         }
 
-        private static void CommandDO_QUEBAR(string[] tokens)
+        private void CommandDO_QUEBAR(string[] tokens)
         {
             /* @DO quebar
                 <message>
@@ -714,7 +716,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandDO_RANDOM(string[] tokens)
+        private void CommandDO_RANDOM(string[] tokens)
         {
             /* @DO <Varible to put # in> RANDOM <Highest number> <number to add to it>
                 RANDOM 5 1 will pick a number between 0 (inclusive) and 5 (exclusive) and add 1 to it, resulting in 1-5
@@ -724,7 +726,7 @@ namespace LORD2
             AssignVariable(tokens[1], _R.Next(Min, Max).ToString());
         }
 
-        private static void CommandDO_READCHAR(string[] tokens)
+        private void CommandDO_READCHAR(string[] tokens)
         {
             /* @DO READCHAR <string variable to put it in> 
                 Waits for a key to be pressed.  This uses DV and Windows time slicing while 
@@ -741,7 +743,7 @@ namespace LORD2
             }
         }
 
-        private static void CommandDO_READNUM(string[] tokens)
+        private void CommandDO_READNUM(string[] tokens)
         {
             /* @DO READNUM <MAX LENGTH> <DEFAULT> (Optional: <FOREGROUND COLOR> <BACKGROUND COLOR>
                 The number is put into `V40.
@@ -757,7 +759,7 @@ namespace LORD2
             AssignVariable("`V40", AnswerInt.ToString());
         }
 
-        private static void CommandDO_READSPECIAL(string[] tokens)
+        private void CommandDO_READSPECIAL(string[] tokens)
         {
             /* @DO READSPECIAL (String variable to put it in> <legal chars, 1st is default>
                 Example:
@@ -774,7 +776,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandDO_READSTRING(string[] tokens)
+        private void CommandDO_READSTRING(string[] tokens)
         {
             /* @DO READSTRING <MAX LENGTH> <DEFAULT> <variable TO PUT IT IN>
                 Get a string.  Uses same string editer as READNUM.
@@ -793,7 +795,7 @@ namespace LORD2
             }
         }
 
-        private static void CommandDO_REPLACE(string[] tokens)
+        private void CommandDO_REPLACE(string[] tokens)
         {
             /* @REPLACE <X> <Y> <in `S10>
                 Replaces X with Y in an `s variable. */
@@ -802,14 +804,14 @@ namespace LORD2
             AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), "(?<!" + Regex.Escape(TranslateVariables(tokens[2])) + ".*)" + Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
         }
 
-        private static void CommandDO_REPLACEALL(string[] tokens)
+        private void CommandDO_REPLACEALL(string[] tokens)
         {
             /* @REPLACEALL <X> <Y> <in `S10>:
                 Same as above but replaces all instances. */
             AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
         }
 
-        private static void CommandDO_SAYBAR(string[] tokens)
+        private void CommandDO_SAYBAR(string[] tokens)
         {
             /* @DO saybar
                 <message>
@@ -819,21 +821,21 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandDO_STRIP(string[] tokens)
+        private void CommandDO_STRIP(string[] tokens)
         {
             /* @DO STRIP <string variable>
                 This strips beginning and end spaces of a string. */
             AssignVariable(tokens[2], TranslateVariables(tokens[2]).Trim());
         }
 
-        private static void CommandDO_STRIPALL(string[] tokens)
+        private void CommandDO_STRIPALL(string[] tokens)
         {
             /* @DO STRIPALL
                 This command strips out all ` codes.  This is good for passwords, etc. */
             LogMissing(tokens);
         }
 
-        private static void CommandDO_STRIPBAD(string[] tokens)
+        private void CommandDO_STRIPBAD(string[] tokens)
         {
             /* @DO STRIPBAD
                 This strips out illegal ` codes, and replaces badwords with the standard 
@@ -841,20 +843,20 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandDO_STRIPCODE(string[] tokens)
+        private void CommandDO_STRIPCODE(string[] tokens)
         {
             /* @STRIPCODE <any `s variable>
                 This will remove ALL ` codes from a string. */
             LogMissing(tokens);
         }
 
-        private static void CommandDO_SUBTRACT(string[] tokens)
+        private void CommandDO_SUBTRACT(string[] tokens)
         {
             /* @DO <Number To Change> <How To Change It> <Change With What> */
             AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) - Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
         }
 
-        private static void CommandDO_TRIM(string[] tokens)
+        private void CommandDO_TRIM(string[] tokens)
         {
             /* @DO TRIM <file name> <number to trim to>
                 This nifty command makes text file larger than <number to trim to> get 
@@ -871,14 +873,14 @@ namespace LORD2
             }
         }
 
-        private static void CommandDO_UPCASE(string[] tokens)
+        private void CommandDO_UPCASE(string[] tokens)
         {
             /* @DO UPCASE <string variable>
                 This makes a string all capitals. */
             AssignVariable(tokens[2], TranslateVariables(tokens[2]).ToUpper());
         }
 
-        private static void CommandDO_WRITE(string[] tokens)
+        private void CommandDO_WRITE(string[] tokens)
         {
             /* @DO WRITE
                 <Stuff to write>
@@ -890,7 +892,7 @@ namespace LORD2
             _InDOWrite = true;
         }
 
-        private static void CommandDRAWMAP(string[] tokens)
+        private void CommandDRAWMAP(string[] tokens)
         {
             /* @DRAWMAP
                 This draws the current map the user is on.  This command does NOT update the 
@@ -898,7 +900,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandDRAWPART(string[] tokens)
+        private void CommandDRAWPART(string[] tokens)
         {
             /* @DRAWPART <x> <y>
                 This command will draw one block of the current map as defined by <x> and <y> 
@@ -906,12 +908,12 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandEND(string[] tokens)
+        private void CommandEND(string[] tokens)
         {
             _InBEGINCount -= 1;
         }
 
-        private static void CommandFIGHT(string[] tokens)
+        private void CommandFIGHT(string[] tokens)
         {
             /* @FIGHT  : Causes the L2 engine to go into fight mode.
                 <Monster name>
@@ -987,7 +989,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandGRAPHICS(string[] tokens)
+        private void CommandGRAPHICS(string[] tokens)
         {
             /* @GRAPHICS IS <Num> 
                 3 or more enable remote ANSI.  If you never wanted to send ANSI, you could set 
@@ -995,14 +997,21 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandHALT(string[] tokens)
+        private void CommandHALT(string[] tokens)
         {
             /* @HALT <error level>
                 This command closes the door and returns the specified error level. */
-            LogMissing(tokens);
+            if (tokens.Length == 1)
+            {
+                _InHALT = 0;
+            }
+            else
+            {
+                _InHALT = Convert.ToInt32(tokens[1]);
+            }
         }
 
-        private static void CommandIF(string[] tokens)
+        private void CommandIF(string[] tokens)
         {
             /* @IF <Varible> <Math> <Thing the varible must be, or more or less then, or
                 another varible>  (Possible math functions: EQUALS, MORE, LESS, NOT) */
@@ -1102,7 +1111,7 @@ namespace LORD2
             }
         }
 
-        private static void CommandITEMEXIT(string[] tokens)
+        private void CommandITEMEXIT(string[] tokens)
         {
             /* @ITEMEXIT
                 This tells the item editor to automatically return the player to the map 
@@ -1111,7 +1120,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandKEY(string[] tokens)
+        private void CommandKEY(string[] tokens)
         {
             // Save text attribute
             int SavedAttr = Crt.TextAttr;
@@ -1158,14 +1167,14 @@ namespace LORD2
             Door.Write(Ansi.TextAttr(SavedAttr));
         }
 
-        private static void CommandLABEL(string[] tokens)
+        private void CommandLABEL(string[] tokens)
         {
             /* @LABEL <label name>
                 Mark a spot where @DO GOTO <label name> can be used */
             // Ignore, nothing to do here
         }
 
-        private static void CommandLOADCURSOR(string[] tokens)
+        private void CommandLOADCURSOR(string[] tokens)
         {
             /* @LOADCURSOR
                 This command restores the cursor to the position before the last @SAVECURSOR 
@@ -1174,7 +1183,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandLOADGLOBALS(string[] tokens)
+        private void CommandLOADGLOBALS(string[] tokens)
         {
             /* @LOADGLOBALS
                 This command loads the last value of all global variables as existed when the 
@@ -1182,7 +1191,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandLOADMAP(string[] tokens)
+        private void CommandLOADMAP(string[] tokens)
         {
             /* @LOADMAP <map #>
                 This is a very handy command.  It lets you change someones map location in a 
@@ -1194,7 +1203,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandLOADWORLD(string[] tokens)
+        private void CommandLOADWORLD(string[] tokens)
         {
             /* @LOADWORLD
                 This command loads globals and world data.  It has never been used but is 
@@ -1202,7 +1211,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandLORDRANK(string[] tokens)
+        private void CommandLORDRANK(string[] tokens)
         {
             /* @LORDRANK <filename> <`p variable to rank by>
                 This command produces a file as specified by <filename>.  It uses the `p 
@@ -1222,14 +1231,14 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandMOREMAP(string[] tokens)
+        private void CommandMOREMAP(string[] tokens)
         {
             /* @MOREMAP
                 The line UNDER this will be the new <more> prompt.  30 characters maximum. */
             LogMissing(tokens);
         }
 
-        private static void CommandNAME(string[] tokens)
+        private void CommandNAME(string[] tokens)
         {
             /* @NAME <name to put under picture>
                 Undocumented. Puts a name under the picture window */
@@ -1240,7 +1249,7 @@ namespace LORD2
             Door.Write(Name);
         }
 
-        private static void CommandNOCHECK(string[] obj)
+        private void CommandNOCHECK(string[] obj)
         {
             /* @NOCHECK
                 Tell the original RTReader to stop scanning for sections/labels
@@ -1248,7 +1257,7 @@ namespace LORD2
             // Ignore
         }
 
-        private static void CommandOFFMAP(string[] tokens)
+        private void CommandOFFMAP(string[] tokens)
         {
             /* @OFFMAP
                 This takes the player's symbol off the map.  This makes the player appear to 
@@ -1257,7 +1266,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandOVERHEADMAP(string[] tokens)
+        private void CommandOVERHEADMAP(string[] tokens)
         {
             /* @OVERHEADMAP
                 This command displays the visible portion of the map as defined in the world 
@@ -1269,7 +1278,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandPAUSEOFF(string[] tokens)
+        private void CommandPAUSEOFF(string[] tokens)
         {
             /* @PAUSEOFF
                 This turns the 24 line pause off so you can show long ansis etc and it won't 
@@ -1277,21 +1286,21 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandPAUSEON(string[] tokens)
+        private void CommandPAUSEON(string[] tokens)
         {
             /* @PAUSEON
                 Just the opposite of the above command.  This turns the pause back on. */
             LogMissing(tokens);
         }
 
-        private static void CommandPROGNAME(string[] tokens)
+        private void CommandPROGNAME(string[] tokens)
         {
             /* @PROGNAME
                 The line UNDER this will be the status bar name of the game. */
             LogMissing(tokens);
         }
 
-        private static void CommandRANK(string[] tokens)
+        private void CommandRANK(string[] tokens)
         {
             /* @RANK <filename> <`p variable to rank by> <procedure to format the ranking>
                 This command is the same as above with the exception it uses a procedure to 
@@ -1303,7 +1312,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandREADFILE(string[] tokens)
+        private void CommandREADFILE(string[] tokens)
         {
             /* @READFILE <file name>
                 <variable to read into>
@@ -1318,7 +1327,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandROUTINE(string[] tokens)
+        private void CommandROUTINE(string[] tokens)
         {
             /* @ROUTINE <Header or label name> IN <Filename of .REF file>
                 The @ROUTINE command is useful - You can use it jump to a completely new .REF 
@@ -1327,31 +1336,34 @@ namespace LORD2
                 have found that @ROUTINE cannot be nested.  That is if you use an @ROUTINE 
                 command inside of a routine called by @ROUTINE, the reader cannot return to 
                 the first procedure that ran @ROUTINE. */
-            LogMissing(tokens);
+            // TODO This will cause LoadRefFiles() to happen for each routine, which is overkill
+            // TODO Should move the ref file loading to a new static class
+            RTReader RTR = new RTReader();
+            _InHALT = RTR.RunSection(TranslateVariables(tokens[3]), TranslateVariables(tokens[1]));
         }
 
-        private static void CommandRUN(string[] tokens)
+        private void CommandRUN(string[] tokens)
         {
             /* @RUN <Header or label name> IN <Filename of .REF file>
                 Same thing as ROUTINE, but doesn't come back to the original .REF. */
             LogMissing(tokens);
         }
 
-        private static void CommandSAVECURSOR(string[] tokens)
+        private void CommandSAVECURSOR(string[] tokens)
         {
             /* @SAVECURSOR
                 This command saves the current cursor positioning for later retrieval. */
             LogMissing(tokens);
         }
 
-        private static void CommandSAVEGLOBALS(string[] tokens)
+        private void CommandSAVEGLOBALS(string[] tokens)
         {
             /* @SAVEGLOBALS
                 This command saves the current global variables for later retrieval */
             LogMissing(tokens);
         }
 
-        private static void CommandSAVEWORLD(string[] tokens)
+        private void CommandSAVEWORLD(string[] tokens)
         {
             /* @SAVEWORLD
                 This command saves stats and world data.  The only use yet is right after 
@@ -1359,14 +1371,14 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandSAY(string[] tokens)
+        private void CommandSAY(string[] tokens)
         {
             /* @SAY
                 All text UNDER this will be put in the 'talk window' until a @ is hit. */
             _InSAY = true;
         }
 
-        private static void CommandSELLMANAGER(string[] tokens)
+        private void CommandSELLMANAGER(string[] tokens)
         {
             /* @SELLMANAGER
                 This command presents a menu of the player's current inventory.  The player 
@@ -1389,7 +1401,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandSHOW(string[] tokens)
+        private void CommandSHOW(string[] tokens)
         {
             if ((tokens.Length > 1) && (tokens[1].ToUpper() == "SCROLL"))
             {
@@ -1407,28 +1419,28 @@ namespace LORD2
             }
         }
 
-        private static void CommandSHOWLOCAL(string[] tokens)
+        private void CommandSHOWLOCAL(string[] tokens)
         {
             /* @SHOWLOCAL
                 Undocumented.  Same as @SHOW, but only outputs to local window */
             _InSHOWLOCAL = true;
         }
 
-        private static void CommandSTATBAR(string[] tokens)
+        private void CommandSTATBAR(string[] tokens)
         {
             /* @STATBAR
                 This draws the statbar. */
             LogMissing(tokens);
         }
 
-        private static void CommandUPDATE(string[] tokens)
+        private void CommandUPDATE(string[] tokens)
         {
             /* @UPDATE
                 Draws all the people on the screen. */
             LogMissing(tokens);
         }
 
-        private static void CommandUPDATE_UPDATE(string[] tokens)
+        private void CommandUPDATE_UPDATE(string[] tokens)
         {
             /* @UPDATE_UPDATE
                 This command writes current player data to UPDATE.TMP file.  This is useful 
@@ -1436,7 +1448,7 @@ namespace LORD2
             LogMissing(tokens);
         }
 
-        private static void CommandVERSION(string[] tokens)
+        private void CommandVERSION(string[] tokens)
         {
             /* @VERSION  <Version it needs>  
                 For instance, you would put @VERSION 2 for this version of RTREADER.  (002) If 
@@ -1446,14 +1458,14 @@ namespace LORD2
             if (RequiredVersion > _Version) throw new ArgumentOutOfRangeException("VERSION", "@VERSION requested version " + RequiredVersion + ", we only support version " + _Version);
         }
 
-        private static void CommandWHOISON(string[] tokens)
+        private void CommandWHOISON(string[] tokens)
         {
             /* @WHOISON
                 Undocumented.  Will need to find out what this does */
             LogMissing(tokens);
         }
 
-        private static void CommandWRITEFILE(string[] tokens)
+        private void CommandWRITEFILE(string[] tokens)
         {
             /* @WRITEFILE <file name>
                 <Thing to write>
@@ -1467,7 +1479,7 @@ namespace LORD2
             _InWRITEFILE = StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[1]));
         }
 
-        private static void EndCHOICE()
+        private void EndCHOICE()
         {
             /* NOTE: `V01 is the default option */
             /* TODO ALSO:  Check the CHOICE command, you can check a bit there too, like this:
@@ -1518,13 +1530,17 @@ namespace LORD2
                 example, if `p20 was 600 and the user hit the selection:
                 "Hey, I have more than 500", RESPONSE would be set to 5. */
 
+            // Determine how many spaces to indent by (all lines should be indented same as first line)
+            string Spaces = "\r\n" + new string(' ', Crt.WhereX() - 1);
+
             // Output options
             int FirstKey = 65;
             for (int i = 0; i < _InCHOICEOptions.Count; i++)
             {
                 // TODO LORD2 is light-bar only, no letter to pick with.  
                 //      Just highlight selected item with dark blue background (with of selected text, not of longest text)
-                Door.WriteLn(TranslateVariables("`2(`0" + ((char)(FirstKey + i)).ToString() + "`2)`2 " + _InCHOICEOptions[i]));
+                if (i > 0) Door.Write(Spaces);
+                Door.Write(TranslateVariables("`2(`0" + ((char)(FirstKey + i)).ToString() + "`2)`2 " + _InCHOICEOptions[i]));
             }
 
             // Get response
@@ -1546,9 +1562,10 @@ namespace LORD2
             _GlobalWords["RESPONSE"] = (Ch - 64).ToString();
         }
 
-        private static void EndSHOWSCROLL()
+        private void EndSHOWSCROLL()
         {
             // TODO This should be a scroll window, not just a dump and pause
+            Door.ClrScr();
             for (int i = 0; i < _InSHOWSCROLLLines.Count; i++)
             {
                 Door.WriteLn(_InSHOWSCROLLLines[i]);
@@ -1556,7 +1573,7 @@ namespace LORD2
             Door.ReadKey();
         }
 
-        private static void LoadRefFile(string fileName)
+        private void LoadRefFile(string fileName)
         {
             // A place to store all the sections found in this file
             RTRFile NewFile = new RTRFile();
@@ -1569,7 +1586,7 @@ namespace LORD2
             string[] Lines = FileUtils.FileReadAllLines(fileName, RMEncoding.Ansi);
             foreach (string Line in Lines)
             {
-                string LineTrimmed = Line.Trim();
+                string LineTrimmed = Line.Trim().ToUpper();
 
                 // Check for new section
                 if (LineTrimmed.StartsWith("@#"))
@@ -1617,7 +1634,7 @@ namespace LORD2
             _RefFiles.Add(Path.GetFileNameWithoutExtension(fileName), NewFile);
         }
 
-        private static void LoadRefFiles(string directoryName)
+        private void LoadRefFiles(string directoryName)
         {
             string[] RefFileNames = Directory.GetFiles(directoryName, "*.ref", SearchOption.TopDirectoryOnly);
             foreach (string RefFileName in RefFileNames)
@@ -1626,7 +1643,7 @@ namespace LORD2
             }
         }
 
-        private static void LogMissing(string[] tokens)
+        private void LogMissing(string[] tokens)
         {
             string Output = "TODO (hit a key): " + string.Join(" ", tokens);
             Crt.FastWrite(StringUtils.PadRight(Output, ' ', 80), 1, 25, 31);
@@ -1634,7 +1651,7 @@ namespace LORD2
             Crt.FastWrite(new string(' ', 80), 1, 25, 0);
         }
 
-        public static void RunSection(string fileName, string sectionName)
+        public int RunSection(string fileName, string sectionName)
         {
             // TODO What happens if invalid file and/or section name is given
 
@@ -1657,21 +1674,26 @@ namespace LORD2
                         _InGOTOHeader = "";
                         RunSection(FileNameWithoutExtension, TempGOTOHeader);
                     }
+
+                    // Return the errorcode from _InHALT (which is int.MinValue if no error code)
+                    return _InHALT;
                 }
                 else
                 {
                     Door.WriteLn(TranslateVariables("`4`b**`b `%ERROR : `0" + sectionName + " `2not found in `0" + Path.GetFileName(fileName) + " `4`b**`b`2"));
                     Door.ReadKey();
+                    return 1;
                 }
             }
             else
             {
                 Door.WriteLn(TranslateVariables("`4`b**`b `%ERROR : `2File `0" + Path.GetFileName(fileName) + " `2not found. `4`b**`b`2"));
                 Door.ReadKey();
+                return 2;
             }
         }
 
-        private static void RunScript(string[] script)
+        private void RunScript(string[] script)
         {
             while (_CurrentLineNumber < script.Length)
             {
@@ -1679,7 +1701,15 @@ namespace LORD2
                 string LineTranslated = TranslateVariables(Line);
                 string LineTrimmed = Line.Trim();
 
-                if (_InIFFalse < 999)
+                if (_InCLOSESCRIPT)
+                {
+                    return;
+                }
+                else if (_InHALT != int.MinValue)
+                {
+                    return;
+                } 
+                else if (_InIFFalse < 999)
                 {
                     if (LineTrimmed.StartsWith("@"))
                     {
@@ -1761,7 +1791,7 @@ namespace LORD2
             }
         }
 
-        private static string TranslateVariables(string input)
+        private string TranslateVariables(string input)
         {
             string inputUpper = input.ToUpper();
 

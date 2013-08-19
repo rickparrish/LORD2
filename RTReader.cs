@@ -1574,8 +1574,15 @@ namespace LORD2
                 // Check for new section
                 if (LineTrimmed.StartsWith("@#"))
                 {
-                    // Store section in dictionary
-                    NewFile.Sections.Add(NewSectionName, NewSection);
+                    // Store last section we were working on in dictionary
+                    if (NewFile.Sections.ContainsKey(NewSectionName)) {
+                        // Section already exists, so we can't add it
+                        // CASTLE4 has multiple DONE sections
+                        // STONEB has multiple NOTHING sections
+                        // Both appear harmless, but keep that in mind if either ever seems buggy
+                    } else {
+                        NewFile.Sections.Add(NewSectionName, NewSection);
+                    }
 
                     // Get new section name (presumes only one word headers allowed, trims @# off start) and reset script block
                     NewSectionName = Line.Trim().Split(' ')[0].Substring(2);
@@ -1594,8 +1601,18 @@ namespace LORD2
                 }
             }
 
-            // Store last open section in dictionary
-            NewFile.Sections.Add(NewSectionName, NewSection);
+            // Store last section we were working on in dictionary
+            if (NewFile.Sections.ContainsKey(NewSectionName))
+            {
+                // Section already exists, so we can't add it
+                // CASTLE4 has multiple DONE sections
+                // STONEB has multiple NOTHING sections
+                // Both appear harmless, but keep that in mind if either ever seems buggy
+            }
+            else
+            {
+                NewFile.Sections.Add(NewSectionName, NewSection);
+            }
 
             _RefFiles.Add(Path.GetFileNameWithoutExtension(fileName), NewFile);
         }
@@ -1620,21 +1637,37 @@ namespace LORD2
         public static void RunSection(string fileName, string sectionName)
         {
             // TODO What happens if invalid file and/or section name is given
-            // [blink red]** [white]ERROR : [dark green]File [light green]rtnews02.ref [dark green]not found. [blink red]**
 
             // Run the selected script
-            _CurrentFile = _RefFiles[fileName];
-            _CurrentSection = _CurrentFile.Sections[sectionName];
-            _CurrentLineNumber = _InGOTOLineNumber;
-            _InGOTOLineNumber = 0;
-            RunScript(_CurrentSection.Script.ToArray());
-
-            // If we exit this script with _InGOTOHeader set, it means we want to GOTO a different section
-            if (_InGOTOHeader != "")
+            string FileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+            if (_RefFiles.ContainsKey(FileNameWithoutExtension))
             {
-                string TempGOTOHeader = _InGOTOHeader;
-                _InGOTOHeader = "";
-                RunSection(fileName, TempGOTOHeader);
+                _CurrentFile = _RefFiles[FileNameWithoutExtension];
+                if (_CurrentFile.Sections.ContainsKey(sectionName))
+                {
+                    _CurrentSection = _CurrentFile.Sections[sectionName];
+                    _CurrentLineNumber = _InGOTOLineNumber;
+                    _InGOTOLineNumber = 0;
+                    RunScript(_CurrentSection.Script.ToArray());
+
+                    // If we exit this script with _InGOTOHeader set, it means we want to GOTO a different section
+                    if (_InGOTOHeader != "")
+                    {
+                        string TempGOTOHeader = _InGOTOHeader;
+                        _InGOTOHeader = "";
+                        RunSection(FileNameWithoutExtension, TempGOTOHeader);
+                    }
+                }
+                else
+                {
+                    Door.WriteLn(TranslateVariables("`4`b**`b `%ERROR : `0" + sectionName + " `2not found in `0" + Path.GetFileName(fileName) + " `4`b**`b`2"));
+                    Door.ReadKey();
+                }
+            }
+            else
+            {
+                Door.WriteLn(TranslateVariables("`4`b**`b `%ERROR : `2File `0" + Path.GetFileName(fileName) + " `2not found. `4`b**`b`2"));
+                Door.ReadKey();
             }
         }
 

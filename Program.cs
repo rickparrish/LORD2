@@ -14,7 +14,7 @@ namespace LORD2
 
             // If new player, call newplayer in gametxt.ref
             // If player exists, call startgame in gametxt.ref
-            RTReader.RunSection("RTNEWS02", "START");
+            RTReader.RunSection("GAMETXT.REF", "NEWPLAYER");
             
             if (Debugger.IsAttached)
             {

@@ -131,6 +131,7 @@ namespace LORD2
             _DOCommands.Add("STRIPALL", CommandDO_STRIPALL);
             _DOCommands.Add("STRIPBAD", CommandDO_STRIPBAD);
             _DOCommands.Add("STRIPCODE", CommandDO_STRIPCODE);
+            _DOCommands.Add("TALK", CommandDO_TALK);
             _DOCommands.Add("TRIM", CommandDO_TRIM);
             _DOCommands.Add("UPCASE", CommandDO_UPCASE);
             _DOCommands.Add("WRITE", CommandDO_WRITE);
@@ -191,12 +192,18 @@ namespace LORD2
             _GlobalOther.Add("`k", "TODO MORE");
             // TODO `b and `. and `|
 
+            // TODO On all of these probably
+            _GlobalWords.Add("DEAD", "0");
             _GlobalWords.Add("LOCAL", (Door.Local() ? "5" : "0"));
             _GlobalWords.Add("MAP", "155");
             _GlobalWords.Add("RESPONCE", "0");
             _GlobalWords.Add("RESPONSE", "0");
             _GlobalWords.Add("SEX", "0"); // Male
             _GlobalWords.Add("SEXMALE", "1"); // True for male
+            _GlobalWords.Add("TIME", "1"); // Should be value from TIME.DAT, which is the number of days the game has been running
+            _GlobalWords.Add("WEP_NUM", "0");
+            _GlobalWords.Add("X", "27");
+            _GlobalWords.Add("Y", "7");
         }
 
         private void AssignVariable(string variable, string value)
@@ -298,7 +305,12 @@ namespace LORD2
             /* @BITSET <`tX> <bit> <Y>
                 Sets a certain bit in byte variable X to value Y.  Y must be 0 or 1.  This lets you 
                 have 8 yes/no variables to each byte variable. */
-            LogMissing(tokens);
+            string VariableName = tokens[1];
+            int StartValue = Convert.ToInt32(TranslateVariables(VariableName));
+            int BitToSet = Convert.ToInt32(TranslateVariables(tokens[2]));
+            int ValueToSet = Convert.ToInt32(TranslateVariables(tokens[3]));
+            int EndValue = StartValue | (ValueToSet << BitToSet);
+            AssignVariable(VariableName, EndValue.ToString());
         }
 
         private void CommandBUSY(string[] tokens)
@@ -888,6 +900,14 @@ namespace LORD2
             AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) - Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
         }
 
+        private void CommandDO_TALK(string[] tokens)
+        {
+            /* @DO TALK <message> [recipients]
+                Undocumented. Looks like recipients is usually ALL, which sends a global message
+                Lack of recipients value means message is only displayed to those on the same screen */
+            LogMissing(tokens);
+        }
+
         private void CommandDO_TRIM(string[] tokens)
         {
             /* @DO TRIM <file name> <number to trim to>
@@ -1068,6 +1088,13 @@ namespace LORD2
                   @SHOW
                   Yeah!  Bit 1 of t12 is TRUE!!! Yay.
                   @END */
+            /* Sample code for bitcheck
+                if (x & (1<<n)) {
+                  n-th bit is set
+                }
+                else {
+                  n-th bit is not set
+                }*/
             switch (tokens[2].ToUpper())
             {
                 case "EQUALS":
@@ -1629,12 +1656,15 @@ namespace LORD2
                 if (LineTrimmed.StartsWith("@#"))
                 {
                     // Store last section we were working on in dictionary
-                    if (NewFile.Sections.ContainsKey(NewSectionName)) {
+                    if (NewFile.Sections.ContainsKey(NewSectionName))
+                    {
                         // Section already exists, so we can't add it
                         // CASTLE4 has multiple DONE sections
                         // STONEB has multiple NOTHING sections
                         // Both appear harmless, but keep that in mind if either ever seems buggy
-                    } else {
+                    }
+                    else
+                    {
                         NewFile.Sections.Add(NewSectionName, NewSection);
                     }
 
@@ -1745,7 +1775,7 @@ namespace LORD2
                 else if (_InHALT != int.MinValue)
                 {
                     return;
-                } 
+                }
                 else if (_InIFFalse < 999)
                 {
                     if (LineTrimmed.StartsWith("@"))
@@ -1882,9 +1912,26 @@ namespace LORD2
             {
                 // TODO This isn't correct, since for example one of the global words is LOCAL, and so if a message says "my local calling area is 519" it'll be replaced with "my 5 calling area is 519"
                 // TODO It's good enough for now for me to test with though
-                if (input.ToUpper() == KVP.Key.ToUpper())
+                if (inputUpper == KVP.Key.ToUpper())
                 {
                     input = KVP.Value;
+                }
+                else if (inputUpper == "&" + KVP.Key.ToUpper())
+                {
+                    input = KVP.Value;
+                }
+                else if (inputUpper == "S&" + KVP.Key.ToUpper())
+                {
+                    char[] value = KVP.Value.ToCharArray();
+                    if (input.StartsWith("s"))
+                    {
+                        value[0] = char.ToLower(value[0]);
+                    }
+                    else
+                    {
+                        value[0] = char.ToUpper(value[0]);
+                    }
+                    input = new string(value);
                 }
                 else
                 {

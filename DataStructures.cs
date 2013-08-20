@@ -21,13 +21,6 @@ namespace LORD2
 
         public static bool Validate()
         {
-            int TraderDatRecordSize = Marshal.SizeOf(typeof(TraderDatRecord));
-            if (TraderDatRecordSize != 1193)
-            {
-                Crt.WriteLn("TraderDatRecord is " + TraderDatRecordSize + ", expected 1193");
-                return false;
-            }
-            
             int MAP_INFOSize = Marshal.SizeOf(typeof(MAP_INFO));
             if (MAP_INFOSize != 6)
             {
@@ -47,6 +40,20 @@ namespace LORD2
                 return false;
             }
 
+            int TraderDatRecordSize = Marshal.SizeOf(typeof(TraderDatRecord));
+            if (TraderDatRecordSize != 1193)
+            {
+                Crt.WriteLn("TraderDatRecord is " + TraderDatRecordSize + ", expected 1193");
+                return false;
+            }
+
+
+            int WorldDatRecordSize = Marshal.SizeOf(typeof(WorldDatRecord));
+            if (WorldDatRecordSize != 6231)
+            {
+                Crt.WriteLn("WorldDatRecord is " + WorldDatRecordSize + ", expected 6231");
+                return false;
+            }
             return true;
         }
     }
@@ -253,5 +260,66 @@ namespace LORD2
                 RMEncoding.Ansi.GetBytes(value, 0, _RealNameLength, _RealName, 0);
             }
         }
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    internal struct WorldDatRecord
+    {
+        private Byte _NameLength;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 60)]
+        private Byte[] _Name;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1600)]
+        public Int16[] Location;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]
+        public Int32[] V;
+        private Byte _S1Length;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
+        private Byte[] _S1;
+        private Byte _S2Length;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
+        private Byte[] _S2;
+        private Byte _S3Length;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
+        private Byte[] _S3;
+        private Byte _S4Length;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
+        private Byte[] _S4;
+        private Byte _S5Length;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
+        private Byte[] _S5;
+        private Byte _S6Length;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
+        private Byte[] _S6;
+        private Byte _S7Length;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
+        private Byte[] _S7;
+        private Byte _S8Length;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
+        private Byte[] _S8;
+        private Byte _S9Length;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
+        private Byte[] _S9;
+        private Byte _S10Length;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
+        private Byte[] _S10;
+        public Int32 Time; // Literally yyyy+mm+dd, ie 2013+08+20 = 2041
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1600)]
+        public Byte[] Show; // Show up on the player's "auto map"?
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 396)]
+        public Char[] Extra;
+
+        public string Name
+        {
+            get
+            {
+                return RMEncoding.Ansi.GetString(_Name, 0, _NameLength);
+            }
+            set
+            {
+                _NameLength = (byte)Math.Min(value.Length, _Name.Length);
+                RMEncoding.Ansi.GetBytes(value, 0, _NameLength, _Name, 0);
+            }
+        }
+        // TODO Need some way to access private S variables
     }
 }

@@ -16,18 +16,21 @@ namespace LORD2
             if (DataStructures.Validate())
             {
                 RTReader RTR = new RTReader();
-                if (PlayerExists())
+                
+                // Check if user has a player already
+                bool PE = PlayerExists();
+
+                // Nope, so try to get them to create one
+                if (!PE) RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
+
+                // Now check again to see if the user has a player (either because they already had one, or because they just created one)
+                if (PE || PlayerExists())
                 {
                     // Player exists, so start the game
                     RTR.RunSection("GAMETXT.REF", "STARTGAME");
-                }
-                else
-                {
-                    // Player does not exist, so run the new player routine
-                    RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
 
-                    // Check if user created a player
-                    if (PlayerExists()) RTR.RunSection("GAMETXT.REF", "STARTGAME");
+                    // We're now in map mode until we hit a hotspot
+                    DrawMap(155, 27, 7);
                 }
             }
             else
@@ -46,6 +49,12 @@ namespace LORD2
             }
 
             Door.Shutdown();
+        }
+
+        static void DrawMap(int mapNumber, int x, int y)
+        {
+            // First determine which block in MAP.DAT the given map number is
+
         }
 
         static bool PlayerExists()

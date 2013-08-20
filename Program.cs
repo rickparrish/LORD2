@@ -20,6 +20,7 @@ namespace LORD2
         static void Main(string[] args)
         {
             // Initialize door driver
+            Crt.HideCursor();
             Door.Startup(args);
             Door.ClrScr();
 

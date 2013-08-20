@@ -164,22 +164,23 @@ namespace LORD2
             _GlobalOther.Add("`G", (Door.DropInfo.Emulation == DoorEmulationType.ANSI ? "3" : "0"));
             _GlobalOther.Add("`X", " ");
             _GlobalOther.Add("`D", "\x08");
-            _GlobalOther.Add("`1", Ansi.TextColor(Crt.Blue));
-            _GlobalOther.Add("`2", Ansi.TextColor(Crt.Green));
-            _GlobalOther.Add("`3", Ansi.TextColor(Crt.Cyan));
-            _GlobalOther.Add("`4", Ansi.TextColor(Crt.Red));
-            _GlobalOther.Add("`5", Ansi.TextColor(Crt.Magenta));
-            _GlobalOther.Add("`6", Ansi.TextColor(Crt.Brown));
-            _GlobalOther.Add("`7", Ansi.TextColor(Crt.LightGray));
-            _GlobalOther.Add("`8", Ansi.TextColor(Crt.White)); // Supposed to be dark gray, but actually white
-            _GlobalOther.Add("`9", Ansi.TextColor(Crt.LightBlue));
-            _GlobalOther.Add("`0", Ansi.TextColor(Crt.LightGreen));
-            _GlobalOther.Add("`!", Ansi.TextColor(Crt.LightCyan));
-            _GlobalOther.Add("`@", Ansi.TextColor(Crt.LightRed));
-            _GlobalOther.Add("`#", Ansi.TextColor(Crt.LightMagenta));
-            _GlobalOther.Add("`$", Ansi.TextColor(Crt.Yellow));
-            _GlobalOther.Add("`%", Ansi.TextColor(Crt.White));
-            _GlobalOther.Add("`^", Ansi.TextColor(15));
+            //TODO Must be handled right in TranslateVariables, to ensure current text attr is taken into account
+            //TODO Ideally these (and the delays and some others below) should be handled right at output time (ie in door.write())
+            //_GlobalOther.Add("`1", Ansi.TextColor(Crt.Blue));
+            //_GlobalOther.Add("`2", Ansi.TextColor(Crt.Green));
+            //_GlobalOther.Add("`3", Ansi.TextColor(Crt.Cyan));
+            //_GlobalOther.Add("`4", Ansi.TextColor(Crt.Red));
+            //_GlobalOther.Add("`5", Ansi.TextColor(Crt.Magenta));
+            //_GlobalOther.Add("`6", Ansi.TextColor(Crt.Brown));
+            //_GlobalOther.Add("`7", Ansi.TextColor(Crt.LightGray));
+            //_GlobalOther.Add("`8", Ansi.TextColor(Crt.White)); // Supposed to be dark gray, but actually white
+            //_GlobalOther.Add("`9", Ansi.TextColor(Crt.LightBlue));
+            //_GlobalOther.Add("`0", Ansi.TextColor(Crt.LightGreen));
+            //_GlobalOther.Add("`!", Ansi.TextColor(Crt.LightCyan));
+            //_GlobalOther.Add("`@", Ansi.TextColor(Crt.LightRed));
+            //_GlobalOther.Add("`#", Ansi.TextColor(Crt.LightMagenta));
+            //_GlobalOther.Add("`$", Ansi.TextColor(Crt.Yellow));
+            //_GlobalOther.Add("`%", Ansi.TextColor(Crt.White));
             _GlobalOther.Add("`W", "TODO 1/10s");
             _GlobalOther.Add("`L", "TODO 1/2s");
             _GlobalOther.Add("`\\", "\r\n");
@@ -1787,7 +1788,6 @@ namespace LORD2
             while (_CurrentLineNumber < script.Length)
             {
                 string Line = script[_CurrentLineNumber];
-                string LineTranslated = TranslateVariables(Line);
                 string LineTrimmed = Line.Trim();
 
                 if (_InCLOSESCRIPT)
@@ -1847,13 +1847,13 @@ namespace LORD2
                         }
                         else if (_InDOWrite)
                         {
-                            Door.Write(LineTranslated);
+                            Door.Write(TranslateVariables(Line));
                             _InDOWrite = false;
                         }
                         else if (_InSAY)
                         {
                             // TODO SHould be in TEXT window
-                            Door.Write(LineTranslated);
+                            Door.Write(TranslateVariables(Line));
                         }
                         else if (_InSAYBAR)
                         {
@@ -1864,7 +1864,7 @@ namespace LORD2
                             // Output new bar
                             Door.GotoXY(3, 21);
                             Door.TextAttr(31);
-                            Door.Write(StringUtils.PadBoth(LineTranslated, ' ', 76)); // TODO LineTranslated includes ansi escape sequences, so padding is not correct
+                            Door.Write(StringUtils.PadBoth(TranslateVariables(Line), ' ', 76)); // TODO LineTranslated includes ansi escape sequences, so padding is not correct
                             // TODO say bar should be removed after 3 seconds or so
 
                             // Restore
@@ -1875,19 +1875,19 @@ namespace LORD2
                         }
                         else if (_InSHOW)
                         {
-                            Door.WriteLn(LineTranslated);
+                            Door.WriteLn(TranslateVariables(Line));
                         }
                         else if (_InSHOWLOCAL)
                         {
-                            Ansi.Write(LineTranslated + "\r\n");
+                            Ansi.Write(TranslateVariables(Line) + "\r\n");
                         }
                         else if (_InSHOWSCROLL)
                         {
-                            _InSHOWSCROLLLines.Add(LineTranslated);
+                            _InSHOWSCROLLLines.Add(TranslateVariables(Line));
                         }
                         else if (_InWRITEFILE != "")
                         {
-                            FileUtils.FileAppendAllText(_InWRITEFILE, LineTranslated + Environment.NewLine, RMEncoding.Ansi);
+                            FileUtils.FileAppendAllText(_InWRITEFILE, TranslateVariables(Line) + Environment.NewLine, RMEncoding.Ansi);
                         }
                     }
                 }
@@ -1903,46 +1903,65 @@ namespace LORD2
         {
             string inputUpper = input.ToUpper();
 
-            if (inputUpper.Contains("`I"))
+            if (input.Contains("`"))
             {
-                foreach (KeyValuePair<string, short> KVP in _GlobalI)
+                input = Regex.Replace(input, "`1", Ansi.TextColor(Crt.Blue));
+                input = Regex.Replace(input, "`2", Ansi.TextColor(Crt.Green));
+                input = Regex.Replace(input, "`3", Ansi.TextColor(Crt.Cyan));
+                input = Regex.Replace(input, "`4", Ansi.TextColor(Crt.Red));
+                input = Regex.Replace(input, "`5", Ansi.TextColor(Crt.Magenta));
+                input = Regex.Replace(input, "`6", Ansi.TextColor(Crt.Brown));
+                input = Regex.Replace(input, "`7", Ansi.TextColor(Crt.LightGray));
+                input = Regex.Replace(input, "`8", Ansi.TextColor(Crt.White)); // Supposed to be dark gray, but actually white
+                input = Regex.Replace(input, "`9", Ansi.TextColor(Crt.LightBlue));
+                input = Regex.Replace(input, "`0", Ansi.TextColor(Crt.LightGreen));
+                input = Regex.Replace(input, "`!", Ansi.TextColor(Crt.LightCyan));
+                input = Regex.Replace(input, "`@", Ansi.TextColor(Crt.LightRed));
+                input = Regex.Replace(input, "`#", Ansi.TextColor(Crt.LightMagenta));
+                input = Regex.Replace(input, "`$", Ansi.TextColor(Crt.Yellow));
+                input = Regex.Replace(input, "`%", Ansi.TextColor(Crt.White));
+
+                if (inputUpper.Contains("`I"))
                 {
-                    input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                    foreach (KeyValuePair<string, short> KVP in _GlobalI)
+                    {
+                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                    }
                 }
-            }
-            if (inputUpper.Contains("`P"))
-            {
-                foreach (KeyValuePair<string, int> KVP in _GlobalP)
+                if (inputUpper.Contains("`P"))
                 {
-                    input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                    foreach (KeyValuePair<string, int> KVP in _GlobalP)
+                    {
+                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                    }
                 }
-            }
-            if (inputUpper.Contains("`+"))
-            {
-                foreach (KeyValuePair<string, string> KVP in _GlobalPLUS)
+                if (inputUpper.Contains("`+"))
                 {
-                    input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
+                    foreach (KeyValuePair<string, string> KVP in _GlobalPLUS)
+                    {
+                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
+                    }
                 }
-            }
-            if (inputUpper.Contains("`S"))
-            {
-                foreach (KeyValuePair<string, string> KVP in _GlobalS)
+                if (inputUpper.Contains("`S"))
                 {
-                    input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
+                    foreach (KeyValuePair<string, string> KVP in _GlobalS)
+                    {
+                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
+                    }
                 }
-            }
-            if (inputUpper.Contains("`T"))
-            {
-                foreach (KeyValuePair<string, byte> KVP in _GlobalT)
+                if (inputUpper.Contains("`T"))
                 {
-                    input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                    foreach (KeyValuePair<string, byte> KVP in _GlobalT)
+                    {
+                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                    }
                 }
-            }
-            if (inputUpper.Contains("`V"))
-            {
-                foreach (KeyValuePair<string, int> KVP in _GlobalV)
+                if (inputUpper.Contains("`V"))
                 {
-                    input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                    foreach (KeyValuePair<string, int> KVP in _GlobalV)
+                    {
+                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                    }
                 }
             }
             foreach (KeyValuePair<string, string> KVP in _GlobalOther)

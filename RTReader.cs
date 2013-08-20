@@ -501,6 +501,7 @@ namespace LORD2
 
         private void CommandCOPYFILE(string[] tokens)
         {
+            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @COPYFILE <input filename> <output filename>
                 This command copies a <input filename to <output filename>.           */
             LogMissing(tokens);
@@ -598,6 +599,7 @@ namespace LORD2
 
         private void CommandDO_BEEP(string[] tokens)
         {
+            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @DO BEEP
                 Makes a weird beep noise, locally only */
             LogMissing(tokens);
@@ -880,6 +882,7 @@ namespace LORD2
 
         private void CommandDO_STRIPALL(string[] tokens)
         {
+            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @DO STRIPALL
                 This command strips out all ` codes.  This is good for passwords, etc. */
             LogMissing(tokens);
@@ -895,6 +898,7 @@ namespace LORD2
 
         private void CommandDO_STRIPCODE(string[] tokens)
         {
+            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @STRIPCODE <any `s variable>
                 This will remove ALL ` codes from a string. */
             LogMissing(tokens);
@@ -1049,6 +1053,7 @@ namespace LORD2
 
         private void CommandGRAPHICS(string[] tokens)
         {
+            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @GRAPHICS IS <Num> 
                 3 or more enable remote ANSI.  If you never wanted to send ANSI, you could set 
                 this to 1. You will probably never touch this one. */
@@ -1255,6 +1260,7 @@ namespace LORD2
 
         private void CommandLOADGLOBALS(string[] tokens)
         {
+            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @LOADGLOBALS
                 This command loads the last value of all global variables as existed when the 
                 last @SAVEGLOBALS command was issued.  See @SAVEGLOBALS below. */
@@ -1275,6 +1281,7 @@ namespace LORD2
 
         private void CommandLOADWORLD(string[] tokens)
         {
+            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @LOADWORLD
                 This command loads globals and world data.  It has never been used but is 
                 included just in case it becomes necessary to do this.  See @SAVEWORLD below. */
@@ -1303,6 +1310,7 @@ namespace LORD2
 
         private void CommandMOREMAP(string[] tokens)
         {
+            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @MOREMAP
                 The line UNDER this will be the new <more> prompt.  30 characters maximum. */
             LogMissing(tokens);
@@ -1365,6 +1373,7 @@ namespace LORD2
 
         private void CommandPROGNAME(string[] tokens)
         {
+            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @PROGNAME
                 The line UNDER this will be the status bar name of the game. */
             LogMissing(tokens);
@@ -1372,6 +1381,7 @@ namespace LORD2
 
         private void CommandRANK(string[] tokens)
         {
+            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @RANK <filename> <`p variable to rank by> <procedure to format the ranking>
                 This command is the same as above with the exception it uses a procedure to 
                 format the ranking.  This procedure needs to be in the same file as the @RANK 
@@ -1435,6 +1445,7 @@ namespace LORD2
 
         private void CommandSAVEWORLD(string[] tokens)
         {
+            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @SAVEWORLD
                 This command saves stats and world data.  The only use yet is right after 
                 @#maint is called to save random stats set for that day and such. */
@@ -1498,6 +1509,7 @@ namespace LORD2
 
         private void CommandSTATBAR(string[] tokens)
         {
+            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @STATBAR
                 This draws the statbar. */
             LogMissing(tokens);

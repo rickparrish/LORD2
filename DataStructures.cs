@@ -18,6 +18,37 @@ namespace LORD2
             pinnedBuffer.Free();
             return structure;
         }
+
+        public static bool Validate()
+        {
+            int TraderDatRecordSize = Marshal.SizeOf(typeof(TraderDatRecord));
+            if (TraderDatRecordSize != 1193)
+            {
+                Crt.WriteLn("TraderDatRecord is " + TraderDatRecordSize + ", expected 1193");
+                return false;
+            }
+            
+            int MAP_INFOSize = Marshal.SizeOf(typeof(MAP_INFO));
+            if (MAP_INFOSize != 6)
+            {
+                Crt.WriteLn("MAP_INFO is " + MAP_INFOSize + ", expected 6");
+                return false;
+            }
+            int SPECIAL_STRUCTSize = Marshal.SizeOf(typeof(SPECIAL_STRUCT));
+            if (SPECIAL_STRUCTSize != 132)
+            {
+                Crt.WriteLn("SPECIAL_STRUCT is " + SPECIAL_STRUCTSize + ", expected 132");
+                return false;
+            }
+            int MapDatRecordSize = Marshal.SizeOf(typeof(MapDatRecord));
+            if (MapDatRecordSize != 11451)
+            {
+                Crt.WriteLn("MapDatRecord is " + MapDatRecordSize + ", expected 11451");
+                return false;
+            }
+
+            return true;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
@@ -90,7 +121,7 @@ namespace LORD2
         private Byte _BatNameLength; // Ref file section header
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
         private Byte[] _BatName;
-        public Byte Safe; // True if players cannot fight on this screen TODO is bool OK?
+        private Byte _Safe; // True if players cannot fight on this screen TODO is bool OK?
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 469)]
         public Char[] Extra;
 
@@ -128,6 +159,17 @@ namespace LORD2
             {
                 _NameLength = (byte)Math.Min(value.Length, _Name.Length);
                 RMEncoding.Ansi.GetBytes(value, 0, _NameLength, _Name, 0);
+            }
+        }
+        public bool Safe
+        {
+            get
+            {
+                return Convert.ToBoolean(_Safe);
+            }
+            set
+            {
+                _Safe = Convert.ToByte(value);
             }
         }
     }

@@ -9,42 +9,35 @@ namespace LORD2
     {
         static void Main(string[] args)
         {
-            // Validate data structures
-            int TraderDatRecordSize = Marshal.SizeOf(typeof(TraderDatRecord));
-            if (TraderDatRecordSize != 1193)
-            {
-                Crt.WriteLn("TraderDatRecord is " + TraderDatRecordSize + ", expected 1193");
-                Crt.ReadKey();
-                return;
-            }
-            int MAP_INFOSize = Marshal.SizeOf(typeof(MAP_INFO));
-            if (MAP_INFOSize != 6)
-            {
-                Crt.WriteLn("MAP_INFO is " + MAP_INFOSize + ", expected 6");
-                Crt.ReadKey();
-                return;
-            }
-            int SPECIAL_STRUCTSize = Marshal.SizeOf(typeof(SPECIAL_STRUCT));
-            if (SPECIAL_STRUCTSize != 132)
-            {
-                Crt.WriteLn("SPECIAL_STRUCT is " + SPECIAL_STRUCTSize + ", expected 132");
-                Crt.ReadKey();
-                return;
-            }
-            int MapDatRecordSize = Marshal.SizeOf(typeof(MapDatRecord));
-            if (MapDatRecordSize != 11451)
-            {
-                Crt.WriteLn("MapDatRecord is " + MapDatRecordSize + ", expected 11451");
-                Crt.ReadKey();
-                return;
-            }
-
             // Initialize door driver
             Door.Startup(args);
+            Door.ClrScr();
 
-            RTReader RTR = new RTReader();
-            if (!PlayerExists()) RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
-            if (PlayerExists()) RTR.RunSection("GAMETXT.REF", "STARTGAME");
+            if (DataStructures.Validate())
+            {
+                RTReader RTR = new RTReader();
+                if (PlayerExists())
+                {
+                    // Player exists, so start the game
+                    RTR.RunSection("GAMETXT.REF", "STARTGAME");
+                }
+                else
+                {
+                    // Player does not exist, so run the new player routine
+                    RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
+
+                    // Check if user created a player
+                    if (PlayerExists()) RTR.RunSection("GAMETXT.REF", "STARTGAME");
+                }
+            }
+            else
+            {
+                Door.WriteLn("ERROR: Data structure size mismatch.  Please inform your SysOp");
+                Door.WriteLn();
+                Door.WriteLn("Hit a key to quit");
+                Door.ReadKey();
+            }
+
 
             if (Debugger.IsAttached)
             {
@@ -57,8 +50,7 @@ namespace LORD2
 
         static bool PlayerExists()
         {
-            // TODO Check if TRADER.DAT contains Door.DropInfo.Alias
-            string TraderDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "TRADER.DAT");
+            string TraderDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "TRADER.DAT"); // TODO Move filenames to another class as constants
             if (File.Exists(TraderDatFileName))
             {
                 using (FileStream FS = new FileStream(TraderDatFileName, FileMode.Open))

@@ -164,37 +164,6 @@ namespace LORD2
             _GlobalOther.Add("`G", (Door.DropInfo.Emulation == DoorEmulationType.ANSI ? "3" : "0"));
             _GlobalOther.Add("`X", " ");
             _GlobalOther.Add("`D", "\x08");
-            //TODO Must be handled right in TranslateVariables, to ensure current text attr is taken into account
-            //TODO Ideally these (and the delays and some others below) should be handled right at output time (ie in door.write())
-            //_GlobalOther.Add("`1", Ansi.TextColor(Crt.Blue));
-            //_GlobalOther.Add("`2", Ansi.TextColor(Crt.Green));
-            //_GlobalOther.Add("`3", Ansi.TextColor(Crt.Cyan));
-            //_GlobalOther.Add("`4", Ansi.TextColor(Crt.Red));
-            //_GlobalOther.Add("`5", Ansi.TextColor(Crt.Magenta));
-            //_GlobalOther.Add("`6", Ansi.TextColor(Crt.Brown));
-            //_GlobalOther.Add("`7", Ansi.TextColor(Crt.LightGray));
-            //_GlobalOther.Add("`8", Ansi.TextColor(Crt.White)); // Supposed to be dark gray, but actually white
-            //_GlobalOther.Add("`9", Ansi.TextColor(Crt.LightBlue));
-            //_GlobalOther.Add("`0", Ansi.TextColor(Crt.LightGreen));
-            //_GlobalOther.Add("`!", Ansi.TextColor(Crt.LightCyan));
-            //_GlobalOther.Add("`@", Ansi.TextColor(Crt.LightRed));
-            //_GlobalOther.Add("`#", Ansi.TextColor(Crt.LightMagenta));
-            //_GlobalOther.Add("`$", Ansi.TextColor(Crt.Yellow));
-            //_GlobalOther.Add("`%", Ansi.TextColor(Crt.White));
-            _GlobalOther.Add("`W", "TODO 1/10s");
-            _GlobalOther.Add("`L", "TODO 1/2s");
-            _GlobalOther.Add("`\\", "\r\n");
-            _GlobalOther.Add("`r0", Ansi.TextBackground(Crt.Black));
-            _GlobalOther.Add("`r1", Ansi.TextBackground(Crt.Blue));
-            _GlobalOther.Add("`r2", Ansi.TextBackground(Crt.Green));
-            _GlobalOther.Add("`r3", Ansi.TextBackground(Crt.Cyan));
-            _GlobalOther.Add("`r4", Ansi.TextBackground(Crt.Red));
-            _GlobalOther.Add("`r5", Ansi.TextBackground(Crt.Magenta));
-            _GlobalOther.Add("`r6", Ansi.TextBackground(Crt.Brown));
-            _GlobalOther.Add("`r7", Ansi.TextBackground(Crt.LightGray));
-            _GlobalOther.Add("`c", Ansi.ClrScr() + "\r\n\r\n"); // TODO only `c works in RTReader, not `C -- bug, or should `C really not work?
-            _GlobalOther.Add("`k", "TODO MORE");
-            // TODO `b and `. and `|
 
             // TODO On all of these probably
             _GlobalWords.Add("DEAD", "0");
@@ -1876,7 +1845,10 @@ namespace LORD2
                             // Output new bar
                             Door.GotoXY(3, 21);
                             Door.TextAttr(31);
-                            Door.Write(StringUtils.PadBoth(TranslateVariables(Line), ' ', 76)); // TODO LineTranslated includes ansi escape sequences, so padding is not correct
+                            int StrippedLength = Door.StripSeth(TranslateVariables(Line)).Length;
+                            int LeftSpaces = Math.Max(0, (76 - StrippedLength) / 2);
+                            int RightSpaces = Math.Max(0, 76 - StrippedLength - LeftSpaces);
+                            Door.Write(new string(' ', LeftSpaces) + TranslateVariables(Line) + new string(' ', RightSpaces));
                             // TODO say bar should be removed after 3 seconds or so
 
                             // Restore
@@ -1917,22 +1889,6 @@ namespace LORD2
 
             if (input.Contains("`"))
             {
-                input = Regex.Replace(input, "`1", Ansi.TextColor(Crt.Blue));
-                input = Regex.Replace(input, "`2", Ansi.TextColor(Crt.Green));
-                input = Regex.Replace(input, "`3", Ansi.TextColor(Crt.Cyan));
-                input = Regex.Replace(input, "`4", Ansi.TextColor(Crt.Red));
-                input = Regex.Replace(input, "`5", Ansi.TextColor(Crt.Magenta));
-                input = Regex.Replace(input, "`6", Ansi.TextColor(Crt.Brown));
-                input = Regex.Replace(input, "`7", Ansi.TextColor(Crt.LightGray));
-                input = Regex.Replace(input, "`8", Ansi.TextColor(Crt.White)); // Supposed to be dark gray, but actually white
-                input = Regex.Replace(input, "`9", Ansi.TextColor(Crt.LightBlue));
-                input = Regex.Replace(input, "`0", Ansi.TextColor(Crt.LightGreen));
-                input = Regex.Replace(input, "`!", Ansi.TextColor(Crt.LightCyan));
-                input = Regex.Replace(input, "`@", Ansi.TextColor(Crt.LightRed));
-                input = Regex.Replace(input, "`#", Ansi.TextColor(Crt.LightMagenta));
-                input = Regex.Replace(input, "`$", Ansi.TextColor(Crt.Yellow));
-                input = Regex.Replace(input, "`%", Ansi.TextColor(Crt.White));
-
                 if (inputUpper.Contains("`I"))
                 {
                     foreach (KeyValuePair<string, short> KVP in _GlobalI)

@@ -23,6 +23,7 @@ namespace LORD2
             Crt.HideCursor();
             Door.Startup(args);
             Door.ClrScr();
+            Door.SethWrite = true;
 
             if (DataStructures.Validate())
             {

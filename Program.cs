@@ -1,10 +1,7 @@
 ﻿using RandM.RMLib;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace LORD2
 {
@@ -12,6 +9,37 @@ namespace LORD2
     {
         static void Main(string[] args)
         {
+            // Validate data structures
+            int TraderDatRecordSize = Marshal.SizeOf(typeof(TraderDatRecord));
+            if (TraderDatRecordSize != 1193)
+            {
+                Crt.WriteLn("TraderDatRecord is " + TraderDatRecordSize + ", expected 1193");
+                Crt.ReadKey();
+                return;
+            }
+            int MAP_INFOSize = Marshal.SizeOf(typeof(MAP_INFO));
+            if (MAP_INFOSize != 6)
+            {
+                Crt.WriteLn("MAP_INFO is " + MAP_INFOSize + ", expected 6");
+                Crt.ReadKey();
+                return;
+            }
+            int SPECIAL_STRUCTSize = Marshal.SizeOf(typeof(SPECIAL_STRUCT));
+            if (SPECIAL_STRUCTSize != 132)
+            {
+                Crt.WriteLn("SPECIAL_STRUCT is " + SPECIAL_STRUCTSize + ", expected 132");
+                Crt.ReadKey();
+                return;
+            }
+            int MapDatRecordSize = Marshal.SizeOf(typeof(MapDatRecord));
+            if (MapDatRecordSize != 11451)
+            {
+                Crt.WriteLn("MapDatRecord is " + MapDatRecordSize + ", expected 11451");
+                Crt.ReadKey();
+                return;
+            }
+
+            // Initialize door driver
             Door.Startup(args);
 
             RTReader RTR = new RTReader();
@@ -30,77 +58,22 @@ namespace LORD2
         static bool PlayerExists()
         {
             // TODO Check if TRADER.DAT contains Door.DropInfo.Alias
-            using (FileStream FS = new FileStream(@"Z:\Programming\GameSrv\bin\Debug\doors\lord2\TRADER.DAT", FileMode.Open))
+            string TraderDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "TRADER.DAT");
+            if (File.Exists(TraderDatFileName))
             {
-                TraderDatRecord TDR = StreamExtensions.ReadStruct<TraderDatRecord>(FS);
-                Crt.WriteLn("Name: " + TDR.Name);
-                Crt.WriteLn("Real Name: " + TDR.RealName);
-                Crt.WriteLn("Race: " + TDR.Race);
-                return false;
+                using (FileStream FS = new FileStream(TraderDatFileName, FileMode.Open))
+                {
+                    long FSLength = FS.Length;
+                    while (FS.Position < FSLength)
+                    {
+                        TraderDatRecord TDR = DataStructures.ReadStruct<TraderDatRecord>(FS);
+                        if (TDR.RealName.ToUpper() == Door.DropInfo.Alias.ToUpper()) return true;
+                    }
+                }
             }
-        }
 
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
-        internal struct TraderDatRecord
-        {
-            private byte _NameLength;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 25)]
-            private byte[] _Name;
-            private byte _RealNameLength;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]
-            private byte[] _RealName;
-            public Int32 Gold;
-            public Int32 Bank;
-            public Int32 Experience;
-            public Int16 LastDayOn;
-            public Int16 Love;
-            public SByte WeaponNumber;
-            public SByte ArmourNumber;
-            private byte _RaceLength;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 30)]
-            private byte[] _Race;
-            public Int16 SexMale; // 1 = male
-            public Byte OnNow;
-            public Byte Battle;
-            public Int16 Dead; // 1 = dead
-            public Int16 Busy;
-            public Int16 Deleted; // 1 = deleted
-            public Int16 Nice;
-            public Int16 Map; // map block #
-            public Int16 E6;
-            public Int16 X;
-            public Int16 Y;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 99)]
-            public Int16[] Item;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 99)]
-            public Int32[] P;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 99)]
-            public byte[] B;
-            public Int32 LastSaved;
-            public Int32 LastDayPlayed;
-            public Int16 LastMap; // last VISIBLE map player was on
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 354)]
-            public char[] Extra;
-
-            public string Name { get { return RMEncoding.Ansi.GetString(_Name, 0, _NameLength); } }
-            public string Race { get { return RMEncoding.Ansi.GetString(_Race, 0, _RaceLength); } }
-            public string RealName { get { return RMEncoding.Ansi.GetString(_RealName, 0, _RealNameLength); } }
-        }
-    }
-
-    // Taken from http://stackoverflow.com/questions/4159184/c-read-structures-from-binary-file
-    public static class StreamExtensions
-    {
-        public static T ReadStruct<T>(Stream stream) where T : struct
-        {
-            var sz = Marshal.SizeOf(typeof(T));
-            var buffer = new byte[sz];
-            stream.Read(buffer, 0, sz);
-            var pinnedBuffer = GCHandle.Alloc(buffer, GCHandleType.Pinned);
-            var structure = (T)Marshal.PtrToStructure(
-                pinnedBuffer.AddrOfPinnedObject(), typeof(T));
-            pinnedBuffer.Free();
-            return structure;
+            // If we get here, user doesn't have an account yet
+            return false;
         }
     }
 }

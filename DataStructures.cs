@@ -118,7 +118,7 @@ namespace LORD2
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 30)]
         private Byte[] _Name;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1600)]
-        private MAP_INFO[] _W;
+        public MAP_INFO[] W;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
         public SPECIAL_STRUCT[] Special;
         public Int32 BattleOdds; // Odds of running the "screen random" ref

@@ -10,9 +10,11 @@ namespace LORD2
     class Program
     {
         static private MapDatRecord _CurrentMap;
-        static private int _LastX = 27; // TODO
-        static private int _LastY = 7; // TODO
+        static private int _LastX = 0;
+        static private int _LastY = 0;
+        static private TraderDatRecord _Player;
         static private List<MapDatRecord> _MapDat = new List<MapDatRecord>();
+        static private RTReader _RTR;
         static private WorldDatRecord _WorldDat;
 
         static void Main(string[] args)
@@ -25,22 +27,26 @@ namespace LORD2
             {
                 if (LoadDataFiles())
                 {
-                    RTReader RTR = new RTReader();
+                    _RTR = new RTReader();
+                    _RTR.OnMoveBack += RTR_OnMoveBack;
 
                     // Check if user has a player already
-                    bool PE = PlayerExists();
-
-                    // Nope, so try to get them to create one
-                    if (!PE) RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
+                    bool PlayerLoaded = LoadPlayer(out _Player);
+                    if (!PlayerLoaded)
+                    {
+                        // Nope, so try to get them to create one
+                        _RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
+                        PlayerLoaded = LoadPlayer(out _Player);
+                    }
 
                     // Now check again to see if the user has a player (either because they already had one, or because they just created one)
-                    if (PE || PlayerExists())
+                    if (PlayerLoaded)
                     {
                         // Player exists, so start the game
-                        RTR.RunSection("GAMETXT.REF", "STARTGAME");
+                        _RTR.RunSection("GAMETXT.REF", "STARTGAME");
 
                         // We're now in map mode until we hit a hotspot
-                        LoadMap(155);
+                        LoadMap(_Player.Map);
                         DrawMap();
 
                         // Allow player to move around
@@ -53,10 +59,10 @@ namespace LORD2
                                 Ch = char.ToUpper((char)Ch);
                                 switch (Ch)
                                 {
-                                    case '8': Move(0, -1); break;
-                                    case '4': Move(-1, 0); break;
-                                    case '6': Move(1, 0); break;
-                                    case '2': Move(0, 1); break;
+                                    case '8': MovePlayer(0, -1); break;
+                                    case '4': MovePlayer(-1, 0); break;
+                                    case '6': MovePlayer(1, 0); break;
+                                    case '2': MovePlayer(0, 1); break;
                                 }
                             }
                         }
@@ -98,7 +104,7 @@ namespace LORD2
             for (int y = 0; y < 20; y++)
             {
                 StringBuilder ToSend = new StringBuilder();
-                
+
                 for (int x = 0; x < 80; x++)
                 {
                     MAP_INFO MI = _CurrentMap.W[y + (x * 20)];
@@ -122,16 +128,16 @@ namespace LORD2
             }
 
             // Draw the player
-            DrawPlayer(_LastX, _LastY);
+            DrawPlayer(_Player.X, _Player.Y);
         }
 
         static void DrawPlayer(int x, int y)
         {
             // Erase the previous position
-            Door.TextBackground(_CurrentMap.W[(_LastY - 1) + ((_LastX - 1) * 20)].BackgroundColour);
-            Door.TextColor(_CurrentMap.W[(_LastY - 1) + ((_LastX - 1) * 20)].ForegroundColour);
-            Door.GotoXY(_LastX, _LastY);
-            Door.Write(_CurrentMap.W[(_LastY - 1) + ((_LastX - 1) * 20)].Character.ToString());
+            Door.TextBackground(_CurrentMap.W[(_Player.Y - 1) + ((_Player.X - 1) * 20)].BackgroundColour);
+            Door.TextColor(_CurrentMap.W[(_Player.Y - 1) + ((_Player.X - 1) * 20)].ForegroundColour);
+            Door.GotoXY(_Player.X, _Player.Y);
+            Door.Write(_CurrentMap.W[(_Player.Y - 1) + ((_Player.X - 1) * 20)].Character.ToString());
 
             // And draw the player
             Door.TextBackground(_CurrentMap.W[(y - 1) + ((x - 1) * 20)].BackgroundColour);
@@ -140,8 +146,10 @@ namespace LORD2
             Door.Write("\x02");
 
             // Store the last position for erasing later
-            _LastX = x;
-            _LastY = y;
+            _LastX = _Player.X;
+            _LastY = _Player.Y;
+            _Player.X = (short)x;
+            _Player.Y = (short)y;
         }
 
         static bool LoadDataFiles()
@@ -194,18 +202,7 @@ namespace LORD2
             _CurrentMap = _MapDat[MapBlockNumber - 1]; // 0 based block number
         }
 
-        static void Move(int xoffset, int yoffset)
-        {
-            int x = _LastX + xoffset;
-            int y = _LastY + yoffset;
-            
-            if (_CurrentMap.W[(y - 1) + ((x - 1) * 20)].Terrain != 0)
-            {
-                DrawPlayer(x, y);
-            }
-        }
-
-        static bool PlayerExists()
+        static bool LoadPlayer(out TraderDatRecord record)
         {
             string TraderDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "TRADER.DAT"); // TODO Move filenames to another class as constants
             if (File.Exists(TraderDatFileName))
@@ -216,13 +213,59 @@ namespace LORD2
                     while (FS.Position < FSLength)
                     {
                         TraderDatRecord TDR = DataStructures.ReadStruct<TraderDatRecord>(FS);
-                        if (TDR.RealName.ToUpper() == Door.DropInfo.Alias.ToUpper()) return true;
+                        if (TDR.RealName.ToUpper() == Door.DropInfo.Alias.ToUpper())
+                        {
+                            record = TDR;
+                            return true;
+                        }
                     }
                 }
             }
 
             // If we get here, user doesn't have an account yet
+            record = new TraderDatRecord();
             return false;
+        }
+
+        static void MovePlayer(int xoffset, int yoffset)
+        {
+            int x = _Player.X + xoffset;
+            int y = _Player.Y + yoffset;
+
+            // Check for passable
+            if (_CurrentMap.W[(y - 1) + ((x - 1) * 20)].Terrain != 0)
+            {
+                DrawPlayer(x, y);
+            }
+
+            // Check for special
+            foreach (SPECIAL_STRUCT SS in _CurrentMap.Special)
+            {
+                if ((SS.HotSpotX == x) && (SS.HotSpotY == y))
+                {
+                    if ((SS.WarpMap > 0) && (SS.WarpX > 0) && (SS.WarpY > 0))
+                    {
+                        _Player.LastMap = _Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
+                        _Player.Map = SS.WarpMap;
+                        _Player.X = SS.WarpX;
+                        _Player.Y = SS.WarpY;
+
+                        LoadMap(SS.WarpMap);
+                        DrawMap();
+                        break;
+                    }
+                    else if ((SS.RefFile != "") && (SS.RefName != ""))
+                    {
+                        _RTR.RunSection(SS.RefFile, SS.RefName);
+                        break;
+                    }
+                }
+            }
+        }
+
+        private static void RTR_OnMoveBack(object sender, System.EventArgs e)
+        {
+            DrawPlayer(_LastX, _LastY);
         }
     }
 }

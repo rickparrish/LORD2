@@ -8,6 +8,8 @@ namespace LORD2
 {
     public class RTReader
     {
+        public EventHandler OnMoveBack = null;
+
         private Dictionary<string, Action<string[]>> _Commands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
         private Dictionary<string, Action<string[]>> _DOCommands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
 
@@ -32,6 +34,7 @@ namespace LORD2
         private int _InHALT = int.MinValue;
         private int _InIFFalse = 999;
         private bool _InSAY = false;
+        private bool _InSAYBAR = false;
         private bool _InSHOW = false;
         private bool _InSHOWLOCAL = false;
         private bool _InSHOWSCROLL = false;
@@ -196,6 +199,7 @@ namespace LORD2
             _GlobalWords.Add("DEAD", "0");
             _GlobalWords.Add("LOCAL", (Door.Local() ? "5" : "0"));
             _GlobalWords.Add("MAP", "155");
+            _GlobalWords.Add("MONEY", "0");
             _GlobalWords.Add("RESPONCE", "0");
             _GlobalWords.Add("RESPONSE", "0");
             _GlobalWords.Add("SEX", "0"); // Male
@@ -725,7 +729,8 @@ namespace LORD2
                 This moves the player back to where he moved from.  This is good for when a 
                 player pushes against a treasure chest or such, and you don't want them to 
                 appear inside of it when they are done. */
-            LogMissing(tokens);
+            EventHandler Handler = OnMoveBack;
+            if (Handler != null) Handler(null, EventArgs.Empty);
         }
 
         private void CommandDO_MULTIPLY(string[] tokens)
@@ -862,7 +867,7 @@ namespace LORD2
                 This is like @do quebar except it displays the message instantly without
                 taking into consideration that a message might have just been displayed.  This 
                 will overwrite any current message on the saybar unconditionally. */
-            LogMissing(tokens);
+            _InSAYBAR = true;
         }
 
         private void CommandDO_STRIP(string[] tokens)
@@ -1731,7 +1736,24 @@ namespace LORD2
                 {
                     _CurrentSection = _CurrentFile.Sections[sectionName];
                     _CurrentLineNumber = _InGOTOLineNumber;
+
+                    _InBEGINCount = 0;
+                    _InCHOICE = false;
+                    _InCHOICEOptions.Clear();
+                    _InCLOSESCRIPT = false;
+                    _InDOWrite = false;
+                    _InGOTOHeader = "";
                     _InGOTOLineNumber = 0;
+                    _InHALT = int.MinValue;
+                    _InIFFalse = 999;
+                    _InSAY = false;
+                    _InSAYBAR = false;
+                    _InSHOW = false;
+                    _InSHOWLOCAL = false;
+                    _InSHOWSCROLL = false;
+                    _InSHOWSCROLLLines.Clear();
+                    _InWRITEFILE = "";
+
                     RunScript(_CurrentSection.Script.ToArray());
 
                     // If we exit this script with _InGOTOHeader set, it means we want to GOTO a different section
@@ -1801,6 +1823,7 @@ namespace LORD2
                         if (_InSHOWSCROLL) EndSHOWSCROLL();
                         _InCHOICE = false;
                         _InSAY = false;
+                        _InSAYBAR = false;
                         _InSHOW = false;
                         _InSHOWLOCAL = false;
                         _InSHOWSCROLL = false;
@@ -1831,6 +1854,24 @@ namespace LORD2
                         {
                             // TODO SHould be in TEXT window
                             Door.Write(LineTranslated);
+                        }
+                        else if (_InSAYBAR)
+                        {
+                            // Save cursor and text attr
+                            int SavedTextAttr = Crt.TextAttr;
+                            Door.CursorSave();
+
+                            // Output new bar
+                            Door.GotoXY(3, 21);
+                            Door.TextAttr(31);
+                            Door.Write(StringUtils.PadBoth(LineTranslated, ' ', 76)); // TODO LineTranslated includes ansi escape sequences, so padding is not correct
+                            // TODO say bar should be removed after 3 seconds or so
+
+                            // Restore
+                            Door.CursorRestore();
+                            Door.TextAttr(SavedTextAttr);
+
+                            _InSAYBAR = false;
                         }
                         else if (_InSHOW)
                         {

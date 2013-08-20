@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace LORD2
 {
     class Program
     {
+        static private MapDatRecord _CurrentMap;
         static private int _LastX = 27; // TODO
         static private int _LastY = 7; // TODO
         static private List<MapDatRecord> _MapDat = new List<MapDatRecord>();
@@ -38,12 +40,26 @@ namespace LORD2
                         RTR.RunSection("GAMETXT.REF", "STARTGAME");
 
                         // We're now in map mode until we hit a hotspot
-                        DrawMap(155);
-                        DrawPlayer(155, 27, 7);
-                        Door.ReadKey();
-                        DrawPlayer(155, 28, 7);
-                        Door.ReadKey();
-                        DrawPlayer(155, 28, 8);
+                        LoadMap(155);
+                        DrawMap();
+
+                        // Allow player to move around
+                        char? Ch = null;
+                        while (Ch != 'Q')
+                        {
+                            Ch = Door.ReadKey();
+                            if (Ch != null)
+                            {
+                                Ch = char.ToUpper((char)Ch);
+                                switch (Ch)
+                                {
+                                    case '8': Move(0, -1); break;
+                                    case '4': Move(-1, 0); break;
+                                    case '6': Move(1, 0); break;
+                                    case '2': Move(0, 1); break;
+                                }
+                            }
+                        }
                     }
                 }
                 else
@@ -72,60 +88,53 @@ namespace LORD2
             Door.Shutdown();
         }
 
-        static void DrawMap(int mapNumber)
+        static void DrawMap()
         {
-            // TODO Store MapDatRecord in private variable so we don't have to look up with each player movement
-            
-            // First use WORLD.DAT to determine which block in MAP.DAT the given map number is
-            int MapBlockNumber = _WorldDat.Location[mapNumber - 1]; // 0 based map number
-
-            // Then get the block from the MAP.DAT file
-            MapDatRecord MDR = _MapDat[MapBlockNumber - 1]; // 0 based block number
-
-            // Then draw the screen
+            // Draw the map
             int BG = 0;
             int FG = 7;
             Door.TextAttr(7);
             Door.ClrScr();
             for (int y = 0; y < 20; y++)
             {
+                StringBuilder ToSend = new StringBuilder();
+                
                 for (int x = 0; x < 80; x++)
                 {
-                    MAP_INFO MI = MDR.W[y + (x * 20)];
+                    MAP_INFO MI = _CurrentMap.W[y + (x * 20)];
 
                     if (BG != MI.BackgroundColour)
                     {
-                        Door.TextBackground(MI.BackgroundColour);
+                        ToSend.Append(Ansi.TextBackground(MI.BackgroundColour));
+                        Crt.TextBackground(MI.BackgroundColour); // Gotta do this to ensure calls to Ansi.* work right
                         BG = MI.BackgroundColour;
                     }
                     if (FG != MI.ForegroundColour)
                     {
-                        Door.TextColor(MI.ForegroundColour);
+                        ToSend.Append(Ansi.TextColor(MI.ForegroundColour));
+                        Crt.TextColor(MI.ForegroundColour); // Gotta do this to ensure calls to Ansi.* work right
                         FG = MI.ForegroundColour;
                     }
-                    Door.Write(MI.Character.ToString());
+                    ToSend.Append(MI.Character.ToString());
                 }
+
+                Door.Write(ToSend.ToString());
             }
+
+            // Draw the player
+            DrawPlayer(_LastX, _LastY);
         }
 
-        static void DrawPlayer(int mapNumber, int x, int y)
+        static void DrawPlayer(int x, int y)
         {
-            // TODO Store MapDatRecord in private variable so we don't have to look up with each player movement
-
-            // First use WORLD.DAT to determine which block in MAP.DAT the given map number is
-            int MapBlockNumber = _WorldDat.Location[mapNumber - 1]; // 0 based map number
-
-            // Then get the block from the MAP.DAT file
-            MapDatRecord MDR = _MapDat[MapBlockNumber - 1]; // 0 based block number
-            
             // Erase the previous position
-            Door.TextBackground(MDR.W[(_LastY - 1) + ((_LastX - 1) * 20)].BackgroundColour);
-            Door.TextColor(MDR.W[(_LastY - 1) + ((_LastX - 1) * 20)].ForegroundColour);
+            Door.TextBackground(_CurrentMap.W[(_LastY - 1) + ((_LastX - 1) * 20)].BackgroundColour);
+            Door.TextColor(_CurrentMap.W[(_LastY - 1) + ((_LastX - 1) * 20)].ForegroundColour);
             Door.GotoXY(_LastX, _LastY);
-            Door.Write(MDR.W[(_LastY - 1) + ((_LastX - 1) * 20)].Character.ToString());
+            Door.Write(_CurrentMap.W[(_LastY - 1) + ((_LastX - 1) * 20)].Character.ToString());
 
             // And draw the player
-            Door.TextBackground(MDR.W[(y - 1) + ((x - 1) * 20)].BackgroundColour);
+            Door.TextBackground(_CurrentMap.W[(y - 1) + ((x - 1) * 20)].BackgroundColour);
             Door.TextColor(Crt.White);
             Door.GotoXY(x, y);
             Door.Write("\x02");
@@ -174,6 +183,26 @@ namespace LORD2
             }
 
             return true;
+        }
+
+        static void LoadMap(int mapNumber)
+        {
+            // First use WORLD.DAT to determine which block in MAP.DAT the given map number is
+            int MapBlockNumber = _WorldDat.Location[mapNumber - 1]; // 0 based map number
+
+            // Then get the block from the MAP.DAT file
+            _CurrentMap = _MapDat[MapBlockNumber - 1]; // 0 based block number
+        }
+
+        static void Move(int xoffset, int yoffset)
+        {
+            int x = _LastX + xoffset;
+            int y = _LastY + yoffset;
+            
+            if (_CurrentMap.W[(y - 1) + ((x - 1) * 20)].Terrain != 0)
+            {
+                DrawPlayer(x, y);
+            }
         }
 
         static bool PlayerExists()

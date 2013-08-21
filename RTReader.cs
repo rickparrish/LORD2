@@ -366,7 +366,7 @@ namespace LORD2
                     Door.GotoXY(78, 23);
                     break;
                 default:
-                    LogMissing(tokens);
+                    LogUnused(tokens);
                     break;
             }
         }
@@ -377,7 +377,19 @@ namespace LORD2
                 This clears lines quick.  <x> is the first line you want to clear. <y> is the 
                 last line you want to clear.  Example:  @clear block 20 24   This would clear 
                 4 lines starting at line 20. */
-            LogMissing(tokens);
+            int SavedAttr = Crt.TextAttr;
+            Door.TextAttr(7);
+
+            int top = Convert.ToInt32(tokens[1]);
+            int bottom = Convert.ToInt32(tokens[2]);
+            for (int i = top; i <= bottom; i++)
+            {
+                Door.GotoXY(1, i);
+                Door.Write(new string(' ', 80));
+            }
+
+            Door.GotoXY(1, bottom);
+            Door.TextColor(SavedAttr & 0x0F);
         }
 
         private void CommandCLOSESCRIPT(string[] tokens)

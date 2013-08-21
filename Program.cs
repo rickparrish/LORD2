@@ -14,7 +14,6 @@ namespace LORD2
         static private int _LastY = 0;
         static private TraderDatRecord _Player;
         static private List<MapDatRecord> _MapDat = new List<MapDatRecord>();
-        static private RTReader _RTR;
         static private WorldDatRecord _WorldDat;
 
         static void Main(string[] args)
@@ -30,15 +29,16 @@ namespace LORD2
             {
                 if (LoadDataFiles())
                 {
-                    _RTR = new RTReader();
-                    _RTR.OnMoveBack += RTR_OnMoveBack;
+                    RTReader RTR = new RTReader();
+                    
+                    RTGlobal.OnMoveBack += RTR_OnMoveBack;
 
                     // Check if user has a player already
                     bool PlayerLoaded = LoadPlayer(out _Player);
                     if (!PlayerLoaded)
                     {
                         // Nope, so try to get them to create one
-                        _RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
+                        RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
                         PlayerLoaded = LoadPlayer(out _Player);
                     }
 
@@ -46,7 +46,7 @@ namespace LORD2
                     if (PlayerLoaded)
                     {
                         // Player exists, so start the game
-                        _RTR.RunSection("GAMETXT.REF", "STARTGAME");
+                        RTR.RunSection("GAMETXT.REF", "STARTGAME");
 
                         // We're now in map mode until we hit a hotspot
                         LoadMap(_Player.Map);
@@ -259,7 +259,8 @@ namespace LORD2
                     }
                     else if ((SS.RefFile != "") && (SS.RefName != ""))
                     {
-                        _RTR.RunSection(SS.RefFile, SS.RefName);
+                        RTReader RTR = new RTReader();
+                        RTR.RunSection(SS.RefFile, SS.RefName);
                         break;
                     }
                 }

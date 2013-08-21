@@ -8,6 +8,10 @@ namespace LORD2
 {
     public static class RTGlobal
     {
+        // Events
+        public static EventHandler OnMoveBack = null;
+
+        // Ref files
         public static Dictionary<string, RTRFile> RefFiles = new Dictionary<string, RTRFile>(StringComparer.OrdinalIgnoreCase);
 
         // Variables
@@ -54,6 +58,7 @@ namespace LORD2
             Words.Add("RESPONSE", "0");
             Words.Add("SEX", "0"); // Male
             Words.Add("SEXMALE", "1"); // True for male
+            Words.Add("SON", "son"); // son or daughter?
             Words.Add("TIME", "1"); // Should be value from TIME.DAT, which is the number of days the game has been running
             Words.Add("WEP_NUM", "0");
             Words.Add("X", "27");

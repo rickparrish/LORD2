@@ -8,8 +8,6 @@ namespace LORD2
 {
     public class RTReader
     {
-        public EventHandler OnMoveBack = null;
-
         private Dictionary<string, Action<string[]>> _Commands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
         private Dictionary<string, Action<string[]>> _DOCommands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
 
@@ -662,7 +660,7 @@ namespace LORD2
                 This moves the player back to where he moved from.  This is good for when a 
                 player pushes against a treasure chest or such, and you don't want them to 
                 appear inside of it when they are done. */
-            EventHandler Handler = OnMoveBack;
+            EventHandler Handler = RTGlobal.OnMoveBack;
             if (Handler != null) Handler(null, EventArgs.Empty);
         }
 
@@ -1532,6 +1530,7 @@ namespace LORD2
 
             // TODO Determine which options are Visible and assign VisibleIndex
             int VisibleCount = 0;
+            int LastVisibleLength = 0;
             int SelectedIndex = Convert.ToInt32(TranslateVariables("`V01"));
             for (int i = 0; i < _InCHOICEOptions.Count; i++)
             {
@@ -1539,6 +1538,7 @@ namespace LORD2
                 if (true)
                 {
                     VisibleCount += 1;
+                    LastVisibleLength = Door.StripSeth(_InCHOICEOptions[i].Text).Length;
                     _InCHOICEOptions[i].Visible = true;
                     _InCHOICEOptions[i].VisibleIndex = VisibleCount;
                 }
@@ -1621,6 +1621,11 @@ namespace LORD2
                     Door.TextBackground(Crt.Black);
                 }
             }
+
+            // Move cursor below choice statement
+            Door.CursorRestore();
+            Door.CursorDown(VisibleCount - 1);
+            Door.CursorRight(LastVisibleLength);
 
             // Update global variable responses
             RTGlobal.Words["RESPONCE"] = SelectedIndex.ToString();
@@ -1921,8 +1926,8 @@ namespace LORD2
                 }
                 else
                 {
-                    input = Regex.Replace(input, Regex.Escape(" s&" + KVP.Key + " "), KVP.Value, RegexOptions.IgnoreCase); // TODO This won't case the first character of KVP.Value properly
-                    input = Regex.Replace(input, Regex.Escape(" &" + KVP.Key + " "), KVP.Value, RegexOptions.IgnoreCase);
+                    input = Regex.Replace(input, Regex.Escape("s&" + KVP.Key), KVP.Value, RegexOptions.IgnoreCase); // TODO This won't case the first character of KVP.Value properly
+                    input = Regex.Replace(input, Regex.Escape("&" + KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
                 }
             }
 

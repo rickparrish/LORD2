@@ -30,8 +30,10 @@ namespace LORD2
                 if (LoadDataFiles())
                 {
                     RTReader RTR = new RTReader();
-                    
-                    RTGlobal.OnMoveBack += RTR_OnMoveBack;
+
+                    RTGlobal.OnDRAWMAP += RTR_OnDRAWMAP;
+                    RTGlobal.OnMOVEBACK += RTR_OnMOVEBACK;
+                    RTGlobal.OnUPDATE += RTR_OnUPDATE;
 
                     // Check if user has a player already
                     bool PlayerLoaded = LoadPlayer(out _Player);
@@ -267,9 +269,19 @@ namespace LORD2
             }
         }
 
-        private static void RTR_OnMoveBack(object sender, System.EventArgs e)
+        private static void RTR_OnDRAWMAP(object sender, System.EventArgs e)
+        {
+            DrawMap();
+        }
+
+        private static void RTR_OnMOVEBACK(object sender, System.EventArgs e)
         {
             DrawPlayer(_LastX, _LastY);
+        }
+
+        private static void RTR_OnUPDATE(object sender, System.EventArgs e)
+        {
+            // TODO Draw all players on this screen
         }
     }
 }

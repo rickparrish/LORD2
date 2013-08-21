@@ -9,7 +9,9 @@ namespace LORD2
     public static class RTGlobal
     {
         // Events
-        public static EventHandler OnMoveBack = null;
+        public static EventHandler OnDRAWMAP = null;
+        public static EventHandler OnMOVEBACK = null;
+        public static EventHandler OnUPDATE = null;
 
         // Ref files
         public static Dictionary<string, RTRFile> RefFiles = new Dictionary<string, RTRFile>(StringComparer.OrdinalIgnoreCase);

@@ -660,7 +660,7 @@ namespace LORD2
                 This moves the player back to where he moved from.  This is good for when a 
                 player pushes against a treasure chest or such, and you don't want them to 
                 appear inside of it when they are done. */
-            EventHandler Handler = RTGlobal.OnMoveBack;
+            EventHandler Handler = RTGlobal.OnMOVEBACK;
             if (Handler != null) Handler(null, EventArgs.Empty);
         }
 
@@ -885,7 +885,8 @@ namespace LORD2
             /* @DRAWMAP
                 This draws the current map the user is on.  This command does NOT update the 
                 screen.  See the @update command below concerning updating the scren. */
-            LogMissing(tokens);
+            EventHandler Handler = RTGlobal.OnDRAWMAP;
+            if (Handler != null) Handler(null, EventArgs.Empty);
         }
 
         private void CommandDRAWPART(string[] tokens)
@@ -1435,7 +1436,8 @@ namespace LORD2
         {
             /* @UPDATE
                 Draws all the people on the screen. */
-            LogMissing(tokens);
+            EventHandler Handler = RTGlobal.OnUPDATE;
+            if (Handler != null) Handler(null, EventArgs.Empty);
         }
 
         private void CommandUPDATE_UPDATE(string[] tokens)

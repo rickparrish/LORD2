@@ -160,10 +160,9 @@ namespace LORD2
         static bool LoadDataFiles()
         {
             // Load MAP.DAT
-            string MapDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "MAP.DAT"); // TODO Move filenames to another class as constants
-            if (File.Exists(MapDatFileName))
+            if (File.Exists(Global.MapDatFileName))
             {
-                using (FileStream FS = new FileStream(MapDatFileName, FileMode.Open))
+                using (FileStream FS = new FileStream(Global.MapDatFileName, FileMode.Open))
                 {
                     long FSLength = FS.Length;
                     while (FS.Position < FSLength)
@@ -178,16 +177,33 @@ namespace LORD2
             }
 
             // Load WORLD.DAT
-            string WorldDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "WORLD.DAT"); // TODO Move filenames to another class as constants
-            if (!File.Exists(WorldDatFileName))
+            if (!File.Exists(Global.WorldDatFileName))
             {
                 // TODO Generate the file
             }
-            if (File.Exists(WorldDatFileName))
+            if (File.Exists(Global.WorldDatFileName))
             {
-                using (FileStream FS = new FileStream(WorldDatFileName, FileMode.Open))
+                using (FileStream FS = new FileStream(Global.WorldDatFileName, FileMode.Open))
                 {
                     _WorldDat = DataStructures.ReadStruct<WorldDatRecord>(FS);
+
+                    // Assign global S values
+                    RTGlobal.S["`S1"] = _WorldDat.S1;
+                    RTGlobal.S["`S2"] = _WorldDat.S2;
+                    RTGlobal.S["`S3"] = _WorldDat.S3;
+                    RTGlobal.S["`S4"] = _WorldDat.S4;
+                    RTGlobal.S["`S5"] = _WorldDat.S5;
+                    RTGlobal.S["`S6"] = _WorldDat.S6;
+                    RTGlobal.S["`S7"] = _WorldDat.S7;
+                    RTGlobal.S["`S8"] = _WorldDat.S8;
+                    RTGlobal.S["`S9"] = _WorldDat.S9;
+                    RTGlobal.S["`S10"] = _WorldDat.S10;
+
+                    // Assign global V values
+                    for (int i = 0; i < _WorldDat.V.Length; i++)
+                    {
+                        RTGlobal.V["`V" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)] = _WorldDat.V[i];
+                    }
                 }
             }
             else
@@ -201,18 +217,17 @@ namespace LORD2
         static void LoadMap(int mapNumber)
         {
             // First use WORLD.DAT to determine which block in MAP.DAT the given map number is
-            int MapBlockNumber = _WorldDat.Location[mapNumber - 1]; // 0 based map number
+            int MapBlockNumber = _WorldDat.Location[mapNumber - 1]; // 0 based array access
 
             // Then get the block from the MAP.DAT file
-            _CurrentMap = _MapDat[MapBlockNumber - 1]; // 0 based block number
+            _CurrentMap = _MapDat[MapBlockNumber - 1]; // 0 based array access
         }
 
         static bool LoadPlayer(out TraderDatRecord record)
         {
-            string TraderDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "TRADER.DAT"); // TODO Move filenames to another class as constants
-            if (File.Exists(TraderDatFileName))
+            if (File.Exists(Global.TraderDatFileName))
             {
-                using (FileStream FS = new FileStream(TraderDatFileName, FileMode.Open))
+                using (FileStream FS = new FileStream(Global.TraderDatFileName, FileMode.Open))
                 {
                     long FSLength = FS.Length;
                     while (FS.Position < FSLength)
@@ -220,6 +235,24 @@ namespace LORD2
                         TraderDatRecord TDR = DataStructures.ReadStruct<TraderDatRecord>(FS);
                         if (TDR.RealName.ToUpper() == Door.DropInfo.Alias.ToUpper())
                         {
+                            // Assign player I values
+                            for (int i = 0; i < TDR.Item.Length; i++)
+                            {
+                                RTGlobal.I["`I" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)] = TDR.Item[i];
+                            }
+                            
+                            // Assign player P values
+                            for (int i = 0; i < TDR.P.Length; i++)
+                            {
+                                RTGlobal.P["`P" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)] = TDR.P[i];
+                            }
+
+                            // Assign player T values
+                            for (int i = 0; i < TDR.B.Length; i++)
+                            {
+                                RTGlobal.T["`T" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)] = TDR.B[i];
+                            }
+
                             record = TDR;
                             return true;
                         }

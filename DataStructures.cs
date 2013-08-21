@@ -1,4 +1,5 @@
-﻿using RandM.RMLib;
+﻿// TODO Add structure for IGM Data, UPDATE.TMP, ITEMS.DAT
+using RandM.RMLib;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -320,6 +321,16 @@ namespace LORD2
                 RMEncoding.Ansi.GetBytes(value, 0, _NameLength, _Name, 0);
             }
         }
-        // TODO Need some way to access private S variables
+
+        public string S1 { get { return RMEncoding.Ansi.GetString(_S1, 0, _S1Length); } }
+        public string S2 { get { return RMEncoding.Ansi.GetString(_S2, 0, _S2Length); } }
+        public string S3 { get { return RMEncoding.Ansi.GetString(_S3, 0, _S3Length); } }
+        public string S4 { get { return RMEncoding.Ansi.GetString(_S4, 0, _S4Length); } }
+        public string S5 { get { return RMEncoding.Ansi.GetString(_S5, 0, _S5Length); } }
+        public string S6 { get { return RMEncoding.Ansi.GetString(_S6, 0, _S6Length); } }
+        public string S7 { get { return RMEncoding.Ansi.GetString(_S7, 0, _S7Length); } }
+        public string S8 { get { return RMEncoding.Ansi.GetString(_S8, 0, _S8Length); } }
+        public string S9 { get { return RMEncoding.Ansi.GetString(_S9, 0, _S9Length); } }
+        public string S10 { get { return RMEncoding.Ansi.GetString(_S10, 0, _S10Length); } }
     }
 }

@@ -132,6 +132,14 @@ namespace LORD2
                 return false;
             }
 
+            // Run maintenance, if required
+            if (IsNewDay)
+            {
+                // This will create a new LOGNOW.TXT and L2TREE.DAT (amongst other things)
+                RTReader RTR = new RTReader();
+                RTR.RunSection("MAINT.REF", "MAINT"); 
+            }
+
             return true;
         }
 

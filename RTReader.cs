@@ -116,6 +116,7 @@ namespace LORD2
             _DOCommands.Add("READSTRING", CommandDO_READSTRING);
             _DOCommands.Add("REPLACE", CommandDO_REPLACE);
             _DOCommands.Add("REPLACEALL", CommandDO_REPLACEALL);
+            _DOCommands.Add("RENAME", CommandDO_RENAME);
             _DOCommands.Add("SAYBAR", CommandDO_SAYBAR);
             _DOCommands.Add("STRIP", CommandDO_STRIP);
             _DOCommands.Add("STRIPALL", CommandDO_STRIPALL);
@@ -419,8 +420,8 @@ namespace LORD2
         {
             /* @COPYFILE <input filename> <output filename>
                 This command copies a <input filename to <output filename>.           */
-            string SourceFile = Global.GetSafeAbsolutePath(tokens[1]);
-            string DestFile = Global.GetSafeAbsolutePath(tokens[2]);
+            string SourceFile = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
+            string DestFile = Global.GetSafeAbsolutePath(TranslateVariables(tokens[2]));
             if ((SourceFile != "") && (DestFile != "") && (File.Exists(SourceFile)))
             {
                 FileUtils.FileCopy(SourceFile, DestFile);
@@ -803,6 +804,18 @@ namespace LORD2
             /* @REPLACEALL <X> <Y> <in `S10>:
                 Same as above but replaces all instances. */
             AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
+        }
+
+        private void CommandDO_RENAME(string[] tokens)
+        {
+            /* @DO RENAME <old name> <new name>
+                Undocumented.  Renames a file */
+            string OldFile = Global.GetSafeAbsolutePath(TranslateVariables(tokens[2]));
+            string NewFile = Global.GetSafeAbsolutePath(TranslateVariables(tokens[3]));
+            if ((OldFile != "") && (NewFile != "") && (File.Exists(OldFile)))
+            {
+                FileUtils.FileMove(OldFile, NewFile);
+            }
         }
 
         private void CommandDO_SAYBAR(string[] tokens)

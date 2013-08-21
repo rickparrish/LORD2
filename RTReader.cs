@@ -195,11 +195,15 @@ namespace LORD2
                 // TODO Both of these need to be corrected to match the docs
                 if (values[0].ToUpper() == "LENGTH")
                 {
-                    values[0] = values[1].Length.ToString();
+                    /* @DO <number variable> IS LENGTH <String variable>
+                        Gets length, smart way. */
+                    values[0] = Door.StripSeth(TranslateVariables(values[1])).Length.ToString();
                 }
                 else if (values[0].ToUpper() == "REALLENGTH")
                 {
-                    values[0] = values[1].Length.ToString();
+                    /* @DO <number variable> IS REALLENGTH <String variable>
+                        Gets length dumb way. (includes '`' codes without deciphering them.) */
+                    values[0] = TranslateVariables(values[1]).Length.ToString();
                 }
             }
             else

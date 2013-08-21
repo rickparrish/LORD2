@@ -4,7 +4,7 @@ using System.Text;
 
 namespace LORD2
 {
-    class RTRFile
+    public class RTRFile
     {
         public Dictionary<string, RTRSection> Sections;
 

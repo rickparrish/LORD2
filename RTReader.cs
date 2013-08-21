@@ -16,14 +16,6 @@ namespace LORD2
         private int _CurrentLineNumber = 0;
         private RTRFile _CurrentFile = null;
         private RTRSection _CurrentSection = null;
-        private Dictionary<string, Int16> _GlobalI = new Dictionary<string, Int16>(StringComparer.OrdinalIgnoreCase);
-        private Dictionary<string, string> _GlobalOther = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private Dictionary<string, Int32> _GlobalP = new Dictionary<string, Int32>(StringComparer.OrdinalIgnoreCase);
-        private Dictionary<string, string> _GlobalPLUS = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private Dictionary<string, string> _GlobalS = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        private Dictionary<string, byte> _GlobalT = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
-        private Dictionary<string, Int32> _GlobalV = new Dictionary<string, Int32>(StringComparer.OrdinalIgnoreCase);
-        private Dictionary<string, string> _GlobalWords = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         private int _InBEGINCount = 0;
         private bool _InCHOICE = false;
         private List<string> _InCHOICEOptions = new List<string>();
@@ -41,7 +33,6 @@ namespace LORD2
         private List<string> _InSHOWSCROLLLines = new List<string>();
         private string _InWRITEFILE = "";
         private Random _R = new Random();
-        private Dictionary<string, RTRFile> _RefFiles = new Dictionary<string, RTRFile>(StringComparer.OrdinalIgnoreCase);
         private int _Version = 99;
 
         public RTReader()
@@ -146,39 +137,6 @@ namespace LORD2
             _DOCommands.Add("ADD", CommandDO_ADD);
             _DOCommands.Add("IS", CommandDO_IS);
             _DOCommands.Add("RANDOM", CommandDO_RANDOM);
-
-            // Load all the ref files in the current directory
-            LoadRefFiles(ProcessUtils.StartupPath);
-
-            // Init global variables
-            for (int i = 1; i <= 99; i++) _GlobalI.Add("`I" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
-            for (int i = 1; i <= 99; i++) _GlobalP.Add("`P" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
-            for (int i = 1; i <= 99; i++) _GlobalPLUS.Add("`+" + StringUtils.PadLeft(i.ToString(), '0', 2), "");
-            for (int i = 1; i <= 10; i++) _GlobalS.Add("`S" + StringUtils.PadLeft(i.ToString(), '0', 2), "");
-            for (int i = 1; i <= 99; i++) _GlobalT.Add("`T" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
-            for (int i = 1; i <= 40; i++) _GlobalV.Add("`V" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
-            // TODO Some need to be tied to player variables?
-
-            _GlobalOther.Add("`N", Door.DropInfo.Alias);
-            _GlobalOther.Add("`E", "ENEMY"); // TODO
-            _GlobalOther.Add("`G", (Door.DropInfo.Emulation == DoorEmulationType.ANSI ? "3" : "0"));
-            _GlobalOther.Add("`X", " ");
-            _GlobalOther.Add("`D", "\x08");
-
-            // TODO On all of these probably
-            _GlobalWords.Add("DEAD", "0");
-            _GlobalWords.Add("LOCAL", (Door.Local() ? "5" : "0"));
-            _GlobalWords.Add("MAP", "155");
-            _GlobalWords.Add("MONEY", "0");
-            _GlobalWords.Add("NIL", "");
-            _GlobalWords.Add("RESPONCE", "0");
-            _GlobalWords.Add("RESPONSE", "0");
-            _GlobalWords.Add("SEX", "0"); // Male
-            _GlobalWords.Add("SEXMALE", "1"); // True for male
-            _GlobalWords.Add("TIME", "1"); // Should be value from TIME.DAT, which is the number of days the game has been running
-            _GlobalWords.Add("WEP_NUM", "0");
-            _GlobalWords.Add("X", "27");
-            _GlobalWords.Add("Y", "7");
         }
 
         private void AssignVariable(string variable, string value)
@@ -212,37 +170,37 @@ namespace LORD2
             }
 
             // See which variables to update
-            if (_GlobalI.ContainsKey(variable))
+            if (RTGlobal.I.ContainsKey(variable))
             {
-                _GlobalI[variable] = Convert.ToInt16(values[0]);
+                RTGlobal.I[variable] = Convert.ToInt16(values[0]);
             }
-            if (_GlobalP.ContainsKey(variable))
+            if (RTGlobal.P.ContainsKey(variable))
             {
-                _GlobalP[variable] = Convert.ToInt32(values[0]);
+                RTGlobal.P[variable] = Convert.ToInt32(values[0]);
             }
-            if (_GlobalPLUS.ContainsKey(variable)) _GlobalPLUS[variable] = value;
-            if (_GlobalS.ContainsKey(variable)) _GlobalS[variable] = value;
-            if (_GlobalT.ContainsKey(variable))
+            if (RTGlobal.PLUS.ContainsKey(variable)) RTGlobal.PLUS[variable] = value;
+            if (RTGlobal.S.ContainsKey(variable)) RTGlobal.S[variable] = value;
+            if (RTGlobal.T.ContainsKey(variable))
             {
-                _GlobalT[variable] = Convert.ToByte(values[0]);
+                RTGlobal.T[variable] = Convert.ToByte(values[0]);
             }
-            if (_GlobalV.ContainsKey(variable))
+            if (RTGlobal.V.ContainsKey(variable))
             {
-                _GlobalV[variable] = Convert.ToInt32(values[0]);
+                RTGlobal.V[variable] = Convert.ToInt32(values[0]);
             }
             // TODO Not sure if these should be assigned this way, but let's try it for now
-            if (_GlobalWords.ContainsKey(variable))
+            if (RTGlobal.Words.ContainsKey(variable))
             {
-                _GlobalWords[variable] = value;
+                RTGlobal.Words[variable] = value;
 
                 // TODO Probably a better way to handle this
                 if (variable.ToUpper() == "SEX")
                 {
-                    _GlobalWords["SEXMALE"] = Math.Abs(Convert.ToInt32(value) - 1).ToString();
+                    RTGlobal.Words["SEXMALE"] = Math.Abs(Convert.ToInt32(value) - 1).ToString();
                 }
                 else if (variable.ToUpper() == "SEXMALE")
                 {
-                    _GlobalWords["SEX"] = Math.Abs(Convert.ToInt32(value) - 1).ToString();
+                    RTGlobal.Words["SEX"] = Math.Abs(Convert.ToInt32(value) - 1).ToString();
                 }
             }
         }
@@ -518,7 +476,7 @@ namespace LORD2
             /* @DISPLAY <this> IN <this file> <options>
                 This is used to display a certain part of a file.  This is compatible with the 
                 LORDTXT.DAT format. */
-            Door.WriteLn(TranslateVariables(string.Join("\r\n", _RefFiles[Path.GetFileNameWithoutExtension(tokens[3])].Sections[tokens[1]].Script.ToArray())));
+            Door.WriteLn(TranslateVariables(string.Join("\r\n", RTGlobal.RefFiles[Path.GetFileNameWithoutExtension(tokens[3])].Sections[tokens[1]].Script.ToArray())));
         }
 
         private void CommandDISPLAYFILE(string[] tokens)
@@ -583,7 +541,7 @@ namespace LORD2
                 allow a player to change his name or to get the name a new player wants to go 
                 by.  It is also useful in the @#newplayer routine to get the alias the player 
                 wants to go by in the game. */
-            _GlobalOther["`N"] = TranslateVariables("`S10");
+            RTGlobal.Other["`N"] = TranslateVariables("`S10");
         }
 
         private void CommandDO_DELETE(string[] tokens)
@@ -1377,8 +1335,6 @@ namespace LORD2
                 have found that @ROUTINE cannot be nested.  That is if you use an @ROUTINE 
                 command inside of a routine called by @ROUTINE, the reader cannot return to 
                 the first procedure that ran @ROUTINE. */
-            // TODO This will cause LoadRefFiles() to happen for each routine, which is overkill
-            // TODO Should move the ref file loading to a new static class
             RTReader RTR = new RTReader();
             _InHALT = RTR.RunSection(TranslateVariables(tokens[3]), TranslateVariables(tokens[1]));
         }
@@ -1599,8 +1555,8 @@ namespace LORD2
                 }
             }
 
-            _GlobalWords["RESPONCE"] = (Ch - 64).ToString();
-            _GlobalWords["RESPONSE"] = (Ch - 64).ToString();
+            RTGlobal.Words["RESPONCE"] = (Ch - 64).ToString();
+            RTGlobal.Words["RESPONSE"] = (Ch - 64).ToString();
         }
 
         private void EndSHOWSCROLL()
@@ -1648,79 +1604,6 @@ namespace LORD2
             }
         }
 
-        private void LoadRefFile(string fileName)
-        {
-            // A place to store all the sections found in this file
-            RTRFile NewFile = new RTRFile();
-
-            // Where to store the info for the section we're currently working on
-            string NewSectionName = "_HEADER";
-            RTRSection NewSection = new RTRSection();
-
-            // Loop through the file
-            string[] Lines = FileUtils.FileReadAllLines(fileName, RMEncoding.Ansi);
-            foreach (string Line in Lines)
-            {
-                string LineTrimmed = Line.Trim().ToUpper();
-
-                // Check for new section
-                if (LineTrimmed.StartsWith("@#"))
-                {
-                    // Store last section we were working on in dictionary
-                    if (NewFile.Sections.ContainsKey(NewSectionName))
-                    {
-                        // Section already exists, so we can't add it
-                        // CASTLE4 has multiple DONE sections
-                        // STONEB has multiple NOTHING sections
-                        // Both appear harmless, but keep that in mind if either ever seems buggy
-                    }
-                    else
-                    {
-                        NewFile.Sections.Add(NewSectionName, NewSection);
-                    }
-
-                    // Get new section name (presumes only one word headers allowed, trims @# off start) and reset script block
-                    NewSectionName = Line.Trim().Split(' ')[0].Substring(2);
-                    NewSection = new RTRSection();
-                }
-                else if (LineTrimmed.StartsWith("@LABEL "))
-                {
-                    NewSection.Script.Add(Line);
-
-                    string[] Tokens = LineTrimmed.Split(' ');
-                    NewSection.Labels.Add(Tokens[1].ToUpper(), NewSection.Script.Count - 1);
-                }
-                else
-                {
-                    NewSection.Script.Add(Line);
-                }
-            }
-
-            // Store last section we were working on in dictionary
-            if (NewFile.Sections.ContainsKey(NewSectionName))
-            {
-                // Section already exists, so we can't add it
-                // CASTLE4 has multiple DONE sections
-                // STONEB has multiple NOTHING sections
-                // Both appear harmless, but keep that in mind if either ever seems buggy
-            }
-            else
-            {
-                NewFile.Sections.Add(NewSectionName, NewSection);
-            }
-
-            _RefFiles.Add(Path.GetFileNameWithoutExtension(fileName), NewFile);
-        }
-
-        private void LoadRefFiles(string directoryName)
-        {
-            string[] RefFileNames = Directory.GetFiles(directoryName, "*.ref", SearchOption.TopDirectoryOnly);
-            foreach (string RefFileName in RefFileNames)
-            {
-                LoadRefFile(RefFileName);
-            }
-        }
-
         private void LogMissing(string[] tokens)
         {
             string Output = "MISSING (hit a key): " + string.Join(" ", tokens);
@@ -1743,9 +1626,9 @@ namespace LORD2
 
             // Run the selected script
             string FileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
-            if (_RefFiles.ContainsKey(FileNameWithoutExtension))
+            if (RTGlobal.RefFiles.ContainsKey(FileNameWithoutExtension))
             {
-                _CurrentFile = _RefFiles[FileNameWithoutExtension];
+                _CurrentFile = RTGlobal.RefFiles[FileNameWithoutExtension];
                 if (_CurrentFile.Sections.ContainsKey(sectionName))
                 {
                     _CurrentSection = _CurrentFile.Sections[sectionName];
@@ -1923,52 +1806,52 @@ namespace LORD2
             {
                 if (inputUpper.Contains("`I"))
                 {
-                    foreach (KeyValuePair<string, short> KVP in _GlobalI)
+                    foreach (KeyValuePair<string, short> KVP in RTGlobal.I)
                     {
                         input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
                     }
                 }
                 if (inputUpper.Contains("`P"))
                 {
-                    foreach (KeyValuePair<string, int> KVP in _GlobalP)
+                    foreach (KeyValuePair<string, int> KVP in RTGlobal.P)
                     {
                         input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
                     }
                 }
                 if (inputUpper.Contains("`+"))
                 {
-                    foreach (KeyValuePair<string, string> KVP in _GlobalPLUS)
+                    foreach (KeyValuePair<string, string> KVP in RTGlobal.PLUS)
                     {
                         input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
                     }
                 }
                 if (inputUpper.Contains("`S"))
                 {
-                    foreach (KeyValuePair<string, string> KVP in _GlobalS)
+                    foreach (KeyValuePair<string, string> KVP in RTGlobal.S)
                     {
                         input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
                     }
                 }
                 if (inputUpper.Contains("`T"))
                 {
-                    foreach (KeyValuePair<string, byte> KVP in _GlobalT)
+                    foreach (KeyValuePair<string, byte> KVP in RTGlobal.T)
                     {
                         input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
                     }
                 }
                 if (inputUpper.Contains("`V"))
                 {
-                    foreach (KeyValuePair<string, int> KVP in _GlobalV)
+                    foreach (KeyValuePair<string, int> KVP in RTGlobal.V)
                     {
                         input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
                     }
                 }
             }
-            foreach (KeyValuePair<string, string> KVP in _GlobalOther)
+            foreach (KeyValuePair<string, string> KVP in RTGlobal.Other)
             {
                 input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
             }
-            foreach (KeyValuePair<string, string> KVP in _GlobalWords)
+            foreach (KeyValuePair<string, string> KVP in RTGlobal.Words)
             {
                 // TODO This isn't correct, since for example one of the global words is LOCAL, and so if a message says "my local calling area is 519" it'll be replaced with "my 5 calling area is 519"
                 // TODO It's good enough for now for me to test with though

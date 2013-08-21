@@ -24,6 +24,28 @@ namespace LORD2
         public static int STime = DateTime.Now.Year + DateTime.Now.Month + DateTime.Now.Day;
         public static WorldDatRecord WorldDat;
 
+        public static string GetSafeAbsolutePath(string fileName)
+        {
+            string Result = "";
+
+            try
+            {
+                // Get absolute path for the given relative path
+                string SavedCurrentDirectory = Environment.CurrentDirectory;
+                Environment.CurrentDirectory = ProcessUtils.StartupPath;
+                string AbsoluteFileName = new FileInfo(fileName).FullName;
+                Environment.CurrentDirectory = SavedCurrentDirectory;
+
+                if (AbsoluteFileName.Contains(ProcessUtils.StartupPath)) Result = AbsoluteFileName;
+            }
+            catch
+            {
+                // Ignore, we'll return the default ""
+            }
+
+            return "";
+        }
+
         public static bool LoadDataFiles()
         {
             // Load ITEMS.DAT

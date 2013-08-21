@@ -419,7 +419,12 @@ namespace LORD2
         {
             /* @COPYFILE <input filename> <output filename>
                 This command copies a <input filename to <output filename>.           */
-            LogUnused(tokens);
+            string SourceFile = Global.GetSafeAbsolutePath(tokens[1]);
+            string DestFile = Global.GetSafeAbsolutePath(tokens[2]);
+            if ((SourceFile != "") && (DestFile != "") && (File.Exists(SourceFile)))
+            {
+                FileUtils.FileCopy(SourceFile, DestFile);
+            }
         }
 
         private void CommandDATALOAD(string[] tokens)

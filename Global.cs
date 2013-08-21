@@ -10,6 +10,8 @@ namespace LORD2
     {
         public static string ItemsDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "ITEMS.DAT");
         public static string MapDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "MAP.DAT");
+        public static string STimeDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "STIME.DAT");
+        public static string TimeDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "TIME.DAT");
         public static string TraderDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "TRADER.DAT");
         public static string WorldDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "WORLD.DAT");
 
@@ -19,6 +21,7 @@ namespace LORD2
         public static int LastY = 0;
         public static TraderDatRecord Player;
         public static List<MapDatRecord> MapDat = new List<MapDatRecord>();
+        public static int STime = DateTime.Now.Year + DateTime.Now.Month + DateTime.Now.Day;
         public static WorldDatRecord WorldDat;
 
         public static bool LoadDataFiles()
@@ -61,6 +64,37 @@ namespace LORD2
             else
             {
                 return false;
+            }
+
+            // Load STIME.DAT
+            bool IsNewDay = false;
+            if (File.Exists(Global.STimeDatFileName))
+            {
+                if (Convert.ToInt32(FileUtils.FileReadAllText(Global.STimeDatFileName)) != STime) {
+                    FileUtils.FileWriteAllText(Global.STimeDatFileName, STime.ToString());
+                    IsNewDay = true;
+                }
+            }
+            else
+            {
+                IsNewDay = true;
+                FileUtils.FileWriteAllText(Global.STimeDatFileName, STime.ToString());
+            }
+
+            // Load TIME.DAT
+            if (File.Exists(Global.TimeDatFileName))
+            {
+                int Time = Convert.ToInt32(FileUtils.FileReadAllText(Global.TimeDatFileName));
+                if (IsNewDay) {
+                    Time += 1;
+                    FileUtils.FileWriteAllText(Global.TimeDatFileName, Time.ToString());
+                }
+                RTGlobal.Words["TIME"] = Time.ToString();
+            }
+            else
+            {
+                FileUtils.FileWriteAllText(Global.TimeDatFileName, "1");
+                RTGlobal.Words["TIME"] = "1";
             }
 
             // Load WORLD.DAT

@@ -61,7 +61,7 @@ namespace LORD2
             Words.Add("SEX", "0"); // Male
             Words.Add("SEXMALE", "1"); // True for male
             Words.Add("SON", "son"); // son or daughter?
-            Words.Add("TIME", "1"); // Should be value from TIME.DAT, which is the number of days the game has been running
+            Words.Add("TIME", "1");
             Words.Add("WEP_NUM", "0");
             Words.Add("X", "27");
             Words.Add("Y", "7");

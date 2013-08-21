@@ -9,14 +9,6 @@ namespace LORD2
 {
     class Program
     {
-        static private MapDatRecord _CurrentMap;
-        static private List<ItemsDatRecord> _ItemsDat = new List<ItemsDatRecord>();
-        static private int _LastX = 0;
-        static private int _LastY = 0;
-        static private TraderDatRecord _Player;
-        static private List<MapDatRecord> _MapDat = new List<MapDatRecord>();
-        static private WorldDatRecord _WorldDat;
-
         static void Main(string[] args)
         {
             if (!Debugger.IsAttached) Crt.HideCursor();
@@ -28,7 +20,7 @@ namespace LORD2
 
             if (DataStructures.Validate())
             {
-                if (LoadDataFiles())
+                if (Global.LoadDataFiles())
                 {
                     RTReader RTR = new RTReader();
 
@@ -36,26 +28,26 @@ namespace LORD2
                     RTGlobal.OnMOVEBACK += RTR_OnMOVEBACK;
                     RTGlobal.OnUPDATE += RTR_OnUPDATE;
 
-                    // Check if user has a player already
-                    bool PlayerLoaded = LoadPlayer(out _Player);
+                    // Check if user has a Global.Player already
+                    bool PlayerLoaded = Global.LoadPlayer(out Global.Player);
                     if (!PlayerLoaded)
                     {
                         // Nope, so try to get them to create one
-                        RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
-                        PlayerLoaded = LoadPlayer(out _Player);
+                        RTR.RunSection("GAMETXT.REF", "NEWGlobal.Player");
+                        PlayerLoaded = Global.LoadPlayer(out Global.Player);
                     }
 
-                    // Now check again to see if the user has a player (either because they already had one, or because they just created one)
+                    // Now check again to see if the user has a Global.Player (either because they already had one, or because they just created one)
                     if (PlayerLoaded)
                     {
-                        // Player exists, so start the game
+                        // Global.Player exists, so start the game
                         RTR.RunSection("GAMETXT.REF", "STARTGAME");
 
                         // We're now in map mode until we hit a hotspot
-                        LoadMap(_Player.Map);
+                        Global.LoadMap(Global.Player.Map);
                         DrawMap();
 
-                        // Allow player to move around
+                        // Allow Global.Player to move around
                         char? Ch = null;
                         while (Ch != 'Q')
                         {
@@ -113,7 +105,7 @@ namespace LORD2
 
                 for (int x = 0; x < 80; x++)
                 {
-                    MAP_INFO MI = _CurrentMap.W[y + (x * 20)];
+                    MAP_INFO MI = Global.CurrentMap.W[y + (x * 20)];
 
                     if (BG != MI.BackgroundColour)
                     {
@@ -133,186 +125,55 @@ namespace LORD2
                 Door.Write(ToSend.ToString());
             }
 
-            // Draw the player
-            DrawPlayer(_Player.X, _Player.Y);
+            // Draw the Global.Player
+            DrawPlayer(Global.Player.X, Global.Player.Y);
         }
 
         static void DrawPlayer(int x, int y)
         {
             // Erase the previous position
-            Door.TextBackground(_CurrentMap.W[(_Player.Y - 1) + ((_Player.X - 1) * 20)].BackgroundColour);
-            Door.TextColor(_CurrentMap.W[(_Player.Y - 1) + ((_Player.X - 1) * 20)].ForegroundColour);
-            Door.GotoXY(_Player.X, _Player.Y);
-            Door.Write(_CurrentMap.W[(_Player.Y - 1) + ((_Player.X - 1) * 20)].Character.ToString());
+            Door.TextBackground(Global.CurrentMap.W[(Global.Player.Y - 1) + ((Global.Player.X - 1) * 20)].BackgroundColour);
+            Door.TextColor(Global.CurrentMap.W[(Global.Player.Y - 1) + ((Global.Player.X - 1) * 20)].ForegroundColour);
+            Door.GotoXY(Global.Player.X, Global.Player.Y);
+            Door.Write(Global.CurrentMap.W[(Global.Player.Y - 1) + ((Global.Player.X - 1) * 20)].Character.ToString());
 
-            // And draw the player
-            Door.TextBackground(_CurrentMap.W[(y - 1) + ((x - 1) * 20)].BackgroundColour);
+            // And draw the Global.Player
+            Door.TextBackground(Global.CurrentMap.W[(y - 1) + ((x - 1) * 20)].BackgroundColour);
             Door.TextColor(Crt.White);
             Door.GotoXY(x, y);
             Door.Write("\x02");
 
             // Store the last position for erasing later
-            _LastX = _Player.X;
-            _LastY = _Player.Y;
-            _Player.X = (short)x;
-            _Player.Y = (short)y;
-        }
-
-        static bool LoadDataFiles()
-        {
-            // Load ITEMS.DAT
-            if (File.Exists(Global.ItemsDatFileName))
-            {
-                using (FileStream FS = new FileStream(Global.ItemsDatFileName, FileMode.Open))
-                {
-                    long FSLength = FS.Length;
-                    while (FS.Position < FSLength)
-                    {
-                        _ItemsDat.Add(DataStructures.ReadStruct<ItemsDatRecord>(FS));
-                    }
-                }
-
-                // Assign global PLUS values
-                for (int i = 0; i < _ItemsDat.Count; i++)
-                {
-                    RTGlobal.PLUS["`+" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)] = _ItemsDat[i].Name;
-                }
-            }
-            else
-            {
-                return false;
-            }
-
-            // Load MAP.DAT
-            if (File.Exists(Global.MapDatFileName))
-            {
-                using (FileStream FS = new FileStream(Global.MapDatFileName, FileMode.Open))
-                {
-                    long FSLength = FS.Length;
-                    while (FS.Position < FSLength)
-                    {
-                        _MapDat.Add(DataStructures.ReadStruct<MapDatRecord>(FS));
-                    }
-                }
-            }
-            else
-            {
-                return false;
-            }
-
-            // Load WORLD.DAT
-            if (!File.Exists(Global.WorldDatFileName))
-            {
-                // TODO Generate the file
-            }
-            if (File.Exists(Global.WorldDatFileName))
-            {
-                using (FileStream FS = new FileStream(Global.WorldDatFileName, FileMode.Open))
-                {
-                    _WorldDat = DataStructures.ReadStruct<WorldDatRecord>(FS);
-
-                    // Assign global S values
-                    RTGlobal.S["`S1"] = _WorldDat.S1;
-                    RTGlobal.S["`S2"] = _WorldDat.S2;
-                    RTGlobal.S["`S3"] = _WorldDat.S3;
-                    RTGlobal.S["`S4"] = _WorldDat.S4;
-                    RTGlobal.S["`S5"] = _WorldDat.S5;
-                    RTGlobal.S["`S6"] = _WorldDat.S6;
-                    RTGlobal.S["`S7"] = _WorldDat.S7;
-                    RTGlobal.S["`S8"] = _WorldDat.S8;
-                    RTGlobal.S["`S9"] = _WorldDat.S9;
-                    RTGlobal.S["`S10"] = _WorldDat.S10;
-
-                    // Assign global V values
-                    for (int i = 0; i < _WorldDat.V.Length; i++)
-                    {
-                        RTGlobal.V["`V" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)] = _WorldDat.V[i];
-                    }
-                }
-            }
-            else
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        static void LoadMap(int mapNumber)
-        {
-            // First use WORLD.DAT to determine which block in MAP.DAT the given map number is
-            int MapBlockNumber = _WorldDat.Location[mapNumber - 1]; // 0 based array access
-
-            // Then get the block from the MAP.DAT file
-            _CurrentMap = _MapDat[MapBlockNumber - 1]; // 0 based array access
-        }
-
-        static bool LoadPlayer(out TraderDatRecord record)
-        {
-            if (File.Exists(Global.TraderDatFileName))
-            {
-                using (FileStream FS = new FileStream(Global.TraderDatFileName, FileMode.Open))
-                {
-                    long FSLength = FS.Length;
-                    while (FS.Position < FSLength)
-                    {
-                        TraderDatRecord TDR = DataStructures.ReadStruct<TraderDatRecord>(FS);
-                        if (TDR.RealName.ToUpper() == Door.DropInfo.Alias.ToUpper())
-                        {
-                            // Assign player I values
-                            for (int i = 0; i < TDR.Item.Length; i++)
-                            {
-                                RTGlobal.I["`I" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)] = TDR.Item[i];
-                            }
-                            
-                            // Assign player P values
-                            for (int i = 0; i < TDR.P.Length; i++)
-                            {
-                                RTGlobal.P["`P" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)] = TDR.P[i];
-                            }
-
-                            // Assign player T values
-                            for (int i = 0; i < TDR.B.Length; i++)
-                            {
-                                RTGlobal.T["`T" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)] = TDR.B[i];
-                            }
-
-                            record = TDR;
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            // If we get here, user doesn't have an account yet
-            record = new TraderDatRecord();
-            return false;
+            Global.LastX = Global.Player.X;
+            Global.LastY = Global.Player.Y;
+            Global.Player.X = (short)x;
+            Global.Player.Y = (short)y;
         }
 
         static void MovePlayer(int xoffset, int yoffset)
         {
-            int x = _Player.X + xoffset;
-            int y = _Player.Y + yoffset;
+            int x = Global.Player.X + xoffset;
+            int y = Global.Player.Y + yoffset;
 
             // Check for passable
-            if (_CurrentMap.W[(y - 1) + ((x - 1) * 20)].Terrain != 0)
+            if (Global.CurrentMap.W[(y - 1) + ((x - 1) * 20)].Terrain != 0)
             {
                 DrawPlayer(x, y);
             }
 
             // Check for special
-            foreach (SPECIAL_STRUCT SS in _CurrentMap.Special)
+            foreach (SPECIAL_STRUCT SS in Global.CurrentMap.Special)
             {
                 if ((SS.HotSpotX == x) && (SS.HotSpotY == y))
                 {
                     if ((SS.WarpMap > 0) && (SS.WarpX > 0) && (SS.WarpY > 0))
                     {
-                        _Player.LastMap = _Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
-                        _Player.Map = SS.WarpMap;
-                        _Player.X = SS.WarpX;
-                        _Player.Y = SS.WarpY;
+                        Global.Player.LastMap = Global.Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
+                        Global.Player.Map = SS.WarpMap;
+                        Global.Player.X = SS.WarpX;
+                        Global.Player.Y = SS.WarpY;
 
-                        LoadMap(SS.WarpMap);
+                        Global.LoadMap(SS.WarpMap);
                         DrawMap();
                         break;
                     }
@@ -333,12 +194,12 @@ namespace LORD2
 
         private static void RTR_OnMOVEBACK(object sender, System.EventArgs e)
         {
-            DrawPlayer(_LastX, _LastY);
+            DrawPlayer(Global.LastX, Global.LastY);
         }
 
         private static void RTR_OnUPDATE(object sender, System.EventArgs e)
         {
-            // TODO Draw all players on this screen
+            // TODO Draw all Global.Players on this screen
         }
     }
 }

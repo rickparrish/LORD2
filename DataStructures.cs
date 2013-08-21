@@ -67,7 +67,7 @@ namespace LORD2
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
-    internal struct ItemsDatRecord
+    public struct ItemsDatRecord
     {
         private Byte _NameLength;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 30)]
@@ -228,7 +228,7 @@ namespace LORD2
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
-    internal struct MAP_INFO
+    public struct MAP_INFO
     {
         public SByte ForegroundColour;
         public SByte BackgroundColour;
@@ -238,7 +238,7 @@ namespace LORD2
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
-    internal struct SPECIAL_STRUCT
+    public struct SPECIAL_STRUCT
     {
         public Int16 WarpMap; // Map to warp to, 0 if not a warp
         public SByte HotSpotX; // x coord of hotspot, 0 if hotspot not used
@@ -281,7 +281,7 @@ namespace LORD2
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
-    internal struct MapDatRecord
+    public struct MapDatRecord
     {
         private Byte _NameLength;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 30)]
@@ -352,7 +352,7 @@ namespace LORD2
 
     // TODO Setters are untested
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
-    internal struct TraderDatRecord
+    public struct TraderDatRecord
     {
         private Byte _NameLength;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 25)]
@@ -432,7 +432,7 @@ namespace LORD2
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
-    internal struct WorldDatRecord
+    public struct WorldDatRecord
     {
         private Byte _NameLength;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 60)]

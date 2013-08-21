@@ -753,7 +753,27 @@ namespace LORD2
                  @end
                 The above would ONLY allow the person to hit Y or N - if he hit ENTER, it
                 would be the same as hitting Y, because that was listed first.   */
-            LogMissing(tokens);
+            char? Ch = null;
+            while (true)
+            {
+                Ch = Door.ReadKey();
+                if (Ch != null)
+                {
+                    Ch = char.ToUpper((char)Ch);
+                    if (Ch == '\r')
+                    {
+                        // Assign first option when enter is hit
+                        AssignVariable(tokens[2], tokens[3][0].ToString());
+                        break;
+                    }
+                    else if (tokens[3].ToUpper().Contains(Ch.ToString()))
+                    {
+                        // Assign selected character
+                        AssignVariable(tokens[2], Ch.ToString());
+                        break;
+                    }
+                }
+            }
         }
 
         private void CommandDO_READSTRING(string[] tokens)
@@ -1534,14 +1554,15 @@ namespace LORD2
             // TODO Determine which options are Visible and assign VisibleIndex
             int VisibleCount = 0;
             int LastVisibleLength = 0;
-            
-            char[] IfChars = {'=', '!', '>', '<', '+', '-'};
+
+            char[] IfChars = { '=', '!', '>', '<', '+', '-' };
             for (int i = 0; i < _InCHOICEOptions.Count; i++)
             {
                 bool MakeVisible = true;
 
                 // Parse out the IF statements
-                while (Array.IndexOf(IfChars, _InCHOICEOptions[i].Text[0]) != -1) {
+                while (Array.IndexOf(IfChars, _InCHOICEOptions[i].Text[0]) != -1)
+                {
                     // Extract operator
                     char Operator = _InCHOICEOptions[i].Text[0];
                     _InCHOICEOptions[i].Text = _InCHOICEOptions[i].Text.Substring(1);
@@ -1592,7 +1613,7 @@ namespace LORD2
                     _InCHOICEOptions[i].Visible = false;
                 }
             }
-            
+
             // Ensure `V01 specified a valid/visible selection
             int SelectedIndex = Convert.ToInt32(TranslateVariables("`V01"));
             if ((SelectedIndex < 1) || (SelectedIndex > _InCHOICEOptions.Count)) SelectedIndex = 1;
@@ -1630,7 +1651,7 @@ namespace LORD2
                         {
                             // Go to previous item
                             SelectedIndex -= 1;
-                            
+
                             // Wrap to bottom if we were at the top item
                             if (SelectedIndex < 1) SelectedIndex = _InCHOICEOptions.Count;
 
@@ -1644,7 +1665,7 @@ namespace LORD2
                         {
                             // Go to previous item
                             SelectedIndex += 1;
-                            
+
                             // Wrap to bottom if we were at the top item
                             if (SelectedIndex > _InCHOICEOptions.Count) SelectedIndex = 1;
 
@@ -1654,7 +1675,8 @@ namespace LORD2
                         break;
                 }
 
-                if (OldSelectedIndex != SelectedIndex) {
+                if (OldSelectedIndex != SelectedIndex)
+                {
                     // Store new selection
                     AssignVariable("`V01", SelectedIndex.ToString());
 
@@ -1689,7 +1711,7 @@ namespace LORD2
             int MaxPage = Convert.ToInt32(Math.Truncate(_InSHOWSCROLLLines.Count / 22.0));
             if (_InSHOWSCROLLLines.Count % 22 != 0) MaxPage += 1;
             int SavedAttr = 7;
-            
+
             while (Ch != 'Q')
             {
                 Door.TextAttr(SavedAttr);

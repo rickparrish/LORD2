@@ -1616,13 +1616,47 @@ namespace LORD2
 
         private void EndSHOWSCROLL()
         {
-            // TODO This should be a scroll window, not just a dump and pause
-            Door.ClrScr();
-            for (int i = 0; i < _InSHOWSCROLLLines.Count; i++)
+            char? Ch = null;
+            int Page = 1;
+            int MaxPage = Convert.ToInt32(Math.Truncate(_InSHOWSCROLLLines.Count / 22.0));
+            if (_InSHOWSCROLLLines.Count % 22 != 0) MaxPage += 1;
+            int SavedAttr = 7;
+            
+            while (Ch != 'Q')
             {
-                Door.WriteLn(_InSHOWSCROLLLines[i]);
+                Door.TextAttr(SavedAttr);
+                Door.ClrScr();
+
+                int LineStart = (Page - 1) * 22;
+                int LineEnd = LineStart + 21;
+                for (int i = LineStart; i <= LineEnd; i++)
+                {
+                    if (i >= _InSHOWSCROLLLines.Count) break;
+                    Door.WriteLn(_InSHOWSCROLLLines[i]);
+                }
+                SavedAttr = Crt.TextAttr;
+
+                Door.GotoXY(1, 23);
+                Door.TextAttr(31);
+                Door.Write(new string(' ', 79));
+                Door.GotoXY(3, 23);
+                Door.Write("(" + Page + ")");
+                Door.GotoXY(9, 23);
+                Door.Write("[N]ext Page, [P]revious Page, [Q]uit, [S]tart, [E]nd");
+
+                Ch = Door.ReadKey();
+                if (Ch != null)
+                {
+                    Ch = char.ToUpper((char)Ch);
+                    switch (Ch)
+                    {
+                        case 'E': Page = MaxPage; break;
+                        case 'N': Page = Math.Min(MaxPage, Page + 1); break;
+                        case 'P': Page = Math.Max(1, Page - 1); break;
+                        case 'S': Page = 1; break;
+                    }
+                }
             }
-            Door.ReadKey();
         }
 
         private void LoadRefFile(string fileName)

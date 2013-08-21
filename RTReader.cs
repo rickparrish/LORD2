@@ -170,6 +170,7 @@ namespace LORD2
             _GlobalWords.Add("LOCAL", (Door.Local() ? "5" : "0"));
             _GlobalWords.Add("MAP", "155");
             _GlobalWords.Add("MONEY", "0");
+            _GlobalWords.Add("NIL", "");
             _GlobalWords.Add("RESPONCE", "0");
             _GlobalWords.Add("RESPONSE", "0");
             _GlobalWords.Add("SEX", "0"); // Male

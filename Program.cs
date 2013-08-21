@@ -45,7 +45,7 @@ namespace LORD2
                     if (PlayerLoaded)
                     {
                         // Player exists, so start the game
-                        _RTR.RunSection("GAMETXT.REF", "STARTGAME");
+                        _RTR.RunSection("RTNEWS02.REF", "START");
 
                         // We're now in map mode until we hit a hotspot
                         LoadMap(_Player.Map);

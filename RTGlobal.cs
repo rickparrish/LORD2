@@ -63,7 +63,7 @@ namespace LORD2
         private static void LoadRefFile(string fileName)
         {
             // A place to store all the sections found in this file
-            RTRFile NewFile = new RTRFile();
+            RTRFile NewFile = new RTRFile(fileName);
 
             // Where to store the info for the section we're currently working on
             string NewSectionName = "_HEADER";

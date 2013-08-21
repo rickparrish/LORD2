@@ -21,8 +21,6 @@ namespace LORD2
         private List<string> _InCHOICEOptions = new List<string>();
         private bool _InCLOSESCRIPT = false;
         private bool _InDOWrite = false;
-        private string _InGOTOHeader = "";
-        private int _InGOTOLineNumber = 0;
         private int _InHALT = int.MinValue;
         private int _InIFFalse = 999;
         private bool _InSAY = false;
@@ -597,7 +595,9 @@ namespace LORD2
             if (_CurrentFile.Sections.ContainsKey(tokens[2]))
             {
                 // HEADER goto
-                _InGOTOHeader = tokens[2];
+                RTReader RTR = new RTReader();
+                _InHALT = RTR.RunSection(_CurrentFile.Name, TranslateVariables(tokens[2]));
+                _InCLOSESCRIPT = true; // Don't want to resume this ref
             }
             else if (_CurrentSection.Labels.ContainsKey(tokens[2]))
             {
@@ -611,8 +611,9 @@ namespace LORD2
                     if (KVP.Value.Labels.ContainsKey(tokens[2]))
                     {
                         // LABEL goto within a different section
-                        _InGOTOHeader = KVP.Key; // Section name
-                        _InGOTOLineNumber = KVP.Value.Labels[tokens[2]];
+                        RTReader RTR = new RTReader();
+                        _InHALT = RTR.RunSection(_CurrentFile.Name, KVP.Key, TranslateVariables(tokens[2]));
+                        _InCLOSESCRIPT = true; // Don't want to resume this ref
                         break;
                     }
                 }
@@ -1343,7 +1344,9 @@ namespace LORD2
         {
             /* @RUN <Header or label name> IN <Filename of .REF file>
                 Same thing as ROUTINE, but doesn't come back to the original .REF. */
-            LogMissing(tokens);
+            RTReader RTR = new RTReader();
+            _InHALT = RTR.RunSection(TranslateVariables(tokens[3]), TranslateVariables(tokens[1]));
+            _InCLOSESCRIPT = true; // Don't want to resume this ref
         }
 
         private void CommandSAVECURSOR(string[] tokens)
@@ -1622,6 +1625,11 @@ namespace LORD2
 
         public int RunSection(string fileName, string sectionName)
         {
+            return RunSection(fileName, sectionName, "");
+        }
+
+        public int RunSection(string fileName, string sectionName, string labelName)
+        {
             // TODO What happens if invalid file and/or section name is given
 
             // Run the selected script
@@ -1631,35 +1639,10 @@ namespace LORD2
                 _CurrentFile = RTGlobal.RefFiles[FileNameWithoutExtension];
                 if (_CurrentFile.Sections.ContainsKey(sectionName))
                 {
+                    // Load section, check if requested label exists, and run script
                     _CurrentSection = _CurrentFile.Sections[sectionName];
-                    _CurrentLineNumber = _InGOTOLineNumber;
-
-                    _InBEGINCount = 0;
-                    _InCHOICE = false;
-                    _InCHOICEOptions.Clear();
-                    _InCLOSESCRIPT = false;
-                    _InDOWrite = false;
-                    _InGOTOHeader = "";
-                    _InGOTOLineNumber = 0;
-                    _InHALT = int.MinValue;
-                    _InIFFalse = 999;
-                    _InSAY = false;
-                    _InSAYBAR = false;
-                    _InSHOW = false;
-                    _InSHOWLOCAL = false;
-                    _InSHOWSCROLL = false;
-                    _InSHOWSCROLLLines.Clear();
-                    _InWRITEFILE = "";
-
+                    if (_CurrentSection.Labels.ContainsKey(labelName)) _CurrentLineNumber = _CurrentSection.Labels[labelName];
                     RunScript(_CurrentSection.Script.ToArray());
-
-                    // If we exit this script with _InGOTOHeader set, it means we want to GOTO a different section
-                    if (_InGOTOHeader != "")
-                    {
-                        string TempGOTOHeader = _InGOTOHeader;
-                        _InGOTOHeader = "";
-                        RunSection(FileNameWithoutExtension, TempGOTOHeader);
-                    }
 
                     // Return the errorcode from _InHALT (which is int.MinValue if no error code)
                     return _InHALT;
@@ -1790,9 +1773,6 @@ namespace LORD2
                         }
                     }
                 }
-
-                // Check if we need to GOTO a header (and stop processing this script)
-                if (_InGOTOHeader != "") return;
 
                 _CurrentLineNumber += 1;
             }

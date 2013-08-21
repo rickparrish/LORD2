@@ -187,6 +187,7 @@ namespace LORD2
             if (RTGlobal.LanguageVariables.ContainsKey(variable))
             {
                 // TODO Depending on what got set here, other global variables may need to be set (ie is player dead, their x/y location, their map)
+                // TODO Maybe they shouldn't be variables, and there should just be a long list of if variable == xyz assigning directly into the player record
                 RTGlobal.LanguageVariables[variable] = values[0]; // These variables only ever hold a single value, so anything after values[0] is likely a comment
             }
         }
@@ -1963,15 +1964,18 @@ namespace LORD2
             {
                 // TODO This shouldn't happen for @SHOW and @DO WRITE, so maybe we need a TranslateVariables() that excludes this, and TranslateVariablesForLogic() that includes this (then any non-output code would use the logic call)
                 // TODO Since we look for an exact match, it may not matter anyway (since what are the odds a @SHOW only has the word MAP on a line, for example)
+                // TODO These need to be kept in sync (for example if c# code changes Global.Player.Bank)
+                // TODO Maybe they shouldn't be variables, and there should just be a long list of Regex.Replaces for each variable, linking directly into the player record
                 if (inputUpper == KVP.Key.ToUpper()) input = KVP.Value;
             }
             foreach (KeyValuePair<string, string> KVP in RTGlobal.ReadOnlyVariables)
             {
                 // TODO s& should be lowercasing the first letter, S& uppercasing
+                // TODO These need to be kept in sync (for example if c# code changes Global.Player.Bank)
+                // TODO Maybe they shouldn't be variables, and there should just be a long list of Regex.Replaces for each variable, linking directly into the player record
                 input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
             }
 
-            // TODO also translate language variables and variable symbols
             return input;
         }
     }

@@ -192,7 +192,6 @@ namespace LORD2
             // Check for LENGTH operator
             if ((values.Length == 2) && (values[1].StartsWith("`")))
             {
-                // TODO Both of these need to be corrected to match the docs
                 if (values[0].ToUpper() == "LENGTH")
                 {
                     /* @DO <number variable> IS LENGTH <String variable>
@@ -475,10 +474,9 @@ namespace LORD2
 
         private void CommandCOPYFILE(string[] tokens)
         {
-            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @COPYFILE <input filename> <output filename>
                 This command copies a <input filename to <output filename>.           */
-            LogMissing(tokens);
+            LogUnused(tokens);
         }
 
         private void CommandDATALOAD(string[] tokens)
@@ -573,10 +571,9 @@ namespace LORD2
 
         private void CommandDO_BEEP(string[] tokens)
         {
-            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @DO BEEP
                 Makes a weird beep noise, locally only */
-            LogMissing(tokens);
+            LogUnused(tokens);
         }
 
         private void CommandDO_COPYTONAME(string[] tokens)
@@ -856,10 +853,9 @@ namespace LORD2
 
         private void CommandDO_STRIPALL(string[] tokens)
         {
-            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @DO STRIPALL
                 This command strips out all ` codes.  This is good for passwords, etc. */
-            LogMissing(tokens);
+            LogUnused(tokens);
         }
 
         private void CommandDO_STRIPBAD(string[] tokens)
@@ -872,10 +868,9 @@ namespace LORD2
 
         private void CommandDO_STRIPCODE(string[] tokens)
         {
-            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @STRIPCODE <any `s variable>
                 This will remove ALL ` codes from a string. */
-            LogMissing(tokens);
+            LogUnused(tokens);
         }
 
         private void CommandDO_SUBTRACT(string[] tokens)
@@ -1027,11 +1022,10 @@ namespace LORD2
 
         private void CommandGRAPHICS(string[] tokens)
         {
-            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @GRAPHICS IS <Num> 
                 3 or more enable remote ANSI.  If you never wanted to send ANSI, you could set 
                 this to 1. You will probably never touch this one. */
-            LogMissing(tokens);
+            LogUnused(tokens);
         }
 
         private void CommandHALT(string[] tokens)
@@ -1234,11 +1228,10 @@ namespace LORD2
 
         private void CommandLOADGLOBALS(string[] tokens)
         {
-            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @LOADGLOBALS
                 This command loads the last value of all global variables as existed when the 
                 last @SAVEGLOBALS command was issued.  See @SAVEGLOBALS below. */
-            LogMissing(tokens);
+            LogUnused(tokens);
         }
 
         private void CommandLOADMAP(string[] tokens)
@@ -1255,11 +1248,10 @@ namespace LORD2
 
         private void CommandLOADWORLD(string[] tokens)
         {
-            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @LOADWORLD
                 This command loads globals and world data.  It has never been used but is 
                 included just in case it becomes necessary to do this.  See @SAVEWORLD below. */
-            LogMissing(tokens);
+            LogUnused(tokens);
         }
 
         private void CommandLORDRANK(string[] tokens)
@@ -1284,20 +1276,17 @@ namespace LORD2
 
         private void CommandMOREMAP(string[] tokens)
         {
-            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @MOREMAP
                 The line UNDER this will be the new <more> prompt.  30 characters maximum. */
-            LogMissing(tokens);
+            LogUnused(tokens);
         }
 
         private void CommandNAME(string[] tokens)
         {
             /* @NAME <name to put under picture>
                 Undocumented. Puts a name under the picture window */
-            // TODO Name.Length is going to include the ANSI sequences, so not be the correct length
             string Name = TranslateVariables(string.Join(" ", tokens, 1, tokens.Length - 1));
-            if (Name.Length > 22) Name = Name.Substring(0, 22);
-            Door.GotoXY(55 + Convert.ToInt32(Math.Truncate((22 - Name.Length) / 2.0)), 15);
+            Door.GotoXY(55 + Convert.ToInt32(Math.Truncate((22 - Door.StripSeth(Name).Length) / 2.0)), 15);
             Door.Write(Name);
         }
 
@@ -1347,15 +1336,13 @@ namespace LORD2
 
         private void CommandPROGNAME(string[] tokens)
         {
-            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @PROGNAME
                 The line UNDER this will be the status bar name of the game. */
-            LogMissing(tokens);
+            LogUnused(tokens);
         }
 
         private void CommandRANK(string[] tokens)
         {
-            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @RANK <filename> <`p variable to rank by> <procedure to format the ranking>
                 This command is the same as above with the exception it uses a procedure to 
                 format the ranking.  This procedure needs to be in the same file as the @RANK 
@@ -1363,7 +1350,7 @@ namespace LORD2
                 if feasible.  This one works, but @LORDRANK uses a preset formatting
                 procedure and is therefore quicker.  There may be occasion, however, if you
                 write your own world to use this command rather than @LORDRANK. */
-            LogMissing(tokens);
+            LogUnused(tokens);
         }
 
         private void CommandREADFILE(string[] tokens)
@@ -1419,11 +1406,10 @@ namespace LORD2
 
         private void CommandSAVEWORLD(string[] tokens)
         {
-            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @SAVEWORLD
                 This command saves stats and world data.  The only use yet is right after 
                 @#maint is called to save random stats set for that day and such. */
-            LogMissing(tokens);
+            LogUnused(tokens);
         }
 
         private void CommandSAY(string[] tokens)
@@ -1483,10 +1469,9 @@ namespace LORD2
 
         private void CommandSTATBAR(string[] tokens)
         {
-            // TODO Not used in LORD2 (need to check with the "ultimate" version that has all those IGMs though)
             /* @STATBAR
                 This draws the statbar. */
-            LogMissing(tokens);
+            LogUnused(tokens);
         }
 
         private void CommandUPDATE(string[] tokens)
@@ -1738,7 +1723,15 @@ namespace LORD2
 
         private void LogMissing(string[] tokens)
         {
-            string Output = "TODO (hit a key): " + string.Join(" ", tokens);
+            string Output = "MISSING (hit a key): " + string.Join(" ", tokens);
+            Crt.FastWrite(StringUtils.PadRight(Output, ' ', 80), 1, 25, 31);
+            Crt.ReadKey();
+            Crt.FastWrite(new string(' ', 80), 1, 25, 0);
+        }
+
+        private void LogUnused(string[] tokens)
+        {
+            string Output = "UNUSED?!? (hit a key): " + string.Join(" ", tokens);
             Crt.FastWrite(StringUtils.PadRight(Output, ' ', 80), 1, 25, 31);
             Crt.ReadKey();
             Crt.FastWrite(new string(' ', 80), 1, 25, 0);
@@ -1872,7 +1865,7 @@ namespace LORD2
                         }
                         else if (_InSAY)
                         {
-                            // TODO SHould be in TEXT window
+                            // TODO SHould be in TEXT window (but since LORD2 doesn't use @SAY, not a high priority)
                             Door.Write(TranslateVariables(Line));
                         }
                         else if (_InSAYBAR)

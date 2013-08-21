@@ -18,7 +18,7 @@ namespace LORD2
         private RTRSection _CurrentSection = null;
         private int _InBEGINCount = 0;
         private bool _InCHOICE = false;
-        private List<string> _InCHOICEOptions = new List<string>();
+        private List<RTChoiceOption> _InCHOICEOptions = new List<RTChoiceOption>();
         private bool _InCLOSESCRIPT = false;
         private bool _InDOWrite = false;
         private int _InHALT = int.MinValue;
@@ -1530,36 +1530,101 @@ namespace LORD2
                 example, if `p20 was 600 and the user hit the selection:
                 "Hey, I have more than 500", RESPONSE would be set to 5. */
 
+            // TODO Determine which options are Visible and assign VisibleIndex
+            int VisibleCount = 0;
+            int SelectedIndex = Convert.ToInt32(TranslateVariables("`V01"));
+            for (int i = 0; i < _InCHOICEOptions.Count; i++)
+            {
+                // TODO Determine if option is visible
+                if (true)
+                {
+                    VisibleCount += 1;
+                    _InCHOICEOptions[i].Visible = true;
+                    _InCHOICEOptions[i].VisibleIndex = VisibleCount;
+                }
+                else
+                {
+                    _InCHOICEOptions[i].Visible = false;
+                }
+            }
+            
+            // Ensure `V01 specified a valid/visible selection
+            if ((SelectedIndex < 1) || (SelectedIndex > _InCHOICEOptions.Count) || (!_InCHOICEOptions[SelectedIndex].Visible)) SelectedIndex = 1;
+
             // Determine how many spaces to indent by (all lines should be indented same as first line)
             string Spaces = "\r\n" + new string(' ', Crt.WhereX() - 1);
 
             // Output options
-            int FirstKey = 65;
-            for (int i = 0; i < _InCHOICEOptions.Count; i++)
+            Door.CursorSave();
+            Door.TextAttr(15);
+            foreach (RTChoiceOption Option in _InCHOICEOptions)
             {
-                // TODO LORD2 is light-bar only, no letter to pick with.  
-                //      Just highlight selected item with dark blue background (with of selected text, not of longest text)
-                if (i > 0) Door.Write(Spaces);
-                Door.Write(TranslateVariables("`2(`0" + ((char)(FirstKey + i)).ToString() + "`2)`2 " + _InCHOICEOptions[i]));
+                if (Option.VisibleIndex > 1) Door.Write(Spaces);
+                if (Option.VisibleIndex == SelectedIndex) Door.TextBackground(Crt.Blue);
+                Door.Write(TranslateVariables(Option.Text));
+                if (Option.VisibleIndex == SelectedIndex) Door.TextBackground(Crt.Black);
             }
 
             // Get response
-            char? Ch = '\0';
-            while (((byte)Ch < FirstKey) || ((byte)Ch > (FirstKey + _InCHOICEOptions.Count - 1)))
+            char? Ch = null;
+            while (Ch != '\r')
             {
+                int OldSelectedIndex = SelectedIndex;
+
                 Ch = Door.ReadKey();
-                if (Ch == null)
+                switch (Ch)
                 {
-                    Ch = '\0';
+                    case '8':
+                    case '4':
+                        while (true)
+                        {
+                            // Go to previous item
+                            SelectedIndex -= 1;
+                            
+                            // Wrap to bottom if we were at the top item
+                            if (SelectedIndex < 1) SelectedIndex = _InCHOICEOptions.Count;
+
+                            // Check if new selected item is visible (and break if so)
+                            if (_InCHOICEOptions[SelectedIndex - 1].Visible) break;
+                        }
+                        break;
+                    case '6':
+                    case '2':
+                        while (true)
+                        {
+                            // Go to previous item
+                            SelectedIndex += 1;
+                            
+                            // Wrap to bottom if we were at the top item
+                            if (SelectedIndex > _InCHOICEOptions.Count) SelectedIndex = 1;
+
+                            // Check if new selected item is visible (and break if so)
+                            if (_InCHOICEOptions[SelectedIndex - 1].Visible) break;
+                        }
+                        break;
                 }
-                else
-                {
-                    Ch = char.ToUpper((char)Ch);
+
+                if (OldSelectedIndex != SelectedIndex) {
+                    // Store new selection
+                    AssignVariable("`V01", SelectedIndex.ToString());
+
+                    // Redraw old selection without blue highlight
+                    Door.CursorRestore();
+                    if (OldSelectedIndex > 1) Door.CursorDown(OldSelectedIndex - 1);
+                    Door.Write(TranslateVariables(_InCHOICEOptions[OldSelectedIndex - 1].Text));
+
+                    // Draw new selection with blue highlight
+                    Door.CursorRestore();
+                    if (SelectedIndex > 1) Door.CursorDown(SelectedIndex - 1);
+                    Door.TextBackground(Crt.Blue);
+                    Door.Write(TranslateVariables(_InCHOICEOptions[SelectedIndex - 1].Text));
+                    Door.TextBackground(Crt.Black);
                 }
             }
 
-            RTGlobal.Words["RESPONCE"] = (Ch - 64).ToString();
-            RTGlobal.Words["RESPONSE"] = (Ch - 64).ToString();
+            // Update global variable responses
+            RTGlobal.Words["RESPONCE"] = SelectedIndex.ToString();
+            RTGlobal.Words["RESPONSE"] = SelectedIndex.ToString();
         }
 
         private void EndSHOWSCROLL()
@@ -1722,7 +1787,7 @@ namespace LORD2
                     {
                         if (_InCHOICE)
                         {
-                            _InCHOICEOptions.Add(Line);
+                            _InCHOICEOptions.Add(new RTChoiceOption(Line));
                         }
                         else if (_InDOWrite)
                         {
@@ -1833,8 +1898,6 @@ namespace LORD2
             }
             foreach (KeyValuePair<string, string> KVP in RTGlobal.Words)
             {
-                // TODO This isn't correct, since for example one of the global words is LOCAL, and so if a message says "my local calling area is 519" it'll be replaced with "my 5 calling area is 519"
-                // TODO It's good enough for now for me to test with though
                 if (inputUpper == KVP.Key.ToUpper())
                 {
                     input = KVP.Value;
@@ -1858,7 +1921,8 @@ namespace LORD2
                 }
                 else
                 {
-                    input = Regex.Replace(input, Regex.Escape(" " + KVP.Key + " "), KVP.Value, RegexOptions.IgnoreCase);
+                    input = Regex.Replace(input, Regex.Escape(" s&" + KVP.Key + " "), KVP.Value, RegexOptions.IgnoreCase); // TODO This won't case the first character of KVP.Value properly
+                    input = Regex.Replace(input, Regex.Escape(" &" + KVP.Key + " "), KVP.Value, RegexOptions.IgnoreCase);
                 }
             }
 

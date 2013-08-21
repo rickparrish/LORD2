@@ -19,8 +19,9 @@ namespace LORD2
 
         static void Main(string[] args)
         {
+            if (!Debugger.IsAttached) Crt.HideCursor();
+            
             // Initialize door driver
-            Crt.HideCursor();
             Door.Startup(args);
             Door.ClrScr();
             Door.SethWrite = true;

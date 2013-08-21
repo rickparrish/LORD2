@@ -1528,14 +1528,57 @@ namespace LORD2
                 example, if `p20 was 600 and the user hit the selection:
                 "Hey, I have more than 500", RESPONSE would be set to 5. */
 
+
             // TODO Determine which options are Visible and assign VisibleIndex
             int VisibleCount = 0;
             int LastVisibleLength = 0;
-            int SelectedIndex = Convert.ToInt32(TranslateVariables("`V01"));
+            
+            char[] IfChars = {'=', '!', '>', '<', '+', '-'};
             for (int i = 0; i < _InCHOICEOptions.Count; i++)
             {
+                bool MakeVisible = true;
+
+                // Parse out the IF statements
+                while (Array.IndexOf(IfChars, _InCHOICEOptions[i].Text[0]) != -1) {
+                    // Extract operator
+                    char Operator = _InCHOICEOptions[i].Text[0];
+                    _InCHOICEOptions[i].Text = _InCHOICEOptions[i].Text.Substring(1);
+
+                    // Extract variable and translate
+                    string Variable = _InCHOICEOptions[i].Text.Split(' ')[0];
+                    _InCHOICEOptions[i].Text = _InCHOICEOptions[i].Text.Substring(Variable.Length + 1);
+                    Variable = TranslateVariables(Variable);
+
+                    // Extract value
+                    string Value = _InCHOICEOptions[i].Text.Split(' ')[0];
+                    _InCHOICEOptions[i].Text = _InCHOICEOptions[i].Text.Substring(Value.Length + 1);
+
+                    // Determine result of if
+                    switch (Operator)
+                    {
+                        case '=':
+                            MakeVisible = MakeVisible && (Convert.ToInt32(Variable) == Convert.ToInt32(Value));
+                            break;
+                        case '!':
+                            MakeVisible = MakeVisible && (Convert.ToInt32(Variable) != Convert.ToInt32(Value));
+                            break;
+                        case '>':
+                            MakeVisible = MakeVisible && (Convert.ToInt32(Variable) > Convert.ToInt32(Value));
+                            break;
+                        case '<':
+                            MakeVisible = MakeVisible && (Convert.ToInt32(Variable) < Convert.ToInt32(Value));
+                            break;
+                        case '+':
+                            MakeVisible = MakeVisible && ((Convert.ToInt32(Variable) & (1 << Convert.ToInt32(Value))) != 0);
+                            break;
+                        case '-':
+                            MakeVisible = MakeVisible && ((Convert.ToInt32(Variable) & (1 << Convert.ToInt32(Value))) == 0);
+                            break;
+                    }
+                }
+
                 // TODO Determine if option is visible
-                if (true)
+                if (MakeVisible)
                 {
                     VisibleCount += 1;
                     LastVisibleLength = Door.StripSeth(_InCHOICEOptions[i].Text).Length;
@@ -1549,7 +1592,9 @@ namespace LORD2
             }
             
             // Ensure `V01 specified a valid/visible selection
-            if ((SelectedIndex < 1) || (SelectedIndex > _InCHOICEOptions.Count) || (!_InCHOICEOptions[SelectedIndex].Visible)) SelectedIndex = 1;
+            int SelectedIndex = Convert.ToInt32(TranslateVariables("`V01"));
+            if ((SelectedIndex < 1) || (SelectedIndex > _InCHOICEOptions.Count)) SelectedIndex = 1;
+            while (!_InCHOICEOptions[SelectedIndex - 1].Visible) SelectedIndex += 1;
 
             // Determine how many spaces to indent by (all lines should be indented same as first line)
             string Spaces = "\r\n" + new string(' ', Crt.WhereX() - 1);
@@ -1557,12 +1602,15 @@ namespace LORD2
             // Output options
             Door.CursorSave();
             Door.TextAttr(15);
-            foreach (RTChoiceOption Option in _InCHOICEOptions)
+            for (int i = 0; i < _InCHOICEOptions.Count; i++)
             {
-                if (Option.VisibleIndex > 1) Door.Write(Spaces);
-                if (Option.VisibleIndex == SelectedIndex) Door.TextBackground(Crt.Blue);
-                Door.Write(TranslateVariables(Option.Text));
-                if (Option.VisibleIndex == SelectedIndex) Door.TextBackground(Crt.Black);
+                if (_InCHOICEOptions[i].Visible)
+                {
+                    if (_InCHOICEOptions[i].VisibleIndex > 1) Door.Write(Spaces);
+                    if (i == (SelectedIndex - 1)) Door.TextBackground(Crt.Blue);
+                    Door.Write(TranslateVariables(_InCHOICEOptions[i].Text));
+                    if (i == (SelectedIndex - 1)) Door.TextBackground(Crt.Black);
+                }
             }
 
             // Get response
@@ -1610,12 +1658,12 @@ namespace LORD2
 
                     // Redraw old selection without blue highlight
                     Door.CursorRestore();
-                    if (OldSelectedIndex > 1) Door.CursorDown(OldSelectedIndex - 1);
+                    if (_InCHOICEOptions[OldSelectedIndex - 1].VisibleIndex > 1) Door.CursorDown(_InCHOICEOptions[OldSelectedIndex - 1].VisibleIndex - 1);
                     Door.Write(TranslateVariables(_InCHOICEOptions[OldSelectedIndex - 1].Text));
 
                     // Draw new selection with blue highlight
                     Door.CursorRestore();
-                    if (SelectedIndex > 1) Door.CursorDown(SelectedIndex - 1);
+                    if (_InCHOICEOptions[SelectedIndex - 1].VisibleIndex > 1) Door.CursorDown(_InCHOICEOptions[SelectedIndex - 1].VisibleIndex - 1);
                     Door.TextBackground(Crt.Blue);
                     Door.Write(TranslateVariables(_InCHOICEOptions[SelectedIndex - 1].Text));
                     Door.TextBackground(Crt.Black);

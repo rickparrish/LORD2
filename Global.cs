@@ -7,6 +7,7 @@ namespace LORD2
 {
     public static class Global
     {
+        public static string ItemsDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "ITEMS.DAT");
         public static string MapDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "MAP.DAT");
         public static string TraderDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "TRADER.DAT");
         public static string WorldDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "WORLD.DAT");

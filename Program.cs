@@ -10,6 +10,7 @@ namespace LORD2
     class Program
     {
         static private MapDatRecord _CurrentMap;
+        static private List<ItemsDatRecord> _ItemsDat = new List<ItemsDatRecord>();
         static private int _LastX = 0;
         static private int _LastY = 0;
         static private TraderDatRecord _Player;
@@ -159,6 +160,29 @@ namespace LORD2
 
         static bool LoadDataFiles()
         {
+            // Load ITEMS.DAT
+            if (File.Exists(Global.ItemsDatFileName))
+            {
+                using (FileStream FS = new FileStream(Global.ItemsDatFileName, FileMode.Open))
+                {
+                    long FSLength = FS.Length;
+                    while (FS.Position < FSLength)
+                    {
+                        _ItemsDat.Add(DataStructures.ReadStruct<ItemsDatRecord>(FS));
+                    }
+                }
+
+                // Assign global PLUS values
+                for (int i = 0; i < _ItemsDat.Count; i++)
+                {
+                    RTGlobal.PLUS["`+" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)] = _ItemsDat[i].Name;
+                }
+            }
+            else
+            {
+                return false;
+            }
+
             // Load MAP.DAT
             if (File.Exists(Global.MapDatFileName))
             {

@@ -1,4 +1,4 @@
-﻿// TODO Add structure for IGM Data, UPDATE.TMP, ITEMS.DAT
+﻿// TODO Add structure for IGM Data, UPDATE.TMP
 using RandM.RMLib;
 using System;
 using System.IO;
@@ -22,6 +22,13 @@ namespace LORD2
 
         public static bool Validate()
         {
+            int ItemsDatRecordSize = Marshal.SizeOf(typeof(ItemsDatRecord));
+            if (ItemsDatRecordSize != 204)
+            {
+                Crt.WriteLn("ItemsDatRecord is " + ItemsDatRecordSize + ", expected 204");
+                return false;
+            }
+
             int MAP_INFOSize = Marshal.SizeOf(typeof(MAP_INFO));
             if (MAP_INFOSize != 6)
             {
@@ -56,6 +63,167 @@ namespace LORD2
                 return false;
             }
             return true;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    internal struct ItemsDatRecord
+    {
+        private Byte _NameLength;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 30)]
+        private Byte[] _Name;
+        private Byte _ActionLength;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]
+        private Byte[] _Action; // String for hitting someone with it
+        private Byte _UseOnce;
+        private Byte _Armour;
+        private Byte _Weapon;
+        private Byte _Sell;
+        private Byte _Used;
+        public Int32 Value; // Gold value
+        public Int16 Breakage; // Percent breakage per use
+        public Int16 MaxBuy; // Unused for now
+        public Int16 Defense; // Defense added when equipped
+        public Int16 Strength; // Strength added when equipped
+        public Int16 Eat; // Unused for now
+        private Byte _RefNameLength;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
+        private Byte[] _RefName; // Section in ITEMS.REF
+        private Byte _UseActionLength;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 30)]
+        private Byte[] _UseAction; // Text for using it with the .REF
+        private Byte _DescriptionLength;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 30)]
+        private Byte[] _Description; // Description of item that shows to the right
+        private Byte _DontDrop; // True if item cannot be dropped (quest item)
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 37)]
+        public Char[] Extra;
+
+        public string Action
+        {
+            get
+            {
+                return RMEncoding.Ansi.GetString(_Action, 0, _ActionLength);
+            }
+            set
+            {
+                _ActionLength = (byte)Math.Min(value.Length, _Action.Length);
+                RMEncoding.Ansi.GetBytes(value, 0, _ActionLength, _Action, 0);
+            }
+        }
+        public bool Armour
+        {
+            get
+            {
+                return Convert.ToBoolean(_Armour);
+            }
+            set
+            {
+                _Armour = Convert.ToByte(value);
+            }
+        }
+        public string Description
+        {
+            get
+            {
+                return RMEncoding.Ansi.GetString(_Description, 0, _DescriptionLength);
+            }
+            set
+            {
+                _DescriptionLength = (byte)Math.Min(value.Length, _Description.Length);
+                RMEncoding.Ansi.GetBytes(value, 0, _DescriptionLength, _Description, 0);
+            }
+        }
+        public bool DontDrop
+        {
+            get
+            {
+                return Convert.ToBoolean(_DontDrop);
+            }
+            set
+            {
+                _DontDrop = Convert.ToByte(value);
+            }
+        }
+        public string Name
+        {
+            get
+            {
+                return RMEncoding.Ansi.GetString(_Name, 0, _NameLength);
+            }
+            set
+            {
+                _NameLength = (byte)Math.Min(value.Length, _Name.Length);
+                RMEncoding.Ansi.GetBytes(value, 0, _NameLength, _Name, 0);
+            }
+        }
+        public string RefName
+        {
+            get
+            {
+                return RMEncoding.Ansi.GetString(_RefName, 0, _RefNameLength);
+            }
+            set
+            {
+                _RefNameLength = (byte)Math.Min(value.Length, _RefName.Length);
+                RMEncoding.Ansi.GetBytes(value, 0, _RefNameLength, _RefName, 0);
+            }
+        }
+        public bool Sell
+        {
+            get
+            {
+                return Convert.ToBoolean(_Sell);
+            }
+            set
+            {
+                _Sell = Convert.ToByte(value);
+            }
+        }
+        public string UseAction
+        {
+            get
+            {
+                return RMEncoding.Ansi.GetString(_UseAction, 0, _UseActionLength);
+            }
+            set
+            {
+                _UseActionLength = (byte)Math.Min(value.Length, _UseAction.Length);
+                RMEncoding.Ansi.GetBytes(value, 0, _UseActionLength, _UseAction, 0);
+            }
+        }
+        public bool UseOnce
+        {
+            get
+            {
+                return Convert.ToBoolean(_UseOnce);
+            }
+            set
+            {
+                _UseOnce = Convert.ToByte(value);
+            }
+        }
+        public bool Used
+        {
+            get
+            {
+                return Convert.ToBoolean(_Used);
+            }
+            set
+            {
+                _Used = Convert.ToByte(value);
+            }
+        }
+        public bool Weapon
+        {
+            get
+            {
+                return Convert.ToBoolean(_Weapon);
+            }
+            set
+            {
+                _Weapon = Convert.ToByte(value);
+            }
         }
     }
 

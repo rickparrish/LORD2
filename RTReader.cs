@@ -184,20 +184,10 @@ namespace LORD2
             {
                 RTGlobal.V[variable] = Convert.ToInt32(values[0]);
             }
-            // TODO Not sure if these should be assigned this way, but let's try it for now
-            if (RTGlobal.Words.ContainsKey(variable))
+            if (RTGlobal.LanguageVariables.ContainsKey(variable))
             {
-                RTGlobal.Words[variable] = value;
-
-                // TODO Probably a better way to handle this
-                if (variable.ToUpper() == "SEX")
-                {
-                    RTGlobal.Words["SEXMALE"] = Math.Abs(Convert.ToInt32(value) - 1).ToString();
-                }
-                else if (variable.ToUpper() == "SEXMALE")
-                {
-                    RTGlobal.Words["SEX"] = Math.Abs(Convert.ToInt32(value) - 1).ToString();
-                }
+                // TODO Depending on what got set here, other global variables may need to be set (ie is player dead, their x/y location, their map)
+                RTGlobal.LanguageVariables[variable] = values[0]; // These variables only ever hold a single value, so anything after values[0] is likely a comment
             }
         }
 
@@ -537,7 +527,7 @@ namespace LORD2
                 allow a player to change his name or to get the name a new player wants to go 
                 by.  It is also useful in the @#newplayer routine to get the alias the player 
                 wants to go by in the game. */
-            RTGlobal.Other["`N"] = TranslateVariables("`S10");
+            RTGlobal.ReadOnlyVariables["`N"] = TranslateVariables("`S10");
         }
 
         private void CommandDO_DELETE(string[] tokens)
@@ -1700,8 +1690,8 @@ namespace LORD2
             Door.CursorRight(LastVisibleLength);
 
             // Update global variable responses
-            RTGlobal.Words["RESPONCE"] = SelectedIndex.ToString();
-            RTGlobal.Words["RESPONSE"] = SelectedIndex.ToString();
+            RTGlobal.ReadOnlyVariables["RESPONCE"] = SelectedIndex.ToString();
+            RTGlobal.ReadOnlyVariables["RESPONSE"] = SelectedIndex.ToString();
         }
 
         private void EndSHOWSCROLL()
@@ -1969,38 +1959,16 @@ namespace LORD2
                     }
                 }
             }
-            foreach (KeyValuePair<string, string> KVP in RTGlobal.Other)
+            foreach (KeyValuePair<string, string> KVP in RTGlobal.LanguageVariables)
             {
-                input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
+                // TODO This shouldn't happen for @SHOW and @DO WRITE, so maybe we need a TranslateVariables() that excludes this, and TranslateVariablesForLogic() that includes this (then any non-output code would use the logic call)
+                // TODO Since we look for an exact match, it may not matter anyway (since what are the odds a @SHOW only has the word MAP on a line, for example)
+                if (inputUpper == KVP.Key.ToUpper()) input = KVP.Value;
             }
-            foreach (KeyValuePair<string, string> KVP in RTGlobal.Words)
+            foreach (KeyValuePair<string, string> KVP in RTGlobal.ReadOnlyVariables)
             {
-                if (inputUpper == KVP.Key.ToUpper())
-                {
-                    input = KVP.Value;
-                }
-                else if (inputUpper == "&" + KVP.Key.ToUpper())
-                {
-                    input = KVP.Value;
-                }
-                else if (inputUpper == "S&" + KVP.Key.ToUpper())
-                {
-                    char[] value = KVP.Value.ToCharArray();
-                    if (input.StartsWith("s"))
-                    {
-                        value[0] = char.ToLower(value[0]);
-                    }
-                    else
-                    {
-                        value[0] = char.ToUpper(value[0]);
-                    }
-                    input = new string(value);
-                }
-                else
-                {
-                    input = Regex.Replace(input, Regex.Escape("s&" + KVP.Key), KVP.Value, RegexOptions.IgnoreCase); // TODO This won't case the first character of KVP.Value properly
-                    input = Regex.Replace(input, Regex.Escape("&" + KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
-                }
+                // TODO s& should be lowercasing the first letter, S& uppercasing
+                input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
             }
 
             // TODO also translate language variables and variable symbols

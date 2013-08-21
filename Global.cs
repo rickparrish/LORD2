@@ -89,12 +89,12 @@ namespace LORD2
                     Time += 1;
                     FileUtils.FileWriteAllText(Global.TimeDatFileName, Time.ToString());
                 }
-                RTGlobal.Words["TIME"] = Time.ToString();
+                RTGlobal.ReadOnlyVariables["&time"] = Time.ToString();
             }
             else
             {
                 FileUtils.FileWriteAllText(Global.TimeDatFileName, "1");
-                RTGlobal.Words["TIME"] = "1";
+                RTGlobal.ReadOnlyVariables["&time"] = "1";
             }
 
             // Load WORLD.DAT

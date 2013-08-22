@@ -450,7 +450,7 @@ namespace LORD2
                     using (FileStream FS = new FileStream(FileName,FileMode.Create, FileAccess.Write))
                     {
                         IGM_DATA IGMD = new IGM_DATA();
-                        IGMD.LastUsed = Global.STime;
+                        IGMD.LastUsed = DateTime.Now.Month + DateTime.Now.Day;
                         IGMD.Data = new Int32[200];
                         for (int i = 0; i < IGMD.Data.Length; i++)
                         {
@@ -474,7 +474,49 @@ namespace LORD2
                 called, all records in <filename> will be set to 0.  Check EXAMPLE.REF in the 
                 LORD II archive for an example of how this works.
                 NOTE: You should specify an extension (usually .IDF) */
-            LogMissing(tokens);
+            string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
+            if (FileName != "")
+            {
+                if (File.Exists(FileName))
+                {
+                    using (FileStream FS = new FileStream(FileName, FileMode.Open))
+                    {
+                        IGM_DATA IGMD = DataStructures.ReadStruct<IGM_DATA>(FS);
+                        if (IGMD.LastUsed != (DateTime.Now.Month + DateTime.Now.Day))
+                        {
+                            IGMD.LastUsed = (DateTime.Now.Month + DateTime.Now.Day);
+                            for (int i = 0; i < IGMD.Data.Length; i++)
+                            {
+                                IGMD.Data[i] = 0;
+                            }
+                            for (int i = 0; i < IGMD.Extra.Length; i++)
+                            {
+                                IGMD.Extra[i] = '\0';
+                            }
+                            DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
+                        }
+                    }
+                }
+                else
+                {
+                    using (FileStream FS = new FileStream(FileName, FileMode.Create, FileAccess.Write))
+                    {
+                        IGM_DATA IGMD = new IGM_DATA();
+                        IGMD.LastUsed = DateTime.Now.Month + DateTime.Now.Day;
+                        IGMD.Data = new Int32[200];
+                        for (int i = 0; i < IGMD.Data.Length; i++)
+                        {
+                            IGMD.Data[i] = 0;
+                        }
+                        IGMD.Extra = new Char[200];
+                        for (int i = 0; i < IGMD.Extra.Length; i++)
+                        {
+                            IGMD.Extra[i] = '\0';
+                        }
+                        DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
+                    }
+                }
+            }
         }
 
         private void CommandDATASAVE(string[] tokens)
@@ -484,7 +526,43 @@ namespace LORD2
                 and all 200 long integers (except the one referenced) are set to 0.  The 
                 record that is referenced will be set to the value of the 3rd parameter.
                 NOTE: You should specify an extension (usually .IDF) */
-            LogMissing(tokens);
+            string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
+            if (FileName != "")
+            {
+                if (File.Exists(FileName))
+                {
+                    using (FileStream FS = new FileStream(FileName, FileMode.Open, FileAccess.ReadWrite))
+                    {
+                        // Read file
+                        IGM_DATA IGMD = DataStructures.ReadStruct<IGM_DATA>(FS);
+                        IGMD.Data[Convert.ToInt32(TranslateVariables(tokens[2])) - 1] = Convert.ToInt32(TranslateVariables(tokens[3]));
+                        
+                        // Write file
+                        FS.Position = 0;
+                        DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
+                    }
+                }
+                else
+                {
+                    using (FileStream FS = new FileStream(FileName, FileMode.Create, FileAccess.Write))
+                    {
+                        IGM_DATA IGMD = new IGM_DATA();
+                        IGMD.LastUsed = DateTime.Now.Month + DateTime.Now.Day;
+                        IGMD.Data = new Int32[200];
+                        for (int i = 0; i < IGMD.Data.Length; i++)
+                        {
+                            IGMD.Data[i] = 0;
+                        }
+                        IGMD.Data[Convert.ToInt32(TranslateVariables(tokens[2])) - 1] = Convert.ToInt32(TranslateVariables(tokens[3]));
+                        IGMD.Extra = new Char[200];
+                        for (int i = 0; i < IGMD.Extra.Length; i++)
+                        {
+                            IGMD.Extra[i] = '\0';
+                        }
+                        DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
+                    }
+                }
+            }
         }
 
         private void CommandDECLARE(string[] obj)

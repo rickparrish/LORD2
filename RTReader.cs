@@ -646,7 +646,11 @@ namespace LORD2
             /* @DO DELETE <file name>
                 This command deletes the file specified by <file name>.  The file name must be 
                 a valid DOS file name.  There can be no spaces. */
-            LogMissing(tokens);
+            string FileName = Global.GetSafeAbsolutePath(tokens[2]);
+            if (File.Exists(FileName))
+            {
+                FileUtils.FileDelete(FileName);
+            }
         }
 
         private void CommandDO_DIVIDE(string[] tokens)

@@ -22,6 +22,8 @@ namespace LORD2
         private bool _InDO_WRITE = false;
         private int _InHALT = int.MinValue;
         private int _InIFFalse = 999;
+        private string _InREADFILE = "";
+        private List<string> _InREADFILELines = new List<string>();
         private bool _InSAY = false;
         private bool _InSAYBAR = false;
         private bool _InSHOW = false;
@@ -1173,6 +1175,10 @@ namespace LORD2
                 {
                     // Ignore, tokens[1] was a literal filename
                 }
+                else if (tokens[2].ToUpper() == "EXISTS")
+                {
+                    // Ignore, tokens[1] was a literal filename
+                }
                 else
                 {
                     LogMissing(tokens);
@@ -1205,6 +1211,7 @@ namespace LORD2
                     }
                     break;
                 case "EXIST":
+                case "EXISTS":
                     /* Undocumented.  Checks if given file exists */
                     string FileName = Global.GetSafeAbsolutePath(Left);
                     bool TrueFalse = Convert.ToBoolean(Right.ToUpper());
@@ -1482,7 +1489,8 @@ namespace LORD2
                 NOTE:  @READFILE is a smart procedure - It will not run-time error or 
                 anything, even if you try to read past the end of the file. It simply won't 
                 change the variables if the file isn't long enough. */
-            LogMissing(tokens);
+            _InREADFILE = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
+            _InREADFILELines.Clear();
         }
 
         private void CommandROUTINE(string[] tokens)
@@ -1845,6 +1853,21 @@ namespace LORD2
             RTGlobal.ReadOnlyVariables["RESPONSE"] = SelectedIndex.ToString();
         }
 
+        private void EndREADFILE()
+        {
+            // TODO _InWRITEFILE could be handled like this, so no need for multiple writes per writefile
+            if (File.Exists(_InREADFILE))
+            {
+                string[] Lines = FileUtils.FileReadAllLines(_InREADFILE, RMEncoding.Ansi);
+
+                int LoopMax = Math.Min(Lines.Length, _InREADFILELines.Count);
+                for (int i = 0; i < LoopMax; i++)
+                {
+                    AssignVariable(_InREADFILELines[i], TranslateVariables(Lines[i]));
+                }
+            }
+        }
+
         private void EndSHOWSCROLL()
         {
             char? Ch = null;
@@ -1980,8 +2003,10 @@ namespace LORD2
                     if (LineTrimmed.StartsWith("@"))
                     {
                         if (_InCHOICE) EndCHOICE();
+                        if (_InREADFILE != "") EndREADFILE();
                         if (_InSHOWSCROLL) EndSHOWSCROLL();
                         _InCHOICE = false;
+                        _InREADFILE = "";
                         _InSAY = false;
                         _InSAYBAR = false;
                         _InSHOW = false;
@@ -2014,6 +2039,10 @@ namespace LORD2
                         {
                             Door.Write(TranslateVariables(Line));
                             _InDO_WRITE = false;
+                        }
+                        else if (_InREADFILE != "")
+                        {
+                            _InREADFILELines.Add(Line);
                         }
                         else if (_InSAY)
                         {

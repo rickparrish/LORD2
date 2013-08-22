@@ -12,7 +12,7 @@ namespace LORD2
         static void Main(string[] args)
         {
             if (!Debugger.IsAttached) Crt.HideCursor();
-            
+
             // Initialize door driver
             Door.Startup(args);
             Door.ClrScr();
@@ -155,10 +155,50 @@ namespace LORD2
             int x = Global.Player.X + xoffset;
             int y = Global.Player.Y + yoffset;
 
-            // Check for passable
-            if (Global.CurrentMap.W[(y - 1) + ((x - 1) * 20)].Terrain != 0)
+            // Check for movement
+            if (x == 0)
             {
-                DrawPlayer(x, y);
+                Global.Player.LastMap = Global.Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
+                Global.Player.Map -= 1;
+                Global.Player.X = 80;
+
+                Global.LoadMap(Global.Player.Map);
+                DrawMap();
+            }
+            else if (x == 81)
+            {
+                Global.Player.LastMap = Global.Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
+                Global.Player.Map += 1;
+                Global.Player.X = 1;
+
+                Global.LoadMap(Global.Player.Map);
+                DrawMap();
+            }
+            else if (y == 0)
+            {
+                Global.Player.LastMap = Global.Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
+                Global.Player.Map -= 80;
+                Global.Player.Y = 20;
+
+                Global.LoadMap(Global.Player.Map);
+                DrawMap();
+            }
+            else if (y == 21)
+            {
+                Global.Player.LastMap = Global.Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
+                Global.Player.Map += 80;
+                Global.Player.Y = 1;
+
+                Global.LoadMap(Global.Player.Map);
+                DrawMap();
+            }
+            else
+            {
+                // TODO Any other terrains walkable?
+                if (Global.CurrentMap.W[(y - 1) + ((x - 1) * 20)].Terrain == 1)
+                {
+                    DrawPlayer(x, y);
+                }
             }
 
             // Check for special

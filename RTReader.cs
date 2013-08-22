@@ -1167,13 +1167,6 @@ namespace LORD2
         {
             /* @IF <Varible> <Math> <Thing the varible must be, or more or less then, or
                 another varible>  (Possible math functions: EQUALS, MORE, LESS, NOT) */
-            /* TODO You can also use @if checkdupe `S10 is TRUE(or FALSE) then do
-                                 @begin
-                                   code to execute
-                                 @end
-                This will check all the accounts for a name as specified in `S10.  If a match 
-                is found, then checkdupe will be true.  Othewise checkdupe will be false.  `S10
-                is used for example only.  `S10 can be substituted for any of the `S variables. */
             bool Result = false;
             string Left = TranslateVariables(tokens[1]);
             string Right = TranslateVariables(tokens[3]);
@@ -1197,22 +1190,11 @@ namespace LORD2
                 }
             }
 
-            /* TODO @IF bitcheck `t12 1 1 then do
-                  @BEGIN
-                  @SHOW
-                  Yeah!  Bit 1 of t12 is TRUE!!! Yay.
-                  @END */
-            /* Sample code for bitcheck
-                if (x & (1<<n)) {
-                  n-th bit is set
-                }
-                else {
-                  n-th bit is not set
-                }*/
             switch (tokens[2].ToUpper())
             {
                 case "EQUALS":
                 case "IS":
+                case "=":
                     if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
                     {
                         Result = (LeftInt == RightInt);
@@ -1268,7 +1250,27 @@ namespace LORD2
                     }
                     break;
                 default:
-                    // TODO Implement
+                    switch (tokens[1].ToUpper())
+                    {
+                        case "BITCHECK":
+                            /* @IF bitcheck <`t variable> <bit number> <0 or 1>
+                                Check if the given bit is set or not in the given `t variable */
+                            // TODO Untested
+                            Result = ((Convert.ToInt32(TranslateVariables(tokens[2])) & (1 << Convert.ToInt32(TranslateVariables(tokens[3])))) == Convert.ToInt32(TranslateVariables(tokens[4])));
+                            break;
+                        case "BLOCKPASSABLE":
+                            // TODO Check if global x and y is passable (used by smackrod)
+                            LogUnimplemented(tokens);
+                            break;
+                        case "CHECKDUPE":
+                            /* @if checkdupe <`s variable> <true or false>
+                                Check if the given player name already exists */
+                            LogUnimplemented(tokens);
+                            break;
+                        default:
+                            LogMissing(tokens);
+                            break;
+                    }
                     break;
             }
 

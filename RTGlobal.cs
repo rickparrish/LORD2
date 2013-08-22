@@ -184,11 +184,14 @@ namespace LORD2
                         {
                             // Get the @DO command
                             string Command = string.Join(" ", Tokens);
+                            string DOName = Command;
                             if (RTR._DOCommands.ContainsKey(Tokens[1])) {
                                 Command = Tokens[1];
+                                DOName = "@DO " + Command;
                             }
                             else if ((Tokens.Length >= 3) && (RTR._DOCommands.ContainsKey(Tokens[2]))) {
                                 Command = Tokens[2];
+                                DOName = "@DO . " + Command;
                             }
 
                             // Determine if @DO command is known
@@ -197,20 +200,20 @@ namespace LORD2
                                 if (RTR._DOCommands[Command].Method.Name == "LogUnimplemented")
                                 {
                                     // Known, but not yet implemented
-                                    if (!_UnimplementedCommandUsage.ContainsKey(Command)) _UnimplementedCommandUsage[Command] = 0;
-                                    _UnimplementedCommandUsage[Command] = _UnimplementedCommandUsage[Command] + 1;
+                                    if (!_UnimplementedCommandUsage.ContainsKey(DOName)) _UnimplementedCommandUsage[DOName] = 0;
+                                    _UnimplementedCommandUsage[DOName] = _UnimplementedCommandUsage[DOName] + 1;
                                 }
                                 else if (RTR._DOCommands[Command].Method.Name == "LogUnused")
                                 {
                                     // Known, but not known to be used
-                                    if (!_UnusedCommandUsage.ContainsKey(Command)) _UnusedCommandUsage[Command] = 0;
-                                    _UnusedCommandUsage[Command] = _UnusedCommandUsage[Command] + 1;
+                                    if (!_UnusedCommandUsage.ContainsKey(DOName)) _UnusedCommandUsage[DOName] = 0;
+                                    _UnusedCommandUsage[DOName] = _UnusedCommandUsage[DOName] + 1;
                                 }
                                 else if (RTR._DOCommands[Command].Method.Name.StartsWith("Command"))
                                 {
                                     // Known and implemented
-                                    if (!_ImplementedCommandUsage.ContainsKey(Command)) _ImplementedCommandUsage[Command] = 0;
-                                    _ImplementedCommandUsage[Command] = _ImplementedCommandUsage[Command] + 1;
+                                    if (!_ImplementedCommandUsage.ContainsKey(DOName)) _ImplementedCommandUsage[DOName] = 0;
+                                    _ImplementedCommandUsage[DOName] = _ImplementedCommandUsage[DOName] + 1;
                                 }
                                 else
                                 {
@@ -222,8 +225,8 @@ namespace LORD2
                             else
                             {
                                 // Unknown
-                                if (!_UnknownCommandUsage.ContainsKey(Command)) _UnknownCommandUsage[Command] = 0;
-                                _UnknownCommandUsage[Command] = _UnknownCommandUsage[Command] + 1;
+                                if (!_UnknownCommandUsage.ContainsKey(DOName)) _UnknownCommandUsage[DOName] = 0;
+                                _UnknownCommandUsage[DOName] = _UnknownCommandUsage[DOName] + 1;
                             } 
                         }
                         else
@@ -288,22 +291,31 @@ namespace LORD2
 
         private static void SaveCommandCSV(Dictionary<string, int> commandUsage, string group)
         {
-            // Delete old file
             string FileName = Global.GetSafeAbsolutePath("CommandUsage" + group + ".csv");
-            FileUtils.FileDelete(FileName);
 
-            // Save new file
-            if (commandUsage.Count > 0)
+            try
             {
-                StringBuilder SB = new StringBuilder();
-                SB.AppendLine("Command,Uses");
-                foreach (KeyValuePair<string, int> KVP in commandUsage)
+                // Delete old file
+                FileUtils.FileDelete(FileName);
+
+                // Save new file
+                if (commandUsage.Count > 0)
                 {
-                    SB.Append(KVP.Key);
-                    SB.Append(",");
-                    SB.AppendLine(KVP.Value.ToString());
+                    StringBuilder SB = new StringBuilder();
+                    SB.AppendLine("Command,Uses");
+                    foreach (KeyValuePair<string, int> KVP in commandUsage)
+                    {
+                        SB.Append(KVP.Key);
+                        SB.Append(",");
+                        SB.AppendLine(KVP.Value.ToString());
+                    }
+                    FileUtils.FileWriteAllText(FileName, SB.ToString());
                 }
-                FileUtils.FileWriteAllText(FileName, SB.ToString());
+            }
+            catch
+            {
+                Crt.WriteLn("Error saving " + FileName);
+                Crt.ReadKey();
             }
         }
     }

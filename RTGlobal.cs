@@ -77,8 +77,8 @@ namespace LORD2
 
             // These are all TODOs (some need to be populated when something changes, some always need to be populated before using)
             // Variable symbols (ro) (Translated during @SHOW and @DO WRITE)
-            // `C: Clears the screen and simulates 2 carriage returns. (handled in Door.Write)
-            // `D: Sends a #8 (delete). (handled in Door.Write)
+            ReadOnlyVariables.Add("`C", Ansi.ClrScr() + "\r\n\r\n"); // Clears the screen and simulates 2 carriage returns.
+            ReadOnlyVariables.Add("`D", "\x08"); // Sends a #8 (delete).
             ReadOnlyVariables.Add("`E", "ENEMY"); // Enemy name
             ReadOnlyVariables.Add("`G", (Door.DropInfo.Emulation == DoorEmulationType.ANSI ? "3" : "0")); // Current Graphics Level.
             // `K: Presents the more propmt and waits for ENTER to be pressed. (handled in Door.Write)
@@ -86,9 +86,9 @@ namespace LORD2
             ReadOnlyVariables.Add("`N", "NAME"); // User's game name.
             // `R0 to 1R7: change background color. (handled in Door.Write)
             // `W: One tenth a second wait. (handled in Door.Write)
-            // `X: Adds a space. (handled in Door.Write)
+            ReadOnlyVariables.Add("`X", " "); // Adds a space.
             // `1 to `%: change color. (handled in Door.Write)
-            // `\: Simulates a carriage return. (handled in Door.Write)
+            ReadOnlyVariables.Add("`\\", "\r\n"); // Simulates a carriage return.
             ReadOnlyVariables.Add("&realname", Door.DropInfo.Alias); // Real name as passed by the drop file
             ReadOnlyVariables.Add("&date", "DATE"); // The date and time like 12/12/97 format.
             ReadOnlyVariables.Add("&nicedate", "NICEDATE"); // Time AND date like 5:19 on 12/12.

@@ -2111,9 +2111,6 @@ namespace LORD2
 
         private string TranslateVariables(string input)
         {
-            //TODO L2TREE.DAT contained "barak`xrides`xdragons" today, so maybe `x needs to be handled here too
-            //TODO Probably any non-timing sensitive things should be handled here too
-
             string inputUpper = input.ToUpper();
 
             if (input.Contains("`"))

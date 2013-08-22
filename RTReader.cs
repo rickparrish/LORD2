@@ -1165,7 +1165,17 @@ namespace LORD2
             int RightInt = 0;
 
             // TODO This is to try to detect unknown variables in the variable position (if the before and after translation are the same, it's probably an unknown variable)
-            if (tokens[1] == Left) LogMissing(tokens);
+            if (tokens[1] == Left)
+            {
+                if (tokens[2].ToUpper() == "EXIST")
+                {
+                    // Ignore, tokens[1] was a literal filename
+                }
+                else
+                {
+                    LogMissing(tokens);
+                }
+            }
 
             /* TODO @IF bitcheck `t12 1 1 then do
                   @BEGIN

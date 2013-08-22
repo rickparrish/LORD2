@@ -794,7 +794,12 @@ namespace LORD2
         {
             /* @DO PAD <string variable> <length>
                 This adds spaces to the end of the string until string is as long as <length>. */
-            LogMissing(tokens);
+            int StringLength = Door.StripSeth(TranslateVariables(tokens[2])).Length;
+            int RequestedLength = Convert.ToInt32(tokens[3]);
+            if (StringLength < RequestedLength)
+            {
+                AssignVariable(tokens[2], StringUtils.PadRight(TranslateVariables(tokens[2]), ' ', Convert.ToInt32(tokens[3])));
+            }
         }
 
         private void CommandDO_QUEBAR(string[] tokens)

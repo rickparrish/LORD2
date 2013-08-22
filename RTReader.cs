@@ -9,7 +9,7 @@ namespace LORD2
     public class RTReader
     {
         internal Dictionary<string, Action<string[]>> _Commands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
-        private Dictionary<string, Action<string[]>> _DOCommands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
+        internal Dictionary<string, Action<string[]>> _DOCommands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
 
         private int _CurrentLineNumber = 0;
         private RTRFile _CurrentFile = null;

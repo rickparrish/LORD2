@@ -93,7 +93,6 @@ namespace LORD2
             _Commands.Add("@SELLMANAGER", LogUnimplemented);
             _Commands.Add("@SHOW", CommandSHOW);
             _Commands.Add("@SHOWLOCAL", CommandSHOWLOCAL);
-            _Commands.Add("@STATBAR", LogUnused);
             _Commands.Add("@UPDATE", CommandUPDATE);
             _Commands.Add("@UPDATE_UPDATE", LogUnimplemented);
             _Commands.Add("@VERSION", CommandVERSION);
@@ -122,6 +121,7 @@ namespace LORD2
             _DOCommands.Add("REPLACEALL", CommandDO_REPLACEALL);
             _DOCommands.Add("RENAME", CommandDO_RENAME);
             _DOCommands.Add("SAYBAR", CommandDO_SAYBAR);
+            _DOCommands.Add("STATBAR", LogUnimplemented);
             _DOCommands.Add("STRIP", CommandDO_STRIP);
             _DOCommands.Add("STRIPALL", LogUnused);
             _DOCommands.Add("STRIPBAD", LogUnimplemented);
@@ -135,6 +135,7 @@ namespace LORD2
             _DOCommands.Add("*", CommandDO_MULTIPLY);
             _DOCommands.Add("+", CommandDO_ADD);
             _DOCommands.Add("-", CommandDO_SUBTRACT);
+            _DOCommands.Add("=", CommandDO_IS);
             _DOCommands.Add("ADD", CommandDO_ADD);
             _DOCommands.Add("IS", CommandDO_IS);
             _DOCommands.Add("RANDOM", CommandDO_RANDOM);
@@ -915,16 +916,18 @@ namespace LORD2
 
         private void CommandDO_REPLACE(string[] tokens)
         {
-            /* @REPLACE <X> <Y> <in `S10>
+            /* @DO REPLACE <X> <Y> <in `S10>
                 Replaces X with Y in an `s variable. */
+            // Identified as @REPLACE not @DO REPLACE in the docs
             // The following regex matches only the first instance of the word foo: (?<!foo.*)foo (from http://stackoverflow.com/a/148561/342378)
             AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), "(?<!" + Regex.Escape(TranslateVariables(tokens[2])) + ".*)" + Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
         }
 
         private void CommandDO_REPLACEALL(string[] tokens)
         {
-            /* @REPLACEALL <X> <Y> <in `S10>:
+            /* @DO REPLACEALL <X> <Y> <in `S10>:
                 Same as above but replaces all instances. */
+            // Identified as @REPLACEALL not @DO REPLACEALL in the docs
             AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
         }
 
@@ -948,6 +951,14 @@ namespace LORD2
                 taking into consideration that a message might have just been displayed.  This 
                 will overwrite any current message on the saybar unconditionally. */
             _InSAYBAR = true;
+        }
+
+        private void CommandDO_STATBAR(string[] tokens)
+        {
+            /* @DO STATBAR
+                This draws the statbar. */
+            // Identified as @STATBAR not @DO STATBAR in the docs
+            // TODO Unused
         }
 
         private void CommandDO_STRIP(string[] tokens)
@@ -1605,13 +1616,6 @@ namespace LORD2
             /* @SHOWLOCAL
                 Undocumented.  Same as @SHOW, but only outputs to local window */
             _InSHOWLOCAL = true;
-        }
-
-        private void CommandSTATBAR(string[] tokens)
-        {
-            /* @STATBAR
-                This draws the statbar. */
-            // TODO Unused
         }
 
         private void CommandUPDATE(string[] tokens)

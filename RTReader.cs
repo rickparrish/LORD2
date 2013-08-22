@@ -18,7 +18,8 @@ namespace LORD2
         private bool _InCHOICE = false;
         private List<RTChoiceOption> _InCHOICEOptions = new List<RTChoiceOption>();
         private bool _InCLOSESCRIPT = false;
-        private bool _InDOWrite = false;
+        private bool _InDO_ADDLOG = false;
+        private bool _InDO_WRITE = false;
         private int _InHALT = int.MinValue;
         private int _InIFFalse = 999;
         private bool _InSAY = false;
@@ -614,17 +615,13 @@ namespace LORD2
             {
                 AssignVariable(tokens[1], TranslateVariables(tokens[1] + string.Join(" ", tokens, 3, tokens.Length - 3)));
             }
-            else
-            {
-                LogMissing(tokens);
-            }
         }
 
         private void CommandDO_ADDLOG(string[] tokens)
         {
             /* @DO addlog
                 The line UNDER this command is added to the 'lognow.txt' file. */
-            LogMissing(tokens);
+            _InDO_ADDLOG = true;
         }
 
         private void CommandDO_BEEP(string[] tokens)
@@ -1013,7 +1010,7 @@ namespace LORD2
                 and READSTRING's.
                 NOTE:  You can use variables mixed with text, ansi and color codes in the 
                 <stuff to write> part.  Works this way with most stuff. */
-            _InDOWrite = true;
+            _InDO_WRITE = true;
         }
 
         private void CommandDRAWMAP(string[] tokens)
@@ -1989,10 +1986,15 @@ namespace LORD2
                         {
                             _InCHOICEOptions.Add(new RTChoiceOption(Line));
                         }
-                        else if (_InDOWrite)
+                        else if (_InDO_ADDLOG)
+                        {
+                            FileUtils.FileAppendAllText(Global.GetSafeAbsolutePath("LOGNOW.TXT"), TranslateVariables(Line));
+                            _InDO_ADDLOG = false;
+                        }
+                        else if (_InDO_WRITE)
                         {
                             Door.Write(TranslateVariables(Line));
-                            _InDOWrite = false;
+                            _InDO_WRITE = false;
                         }
                         else if (_InSAY)
                         {

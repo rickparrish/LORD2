@@ -582,10 +582,15 @@ namespace LORD2
 
         private void CommandDISPLAYFILE(string[] tokens)
         {
-            /* TODO @DISPLAYFILE <filename> <options> 
+            /* @DISPLAYFILE <filename> <options> 
                 This display an entire file.  Possible options are:  NOPAUSE and NOSKIP.  Put a
                 space between options if you use both. */
-            Door.Write(FileUtils.FileReadAllText(StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[1])), RMEncoding.Ansi));
+            string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
+            if (File.Exists(FileName))
+            {
+                // TODO Should it translate file contents?
+                Door.Write(FileUtils.FileReadAllText(FileName, RMEncoding.Ansi));
+            }
         }
 
         private void CommandDO(string[] tokens)
@@ -997,14 +1002,17 @@ namespace LORD2
                 This nifty command makes text file larger than <number to trim to> get 
                 smaller.  (It deletes lines from the top until the file is correct # of lines, 
                 if smaller than <number to trim to>, it doesn't change the file) */
-            string FileName = StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[2]));
-            int MaxLines = Convert.ToInt32(TranslateVariables(tokens[3]));
-            List<string> Lines = new List<string>();
-            Lines.AddRange(FileUtils.FileReadAllLines(FileName, RMEncoding.Ansi));
-            if (Lines.Count > MaxLines)
+            string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[2]));
+            if (File.Exists(FileName))
             {
-                while (Lines.Count > MaxLines) Lines.RemoveAt(0);
-                FileUtils.FileWriteAllLines(FileName, Lines.ToArray(), RMEncoding.Ansi);
+                int MaxLines = Convert.ToInt32(TranslateVariables(tokens[3]));
+                List<string> Lines = new List<string>();
+                Lines.AddRange(FileUtils.FileReadAllLines(FileName, RMEncoding.Ansi));
+                if (Lines.Count > MaxLines)
+                {
+                    while (Lines.Count > MaxLines) Lines.RemoveAt(0);
+                    FileUtils.FileWriteAllLines(FileName, Lines.ToArray(), RMEncoding.Ansi);
+                }
             }
         }
 
@@ -1204,7 +1212,7 @@ namespace LORD2
                     break;
                 case "EXIST":
                     /* Undocumented.  Checks if given file exists */
-                    string FileName = StringUtils.PathCombine(ProcessUtils.StartupPath, Left);
+                    string FileName = Global.GetSafeAbsolutePath(Left);
                     bool TrueFalse = Convert.ToBoolean(Right.ToUpper());
                     Result = (File.Exists(FileName) == TrueFalse);
                     break;
@@ -1639,8 +1647,7 @@ namespace LORD2
                 write - or a combination of the two.
                 Note:  @WRITEFILE appends the lines if the file exists, otherwise it creates 
                 it.  File locking techniques are used. */
-            // TODO Safe file names
-            _InWRITEFILE = StringUtils.PathCombine(ProcessUtils.StartupPath, TranslateVariables(tokens[1]));
+            _InWRITEFILE = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
         }
 
         private void EndCHOICE()

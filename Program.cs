@@ -1,4 +1,5 @@
-﻿using RandM.RMLib;
+﻿// For Linux, requires mono-runtime and libmono2.0-cil (on Ubuntu 13.04 anyway)
+using RandM.RMLib;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -33,7 +34,7 @@ namespace LORD2
                     if (!PlayerLoaded)
                     {
                         // Nope, so try to get them to create one
-                        RTR.RunSection("GAMETXT.REF", "NEWGlobal.Player");
+                        RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
                         PlayerLoaded = Global.LoadPlayer(out Global.Player);
                     }
 

@@ -8,12 +8,12 @@ namespace LORD2
 {
     public static class Global
     {
-        public static string ItemsDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "ITEMS.DAT");
-        public static string MapDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "MAP.DAT");
-        public static string STimeDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "STIME.DAT");
-        public static string TimeDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "TIME.DAT");
-        public static string TraderDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "TRADER.DAT");
-        public static string WorldDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "WORLD.DAT");
+        public static string ItemsDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "items.dat");
+        public static string MapDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "map.dat");
+        public static string STimeDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "stime.dat");
+        public static string TimeDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "time.dat");
+        public static string TraderDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "trader.dat");
+        public static string WorldDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "world.dat");
 
         public static MapDatRecord CurrentMap;
         public static List<ItemsDatRecord> ItemsDat = new List<ItemsDatRecord>();
@@ -68,6 +68,7 @@ namespace LORD2
             }
             else
             {
+                Door.WriteLn("Missing " + Global.ItemsDatFileName);
                 return false;
             }
 
@@ -85,6 +86,7 @@ namespace LORD2
             }
             else
             {
+                Door.WriteLn("Missing " + Global.MapDatFileName);
                 return false;
             }
 
@@ -151,6 +153,7 @@ namespace LORD2
             }
             else
             {
+                Door.WriteLn("Missing " + Global.WorldDatFileName);
                 return false;
             }
 

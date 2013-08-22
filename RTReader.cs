@@ -8,7 +8,7 @@ namespace LORD2
 {
     public class RTReader
     {
-        private Dictionary<string, Action<string[]>> _Commands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
+        internal Dictionary<string, Action<string[]>> _Commands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
         private Dictionary<string, Action<string[]>> _DOCommands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
 
         private int _CurrentLineNumber = 0;
@@ -37,19 +37,20 @@ namespace LORD2
         public RTReader()
         {
             // Initialize the commands dictionary
-            _Commands.Add("@ADDCHAR", CommandADDCHAR);
+            _Commands.Add("@", CommandNOP);
+            _Commands.Add("@ADDCHAR", LogUnimplemented);
             _Commands.Add("@BEGIN", CommandBEGIN);
             _Commands.Add("@BITSET", CommandBITSET);
-            _Commands.Add("@BUSY", CommandBUSY);
-            _Commands.Add("@BUYMANAGER", CommandBUYMANAGER);
-            _Commands.Add("@CHECKMAIL", CommandCHECKMAIL);
+            _Commands.Add("@BUSY", LogUnimplemented);
+            _Commands.Add("@BUYMANAGER", LogUnimplemented);
+            _Commands.Add("@CHECKMAIL", LogUnimplemented);
             _Commands.Add("@CHOICE", CommandCHOICE);
-            _Commands.Add("@CHOOSEPLAYER", CommandCHOOSEPLAYER);
+            _Commands.Add("@CHOOSEPLAYER", LogUnimplemented);
             _Commands.Add("@CLEARBLOCK", CommandCLEARBLOCK);
             _Commands.Add("@CLEAR", CommandCLEAR);
             _Commands.Add("@CLOSESCRIPT", CommandCLOSESCRIPT);
-            _Commands.Add("@CONVERT_FILE_TO_ANSI", CommandCONVERT_FILE_TO_ANSI);
-            _Commands.Add("@CONVERT_FILE_TO_ASCII", CommandCONVERT_FILE_TO_ASCII);
+            _Commands.Add("@CONVERT_FILE_TO_ANSI", LogUnimplemented);
+            _Commands.Add("@CONVERT_FILE_TO_ASCII", LogUnimplemented);
             _Commands.Add("@COPYFILE", CommandCOPYFILE);
             _Commands.Add("@DATALOAD", CommandDATALOAD);
             _Commands.Add("@DATANEWDAY", CommandDATANEWDAY);
@@ -59,50 +60,50 @@ namespace LORD2
             _Commands.Add("@DISPLAYFILE", CommandDISPLAYFILE);
             _Commands.Add("@DO", CommandDO);
             _Commands.Add("@DRAWMAP", CommandDRAWMAP);
-            _Commands.Add("@DRAWPART", CommandDRAWPART);
+            _Commands.Add("@DRAWPART", LogUnimplemented);
             _Commands.Add("@END", CommandEND);
-            _Commands.Add("@FIGHT", CommandFIGHT);
-            _Commands.Add("@GRAPHICS", CommandGRAPHICS);
+            _Commands.Add("@FIGHT", LogUnimplemented);
+            _Commands.Add("@GRAPHICS", LogUnused);
             _Commands.Add("@HALT", CommandHALT);
             _Commands.Add("@IF", CommandIF);
-            _Commands.Add("@ITEMEXIT", CommandITEMEXIT);
+            _Commands.Add("@ITEMEXIT", LogUnimplemented);
             _Commands.Add("@KEY", CommandKEY);
             _Commands.Add("@LABEL", CommandLABEL);
-            _Commands.Add("@LOADCURSOR", CommandLOADCURSOR);
-            _Commands.Add("@LOADGLOBALS", CommandLOADGLOBALS);
-            _Commands.Add("@LOADMAP", CommandLOADMAP);
-            _Commands.Add("@LOADWORLD", CommandLOADWORLD);
-            _Commands.Add("@LORDRANK", CommandLORDRANK);
-            _Commands.Add("@MOREMAP", CommandMOREMAP);
+            _Commands.Add("@LOADCURSOR", LogUnimplemented);
+            _Commands.Add("@LOADGLOBALS", LogUnused);
+            _Commands.Add("@LOADMAP", LogUnimplemented);
+            _Commands.Add("@LOADWORLD", LogUnused);
+            _Commands.Add("@LORDRANK", LogUnimplemented);
+            _Commands.Add("@MOREMAP", LogUnused);
             _Commands.Add("@NAME", CommandNAME);
             _Commands.Add("@NOCHECK", CommandNOCHECK);
-            _Commands.Add("@OFFMAP", CommandOFFMAP);
-            _Commands.Add("@OVERHEADMAP", CommandOVERHEADMAP);
-            _Commands.Add("@PAUSEOFF", CommandPAUSEOFF);
-            _Commands.Add("@PAUSEON", CommandPAUSEON);
-            _Commands.Add("@PROGNAME", CommandPROGNAME);
-            _Commands.Add("@RANK", CommandRANK);
+            _Commands.Add("@OFFMAP", LogUnimplemented);
+            _Commands.Add("@OVERHEADMAP", LogUnimplemented);
+            _Commands.Add("@PAUSEOFF", LogUnimplemented);
+            _Commands.Add("@PAUSEON", LogUnimplemented);
+            _Commands.Add("@PROGNAME", LogUnused);
+            _Commands.Add("@RANK", LogUnused);
             _Commands.Add("@READFILE", CommandREADFILE);
             _Commands.Add("@ROUTINE", CommandROUTINE);
             _Commands.Add("@RUN", CommandRUN);
-            _Commands.Add("@SAVECURSOR", CommandSAVECURSOR);
-            _Commands.Add("@SAVEGLOBALS", CommandSAVEGLOBALS);
-            _Commands.Add("@SAVEWORLD", CommandSAVEWORLD);
+            _Commands.Add("@SAVECURSOR", LogUnimplemented);
+            _Commands.Add("@SAVEGLOBALS", LogUnimplemented);
+            _Commands.Add("@SAVEWORLD", LogUnused);
             _Commands.Add("@SAY", CommandSAY);
-            _Commands.Add("@SELLMANAGER", CommandSELLMANAGER);
+            _Commands.Add("@SELLMANAGER", LogUnimplemented);
             _Commands.Add("@SHOW", CommandSHOW);
             _Commands.Add("@SHOWLOCAL", CommandSHOWLOCAL);
-            _Commands.Add("@STATBAR", CommandSTATBAR);
+            _Commands.Add("@STATBAR", LogUnused);
             _Commands.Add("@UPDATE", CommandUPDATE);
-            _Commands.Add("@UPDATE_UPDATE", CommandUPDATE_UPDATE);
+            _Commands.Add("@UPDATE_UPDATE", LogUnimplemented);
             _Commands.Add("@VERSION", CommandVERSION);
-            _Commands.Add("@WHOISON", CommandWHOISON);
+            _Commands.Add("@WHOISON", LogUnimplemented);
             _Commands.Add("@WRITEFILE", CommandWRITEFILE);
 
             // Initialize the @DO commands dictionary
             // @DO <COMMAND> COMMANDS
             _DOCommands.Add("ADDLOG", CommandDO_ADDLOG);
-            _DOCommands.Add("BEEP", CommandDO_BEEP);
+            _DOCommands.Add("BEEP", LogUnused);
             _DOCommands.Add("COPYTONAME", CommandDO_COPYTONAME);
             _DOCommands.Add("DELETE", CommandDO_DELETE);
             _DOCommands.Add("FRONTPAD", CommandDO_FRONTPAD);
@@ -112,7 +113,7 @@ namespace LORD2
             _DOCommands.Add("MOVEBACK", CommandDO_MOVEBACK);
             _DOCommands.Add("NUMRETURN", CommandDO_NUMRETURN);
             _DOCommands.Add("PAD", CommandDO_PAD);
-            _DOCommands.Add("QUEBAR", CommandDO_QUEBAR);
+            _DOCommands.Add("QUEBAR", LogUnimplemented);
             _DOCommands.Add("READCHAR", CommandDO_READCHAR);
             _DOCommands.Add("READNUM", CommandDO_READNUM);
             _DOCommands.Add("READSPECIAL", CommandDO_READSPECIAL);
@@ -122,10 +123,10 @@ namespace LORD2
             _DOCommands.Add("RENAME", CommandDO_RENAME);
             _DOCommands.Add("SAYBAR", CommandDO_SAYBAR);
             _DOCommands.Add("STRIP", CommandDO_STRIP);
-            _DOCommands.Add("STRIPALL", CommandDO_STRIPALL);
-            _DOCommands.Add("STRIPBAD", CommandDO_STRIPBAD);
-            _DOCommands.Add("STRIPCODE", CommandDO_STRIPCODE);
-            _DOCommands.Add("TALK", CommandDO_TALK);
+            _DOCommands.Add("STRIPALL", LogUnused);
+            _DOCommands.Add("STRIPBAD", LogUnimplemented);
+            _DOCommands.Add("STRIPCODE", LogUnused);
+            _DOCommands.Add("TALK", LogUnimplemented);
             _DOCommands.Add("TRIM", CommandDO_TRIM);
             _DOCommands.Add("UPCASE", CommandDO_UPCASE);
             _DOCommands.Add("WRITE", CommandDO_WRITE);
@@ -205,7 +206,7 @@ namespace LORD2
                 X and Y coordinates and map block number before issuing this command.  Failure 
                 to do this can result in a corrupted TRADER.DAT file. */
             // TODO Add record to UPDATE.TMP and TRADER.DAT
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandBEGIN(string[] tokens)
@@ -232,7 +233,7 @@ namespace LORD2
                 This makes the player appear 'red' to other players currently playing.  It 
                 also tells the Lord II engine to run @#busy in gametxt.ref if a player logs on 
                 and someone is attacking him or giving him an item. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandBUYMANAGER(string[] tokens)
@@ -242,14 +243,14 @@ namespace LORD2
                 <item number>
                 <ect until next @ at beginning of string is hit>
                 This command offers items for sale at the price set in items.dat */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandCHECKMAIL(string[] tokens)
         {
             /* @CHECKMAIL
                 Undocumented.  Will need to determine what this does */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandCHOICE(string[] tokens)
@@ -310,7 +311,7 @@ namespace LORD2
                 partial name' prompt, with a 'you mean this guy?'.  It returns the players # 
                 or 0 if none.  If the player isn't found it will display "No one by that name 
                 lives 'round here" and return 0. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandCLEAR(string[] tokens)
@@ -366,7 +367,7 @@ namespace LORD2
                     Door.GotoXY(78, 23);
                     break;
                 default:
-                    LogUnused(tokens);
+                    // TODO Implement
                     break;
             }
         }
@@ -404,7 +405,7 @@ namespace LORD2
             /* @CONVERT_FILE_TO_ANSI <input file> <output file>
                 Converts a text file of Sethansi (whatever) to regular ansi.  This is good for 
                 a final score output. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandCONVERT_FILE_TO_ASCII(string[] tokens)
@@ -412,7 +413,7 @@ namespace LORD2
             /* @CONVERT_FILE_TO_ASCII <input file> <output file>
                 Converts a text file of Sethansi (whatever) to regular ascii, ie, no colors at 
                 all. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandCOPYFILE(string[] tokens)
@@ -564,7 +565,7 @@ namespace LORD2
             }
         }
 
-        private void CommandDECLARE(string[] obj)
+        private void CommandDECLARE(string[] tokens)
         {
             /* @DECLARE <Label/header name> <offset in decimal format> */
             // Ignore, these commands were inserted by REFINDEX, but not used here
@@ -630,7 +631,7 @@ namespace LORD2
         {
             /* @DO BEEP
                 Makes a weird beep noise, locally only */
-            LogUnused(tokens);
+            // TODO Unused
         }
 
         private void CommandDO_COPYTONAME(string[] tokens)
@@ -810,7 +811,7 @@ namespace LORD2
                 <message>
                 This adds a message to the saybar que.  This will ensure that the message is 
                 displayed at it's proper time instead of immediately. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandDO_RANDOM(string[] tokens)
@@ -960,7 +961,7 @@ namespace LORD2
         {
             /* @DO STRIPALL
                 This command strips out all ` codes.  This is good for passwords, etc. */
-            LogUnused(tokens);
+            // TODO Unused
         }
 
         private void CommandDO_STRIPBAD(string[] tokens)
@@ -968,14 +969,14 @@ namespace LORD2
             /* @DO STRIPBAD
                 This strips out illegal ` codes, and replaces badwords with the standard 
                 badword.dat file. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandDO_STRIPCODE(string[] tokens)
         {
             /* @STRIPCODE <any `s variable>
                 This will remove ALL ` codes from a string. */
-            LogUnused(tokens);
+            // TODO Unused
         }
 
         private void CommandDO_SUBTRACT(string[] tokens)
@@ -989,7 +990,7 @@ namespace LORD2
             /* @DO TALK <message> [recipients]
                 Undocumented. Looks like recipients is usually ALL, which sends a global message
                 Lack of recipients value means message is only displayed to those on the same screen */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandDO_TRIM(string[] tokens)
@@ -1045,7 +1046,7 @@ namespace LORD2
             /* @DRAWPART <x> <y>
                 This command will draw one block of the current map as defined by <x> and <y> 
                 with whatever is supposed to be there, including any people. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandEND(string[] tokens)
@@ -1126,7 +1127,7 @@ namespace LORD2
                 You might also have a hotspot defined that calls a routine that will be a 
                 fight.  Make sure you DON'T clear the screen.  It won't hurt anything if you 
                 do, but it won't look very good. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandGRAPHICS(string[] tokens)
@@ -1134,7 +1135,7 @@ namespace LORD2
             /* @GRAPHICS IS <Num> 
                 3 or more enable remote ANSI.  If you never wanted to send ANSI, you could set 
                 this to 1. You will probably never touch this one. */
-            LogUnused(tokens);
+            // TODO Unused
         }
 
         private void CommandHALT(string[] tokens)
@@ -1181,7 +1182,7 @@ namespace LORD2
                 }
                 else
                 {
-                    LogMissing(tokens);
+                    // TODO Implement
                 }
             }
 
@@ -1256,7 +1257,7 @@ namespace LORD2
                     }
                     break;
                 default:
-                    LogMissing(tokens);
+                    // TODO Implement
                     break;
             }
 
@@ -1284,7 +1285,7 @@ namespace LORD2
                 This tells the item editor to automatically return the player to the map 
                 screen after the item is used.  It is up to you to use the @drawmap and 
                 @update commands as usual though. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandKEY(string[] tokens)
@@ -1327,7 +1328,7 @@ namespace LORD2
             }
             else
             {
-                LogMissing(tokens);
+                // TODO Implement
             }
 
             // Restore text attribute
@@ -1347,7 +1348,7 @@ namespace LORD2
                 This command restores the cursor to the position before the last @SAVECURSOR 
                 was issued.  This is good for creative graphics and text positioning with a 
                 minimum of calculations.  See @SAVECURSOR below. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandLOADGLOBALS(string[] tokens)
@@ -1355,7 +1356,7 @@ namespace LORD2
             /* @LOADGLOBALS
                 This command loads the last value of all global variables as existed when the 
                 last @SAVEGLOBALS command was issued.  See @SAVEGLOBALS below. */
-            LogUnused(tokens);
+            // TODO Unused
         }
 
         private void CommandLOADMAP(string[] tokens)
@@ -1367,7 +1368,7 @@ namespace LORD2
                 The L2 engine will display a runtime error and close the door.   Be SURE to 
                 change the map variable too!!  Using this and changing the X and Y coordinates 
                 effectivly lets you do a 'warp' from a .ref file. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandLOADWORLD(string[] tokens)
@@ -1375,7 +1376,7 @@ namespace LORD2
             /* @LOADWORLD
                 This command loads globals and world data.  It has never been used but is 
                 included just in case it becomes necessary to do this.  See @SAVEWORLD below. */
-            LogUnused(tokens);
+            // TODO Unused
         }
 
         private void CommandLORDRANK(string[] tokens)
@@ -1395,14 +1396,14 @@ namespace LORD2
                   48         Status 
                   60         Alignment
                   65         Quests completed */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandMOREMAP(string[] tokens)
         {
             /* @MOREMAP
                 The line UNDER this will be the new <more> prompt.  30 characters maximum. */
-            LogUnused(tokens);
+            // TODO Unused
         }
 
         private void CommandNAME(string[] tokens)
@@ -1414,11 +1415,18 @@ namespace LORD2
             Door.Write(Name);
         }
 
-        private void CommandNOCHECK(string[] obj)
+        private void CommandNOCHECK(string[] tokens)
         {
             /* @NOCHECK
                 Tell the original RTReader to stop scanning for sections/labels
                 Not implemented here, we always scan all files in their entirety */
+            // Ignore
+        }
+
+        private void CommandNOP(string[] tokens)
+        {
+            /* @
+                Undocumented.  Seth appears to use a single @ to signify the end of @CHOICE, @READFILE, @WRITEFILE, etc */
             // Ignore
         }
 
@@ -1428,7 +1436,7 @@ namespace LORD2
                 This takes the player's symbol off the map.  This makes the player appear to 
                 disappear to other players currently playing.  This is usful to make it look
                 like they actually went into the hut, building, ect. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandOVERHEADMAP(string[] tokens)
@@ -1440,7 +1448,7 @@ namespace LORD2
                 is your responsibility.  If you wish to mark the map you must do this in 
                 help.ref under the @#M routine.  Be sure to include a legend so people have 
                 some reference concerning what the marks mean. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandPAUSEOFF(string[] tokens)
@@ -1448,21 +1456,21 @@ namespace LORD2
             /* @PAUSEOFF
                 This turns the 24 line pause off so you can show long ansis etc and it won't 
                 pause every 24 lines. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandPAUSEON(string[] tokens)
         {
             /* @PAUSEON
                 Just the opposite of the above command.  This turns the pause back on. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandPROGNAME(string[] tokens)
         {
             /* @PROGNAME
                 The line UNDER this will be the status bar name of the game. */
-            LogUnused(tokens);
+            // TODO Unused
         }
 
         private void CommandRANK(string[] tokens)
@@ -1474,7 +1482,7 @@ namespace LORD2
                 if feasible.  This one works, but @LORDRANK uses a preset formatting
                 procedure and is therefore quicker.  There may be occasion, however, if you
                 write your own world to use this command rather than @LORDRANK. */
-            LogUnused(tokens);
+            // TODO Unused
         }
 
         private void CommandREADFILE(string[] tokens)
@@ -1526,14 +1534,14 @@ namespace LORD2
         {
             /* @SAVECURSOR
                 This command saves the current cursor positioning for later retrieval. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandSAVEGLOBALS(string[] tokens)
         {
             /* @SAVEGLOBALS
                 This command saves the current global variables for later retrieval */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandSAVEWORLD(string[] tokens)
@@ -1541,7 +1549,7 @@ namespace LORD2
             /* @SAVEWORLD
                 This command saves stats and world data.  The only use yet is right after 
                 @#maint is called to save random stats set for that day and such. */
-            LogUnused(tokens);
+            // TODO Unused
         }
 
         private void CommandSAY(string[] tokens)
@@ -1571,7 +1579,7 @@ namespace LORD2
                 The `c is included so that there will be two carriage returns issued.  This is 
                 important for cosmetic purposes only.  I have found that if the @sellmanager
                 is issued at the top of the screen, the boxes don't dissapear as they should. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandSHOW(string[] tokens)
@@ -1603,7 +1611,7 @@ namespace LORD2
         {
             /* @STATBAR
                 This draws the statbar. */
-            LogUnused(tokens);
+            // TODO Unused
         }
 
         private void CommandUPDATE(string[] tokens)
@@ -1619,7 +1627,7 @@ namespace LORD2
             /* @UPDATE_UPDATE
                 This command writes current player data to UPDATE.TMP file.  This is useful 
                 when you just can't wait until the script is finished for some reason. */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandVERSION(string[] tokens)
@@ -1636,7 +1644,7 @@ namespace LORD2
         {
             /* @WHOISON
                 Undocumented.  Will need to find out what this does */
-            LogMissing(tokens);
+            // TODO Implement
         }
 
         private void CommandWRITEFILE(string[] tokens)
@@ -1915,7 +1923,7 @@ namespace LORD2
 
         private void LogMissing(string[] tokens)
         {
-            string Output = "MISSING (hit a key): " + string.Join(" ", tokens);
+            string Output = "MISSING!!! (hit a key): " + string.Join(" ", tokens);
             Crt.FastWrite(StringUtils.PadRight(Output, ' ', 80), 1, 25, 31);
             Crt.ReadKey();
             Crt.FastWrite(new string(' ', 80), 1, 25, 0);
@@ -1924,6 +1932,14 @@ namespace LORD2
         private void LogUnused(string[] tokens)
         {
             string Output = "UNUSED?!? (hit a key): " + string.Join(" ", tokens);
+            Crt.FastWrite(StringUtils.PadRight(Output, ' ', 80), 1, 25, 31);
+            Crt.ReadKey();
+            Crt.FastWrite(new string(' ', 80), 1, 25, 0);
+        }
+
+        private void LogUnimplemented(string[] tokens)
+        {
+            string Output = "UNIMPLEMENTED (hit a key): " + string.Join(" ", tokens);
             Crt.FastWrite(StringUtils.PadRight(Output, ' ', 80), 1, 25, 31);
             Crt.ReadKey();
             Crt.FastWrite(new string(' ', 80), 1, 25, 0);
@@ -2095,6 +2111,9 @@ namespace LORD2
 
         private string TranslateVariables(string input)
         {
+            //TODO L2TREE.DAT contained "barak`xrides`xdragons" today, so maybe `x needs to be handled here too
+            //TODO Probably any non-timing sensitive things should be handled here too
+
             string inputUpper = input.ToUpper();
 
             if (input.Contains("`"))

@@ -1,6 +1,7 @@
 ﻿using RandM.RMLib;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -32,6 +33,11 @@ namespace LORD2
         public static Dictionary<string, string> ReadOnlyVariables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public static Dictionary<string, string> LanguageVariables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
+        private static Dictionary<string, int> _ImplementedCommandUsage = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        private static Dictionary<string, int> _UnimplementedCommandUsage = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        private static Dictionary<string, int> _UnknownCommandUsage = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        private static Dictionary<string, int> _UnusedCommandUsage = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
         static RTGlobal()
         {
             // Load all the ref files in the current directory
@@ -39,6 +45,20 @@ namespace LORD2
             foreach (string RefFileName in RefFileNames)
             {
                 LoadRefFile(RefFileName);
+            }
+
+            if (Debugger.IsAttached)
+            {
+                SaveCommandCSV(_ImplementedCommandUsage, "Implemented");
+                SaveCommandCSV(_UnimplementedCommandUsage, "Unimplemented");
+                SaveCommandCSV(_UnknownCommandUsage, "Unknown");
+                SaveCommandCSV(_UnusedCommandUsage, "Unused");
+                if ((_UnknownCommandUsage.Count > 0) || (_UnusedCommandUsage.Count > 0))
+                {
+                    Crt.WriteLn("Unknown commands used: " + _UnknownCommandUsage.Count.ToString());
+                    Crt.WriteLn("Unused commands used: " + _UnusedCommandUsage.Count.ToString());
+                    Crt.ReadKey();
+                }
             }
 
             // Init global variables
@@ -109,6 +129,8 @@ namespace LORD2
 
         private static void LoadRefFile(string fileName)
         {
+            RTReader RTR = new RTReader();
+
             // A place to store all the sections found in this file
             RTRFile NewFile = new RTRFile(fileName);
 
@@ -149,6 +171,49 @@ namespace LORD2
                     string[] Tokens = LineTrimmed.Split(' ');
                     NewSection.Labels.Add(Tokens[1].ToUpper(), NewSection.Script.Count - 1);
                 }
+                else if (LineTrimmed.StartsWith("@"))
+                {
+                    NewSection.Script.Add(Line);
+
+                    if (Debugger.IsAttached)
+                    {
+                        // Also record command usage
+                        // TODO @DO and @IF should be broken down
+                        string[] Tokens = LineTrimmed.Split(' ');
+                        if (RTR._Commands.ContainsKey(Tokens[0]))
+                        {
+                            if (RTR._Commands[Tokens[0]].Method.Name == "LogUnimplemented")
+                            {
+                                // Known, but not yet implemented
+                                if (!_UnimplementedCommandUsage.ContainsKey(Tokens[0])) _UnimplementedCommandUsage[Tokens[0]] = 0;
+                                _UnimplementedCommandUsage[Tokens[0]] = _UnimplementedCommandUsage[Tokens[0]] + 1;
+                            }
+                            else if (RTR._Commands[Tokens[0]].Method.Name == "LogUnused")
+                            {
+                                // Known, but not known to be used
+                                if (!_UnusedCommandUsage.ContainsKey(Tokens[0])) _UnusedCommandUsage[Tokens[0]] = 0;
+                                _UnusedCommandUsage[Tokens[0]] = _UnusedCommandUsage[Tokens[0]] + 1;
+                            }
+                            else if (RTR._Commands[Tokens[0]].Method.Name.StartsWith("Command"))
+                            {
+                                // Known and implemented
+                                if (!_ImplementedCommandUsage.ContainsKey(Tokens[0])) _ImplementedCommandUsage[Tokens[0]] = 0;
+                                _ImplementedCommandUsage[Tokens[0]] = _ImplementedCommandUsage[Tokens[0]] + 1;
+                            }
+                            else
+                            {
+                                // Should never happen
+                                throw new Exception("What's up with this? " + string.Join(" ", Tokens));
+                            }
+                        }
+                        else
+                        {
+                            // Unknown
+                            if (!_UnknownCommandUsage.ContainsKey(Tokens[0])) _UnknownCommandUsage[Tokens[0]] = 0;
+                            _UnknownCommandUsage[Tokens[0]] = _UnknownCommandUsage[Tokens[0]] + 1;
+                        }
+                    }
+                }
                 else
                 {
                     NewSection.Script.Add(Line);
@@ -169,6 +234,27 @@ namespace LORD2
             }
 
             RefFiles.Add(Path.GetFileNameWithoutExtension(fileName), NewFile);
+        }
+
+        private static void SaveCommandCSV(Dictionary<string, int> commandUsage, string group)
+        {
+            // Delete old file
+            string FileName = Global.GetSafeAbsolutePath("CommandUsage" + group + ".csv");
+            FileUtils.FileDelete(FileName);
+
+            // Save new file
+            if (commandUsage.Count > 0)
+            {
+                StringBuilder SB = new StringBuilder();
+                SB.AppendLine("Command,Uses");
+                foreach (KeyValuePair<string, int> KVP in commandUsage)
+                {
+                    SB.Append(KVP.Key);
+                    SB.Append(",");
+                    SB.AppendLine(KVP.Value.ToString());
+                }
+                FileUtils.FileWriteAllText(FileName, SB.ToString());
+            }
         }
     }
 }

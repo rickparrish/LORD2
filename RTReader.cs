@@ -664,7 +664,12 @@ namespace LORD2
             /* @DO FRONTPAD <string variable> <length>
                 This adds spaces to the front of the string until the string is as long as 
                 <length>. */
-            LogMissing(tokens);
+            int StringLength = Door.StripSeth(TranslateVariables(tokens[2])).Length;
+            int RequestedLength = Convert.ToInt32(tokens[3]);
+            if (StringLength < RequestedLength)
+            {
+                AssignVariable(tokens[2], StringUtils.PadLeft(TranslateVariables(tokens[2]), ' ', Convert.ToInt32(tokens[3])));
+            }
         }
 
         private void CommandDO_GETKEY(string[] tokens)

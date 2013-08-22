@@ -434,7 +434,38 @@ namespace LORD2
                 a long integer by # from a datafile.  If the file doesn't exist, it is created
                 and all 200 long integers are set to 0.
                 NOTE: You should specify an extension (usually .IDF) */
-            LogMissing(tokens);
+            string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
+            if (FileName != "")
+            {
+                if (File.Exists(FileName))
+                {
+                    using (FileStream FS = new FileStream(FileName, FileMode.Open))
+                    {
+                        IGM_DATA IGMD = DataStructures.ReadStruct<IGM_DATA>(FS);
+                        AssignVariable(tokens[3], IGMD.Data[Convert.ToInt32(TranslateVariables(tokens[2])) - 1].ToString());
+                    }
+                }
+                else
+                {
+                    using (FileStream FS = new FileStream(FileName,FileMode.Create, FileAccess.Write))
+                    {
+                        IGM_DATA IGMD = new IGM_DATA();
+                        IGMD.LastUsed = Global.STime;
+                        IGMD.Data = new Int32[200];
+                        for (int i = 0; i < IGMD.Data.Length; i++)
+                        {
+                            IGMD.Data[i] = 0;
+                        }
+                        IGMD.Extra = new Char[200];
+                        for (int i = 0; i < IGMD.Extra.Length; i++)
+                        {
+                            IGMD.Extra[i] = '\0';
+                        }
+                        DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
+                    }
+                    AssignVariable(tokens[3], "0");
+                }
+            }
         }
 
         private void CommandDATANEWDAY(string[] tokens)

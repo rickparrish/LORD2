@@ -22,6 +22,13 @@ namespace LORD2
 
         public static bool Validate()
         {
+            int IGM_DATASize = Marshal.SizeOf(typeof(IGM_DATA));
+            if (IGM_DATASize != 1004)
+            {
+                Crt.WriteLn("IGM_DATA is " + IGM_DATASize + ", expected 1004");
+                return false;
+            }
+
             int ItemsDatRecordSize = Marshal.SizeOf(typeof(ItemsDatRecord));
             if (ItemsDatRecordSize != 204)
             {
@@ -64,6 +71,26 @@ namespace LORD2
             }
             return true;
         }
+
+        public static void WriteStruct<T>(Stream stream, object record) where T : struct
+        {
+            var sz = Marshal.SizeOf(typeof(T));
+            var buffer = new byte[sz];
+            var pinnedBuffer = GCHandle.Alloc(buffer, GCHandleType.Pinned);
+            Marshal.StructureToPtr(record, pinnedBuffer.AddrOfPinnedObject(), false);
+            stream.Write(buffer, 0, sz);
+            pinnedBuffer.Free();
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    public struct IGM_DATA
+    {
+        public Int32 LastUsed;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 200)]
+        public Int32[] Data;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 200)]
+        public Char[] Extra;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]

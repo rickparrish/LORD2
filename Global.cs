@@ -43,7 +43,7 @@ namespace LORD2
                 // Ignore, we'll return the default ""
             }
 
-            return "";
+            return Result;
         }
 
         public static bool LoadDataFiles()

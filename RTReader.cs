@@ -252,10 +252,6 @@ namespace LORD2
 
         private void CommandCHOICE(string[] tokens)
         {
-            /* NOTE: `V01 is the default option */
-            /* TODO ALSO:  Check the CHOICE command, you can check a bit there too, like this:
-                +`t12 1 Hey, byte 12 bit 1 is TRUE! 
-                -`t12 1 Hey, byte 12 bit 1 is FALSE! */
             /* @CHOICE
                 <A choice>
                 <another choice>
@@ -588,8 +584,7 @@ namespace LORD2
             string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
             if (File.Exists(FileName))
             {
-                // TODO Should it translate file contents?
-                Door.Write(FileUtils.FileReadAllText(FileName, RMEncoding.Ansi));
+                Door.Write(TranslateVariables(FileUtils.FileReadAllText(FileName, RMEncoding.Ansi)));
             }
         }
 
@@ -920,7 +915,6 @@ namespace LORD2
             /* @REPLACE <X> <Y> <in `S10>
                 Replaces X with Y in an `s variable. */
             // The following regex matches only the first instance of the word foo: (?<!foo.*)foo (from http://stackoverflow.com/a/148561/342378)
-            // TODO Test that it does what it should
             AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), "(?<!" + Regex.Escape(TranslateVariables(tokens[2])) + ".*)" + Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
         }
 
@@ -1652,10 +1646,6 @@ namespace LORD2
 
         private void EndCHOICE()
         {
-            /* NOTE: `V01 is the default option */
-            /* TODO ALSO:  Check the CHOICE command, you can check a bit there too, like this:
-                +`t12 1 Hey, byte 12 bit 1 is TRUE! 
-                -`t12 1 Hey, byte 12 bit 1 is FALSE! */
             /* @CHOICE
                 <A choice>
                 <another choice>
@@ -1702,7 +1692,7 @@ namespace LORD2
                 "Hey, I have more than 500", RESPONSE would be set to 5. */
 
 
-            // TODO Determine which options are Visible and assign VisibleIndex
+            // Determine which options are Visible and assign VisibleIndex
             int VisibleCount = 0;
             int LastVisibleLength = 0;
 
@@ -1751,7 +1741,7 @@ namespace LORD2
                     }
                 }
 
-                // TODO Determine if option is visible
+                // Determine if option is visible
                 if (MakeVisible)
                 {
                     VisibleCount += 1;
@@ -1923,8 +1913,6 @@ namespace LORD2
 
         public int RunSection(string fileName, string sectionName, string labelName)
         {
-            // TODO What happens if invalid file and/or section name is given
-
             // Run the selected script
             string FileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
             if (RTGlobal.RefFiles.ContainsKey(FileNameWithoutExtension))

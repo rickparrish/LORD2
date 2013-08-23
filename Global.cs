@@ -66,12 +66,6 @@ namespace LORD2
                         ItemsDat.Add(DataStructures.ReadStruct<ItemsDatRecord>(FS));
                     }
                 }
-
-                // Assign global PLUS values
-                for (int i = 0; i < ItemsDat.Count; i++)
-                {
-                    RTGlobal.PLUS["`+" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)] = ItemsDat[i].Name;
-                }
             }
             else
             {
@@ -138,24 +132,6 @@ namespace LORD2
                 using (FileStream FS = new FileStream(Global.WorldDatFileName, FileMode.Open))
                 {
                     WorldDat = DataStructures.ReadStruct<WorldDatRecord>(FS);
-
-                    // Assign global S values
-                    RTGlobal.S["`S1"] = WorldDat.S1;
-                    RTGlobal.S["`S2"] = WorldDat.S2;
-                    RTGlobal.S["`S3"] = WorldDat.S3;
-                    RTGlobal.S["`S4"] = WorldDat.S4;
-                    RTGlobal.S["`S5"] = WorldDat.S5;
-                    RTGlobal.S["`S6"] = WorldDat.S6;
-                    RTGlobal.S["`S7"] = WorldDat.S7;
-                    RTGlobal.S["`S8"] = WorldDat.S8;
-                    RTGlobal.S["`S9"] = WorldDat.S9;
-                    RTGlobal.S["`S10"] = WorldDat.S10;
-
-                    // Assign global V values
-                    for (int i = 0; i < WorldDat.V.Length; i++)
-                    {
-                        RTGlobal.V["`V" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)] = WorldDat.V[i];
-                    }
                 }
             }
             else
@@ -196,24 +172,6 @@ namespace LORD2
                         TraderDatRecord TDR = DataStructures.ReadStruct<TraderDatRecord>(FS);
                         if (TDR.RealName.ToUpper() == Door.DropInfo.Alias.ToUpper())
                         {
-                            // Assign player I values
-                            for (int i = 0; i < TDR.Item.Length; i++)
-                            {
-                                RTGlobal.I["`I" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)] = TDR.Item[i];
-                            }
-
-                            // Assign player P values
-                            for (int i = 0; i < TDR.P.Length; i++)
-                            {
-                                RTGlobal.P["`P" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)] = TDR.P[i];
-                            }
-
-                            // Assign player T values
-                            for (int i = 0; i < TDR.B.Length; i++)
-                            {
-                                RTGlobal.T["`T" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)] = TDR.B[i];
-                            }
-
                             record = TDR;
                             return true;
                         }

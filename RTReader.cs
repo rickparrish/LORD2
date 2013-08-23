@@ -172,24 +172,42 @@ namespace LORD2
             }
 
             // See which variables to update
-            if (RTGlobal.I.ContainsKey(variable))
+            string VariableUpper = variable.Trim().ToUpper();
+            if (VariableUpper.StartsWith("`I"))
             {
-                RTGlobal.I[variable] = Convert.ToInt16(values[0]);
+                // Player int
+                Global.Player.I[Convert.ToInt32(VariableUpper.Replace("`I", "")) - 1] = Convert.ToInt16(values[0]);
             }
-            if (RTGlobal.P.ContainsKey(variable))
+            if (VariableUpper.StartsWith("`P"))
             {
-                RTGlobal.P[variable] = Convert.ToInt32(values[0]);
+                // Player longint
+                Global.Player.P[Convert.ToInt32(VariableUpper.Replace("`P", "")) - 1] = Convert.ToInt32(values[0]);
             }
-            if (RTGlobal.PLUS.ContainsKey(variable)) RTGlobal.PLUS[variable] = value;
-            if (RTGlobal.S.ContainsKey(variable)) RTGlobal.S[variable] = value;
-            if (RTGlobal.T.ContainsKey(variable))
+            if (VariableUpper.StartsWith("`T"))
             {
-                RTGlobal.T[variable] = Convert.ToByte(values[0]);
+                // Player byte
+                Global.Player.T[Convert.ToInt32(VariableUpper.Replace("`T", "")) - 1] = Convert.ToByte(values[0]);
             }
-            if (RTGlobal.V.ContainsKey(variable))
+
+            if (VariableUpper.StartsWith("`+"))
             {
-                RTGlobal.V[variable] = Convert.ToInt32(values[0]);
+                // Global item name
+                ItemsDatRecord IDR = Global.ItemsDat[Convert.ToInt32(VariableUpper.Replace("`+", "")) - 1];
+                IDR.Name = value;
+                Global.ItemsDat[Convert.ToInt32(VariableUpper.Replace("`+", "")) - 1] = IDR;
             }
+
+            if (VariableUpper.StartsWith("`S"))
+            {
+                // Global string
+                Global.WorldDat.S[Convert.ToInt32(VariableUpper.Replace("`S", "")) - 1].Value = value;
+            }
+            if (VariableUpper.StartsWith("`V"))
+            {
+                // Global longint
+                Global.WorldDat.V[Convert.ToInt32(VariableUpper.Replace("`V", "")) - 1] = Convert.ToInt32(values[0]);
+            }
+
             if (RTGlobal.LanguageVariables.ContainsKey(variable))
             {
                 // TODO Depending on what got set here, other global variables may need to be set (ie is player dead, their x/y location, their map)
@@ -208,21 +226,16 @@ namespace LORD2
                 to do this can result in a corrupted TRADER.DAT file. */
             // TODO a race condition could cause these two inserts to be out of sync
 
-            TraderDatRecord TDR = new TraderDatRecord(true);
-            TDR.Name = TranslateVariables("`N");
-            TDR.RealName = Door.DropInfo.Alias;
-            TDR.Map = 155; // TODO Should come from global variable
-            TDR.SexMale = 1; // TODO Should come from global variable
-            TDR.X = 27; // TODO Should come from global variable
-            TDR.Y = 7; // TODO Should come from global variable
-            for (int i = 0; i < TDR.P.Length; i++)
-            {
-                TDR.P[i] = RTGlobal.P["`P" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)];
-            }
+            Global.Player.Name = TranslateVariables("`N");
+            Global.Player.RealName = Door.DropInfo.Alias;
+            Global.Player.Map = 155; // TODO Should come from global variable
+            Global.Player.SexMale = 1; // TODO Should come from global variable
+            Global.Player.X = 27; // TODO Should come from global variable
+            Global.Player.Y = 7; // TODO Should come from global variable
             using (FileStream FS = new FileStream(Global.TraderDatFileName, FileMode.OpenOrCreate, FileAccess.Write))
             {
                 FS.Position = FS.Length;
-                DataStructures.WriteStruct<TraderDatRecord>(FS, TDR);
+                DataStructures.WriteStruct<TraderDatRecord>(FS, Global.Player);
             }
 
             UpdateTmpRecord UTR = new UpdateTmpRecord(true);
@@ -2143,44 +2156,44 @@ namespace LORD2
             {
                 if (inputUpper.Contains("`I"))
                 {
-                    foreach (KeyValuePair<string, short> KVP in RTGlobal.I)
+                    for (int i = 0; i < Global.Player.I.Length; i++)
                     {
-                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                        input = Regex.Replace(input, Regex.Escape("`I" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.Player.I[i].ToString(), RegexOptions.IgnoreCase);
                     }
                 }
                 if (inputUpper.Contains("`P"))
                 {
-                    foreach (KeyValuePair<string, int> KVP in RTGlobal.P)
+                    for (int i = 0; i < Global.Player.P.Length; i++)
                     {
-                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                        input = Regex.Replace(input, Regex.Escape("`P" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.Player.P[i].ToString(), RegexOptions.IgnoreCase);
                     }
                 }
                 if (inputUpper.Contains("`+"))
                 {
-                    foreach (KeyValuePair<string, string> KVP in RTGlobal.PLUS)
+                    for (int i = 0; i < Global.ItemsDat.Count; i++)
                     {
-                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
+                        input = Regex.Replace(input, Regex.Escape("`+" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.ItemsDat[i].Name, RegexOptions.IgnoreCase);
                     }
                 }
                 if (inputUpper.Contains("`S"))
                 {
-                    foreach (KeyValuePair<string, string> KVP in RTGlobal.S)
+                    for (int i = 0; i < Global.WorldDat.S.Length; i++)
                     {
-                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value, RegexOptions.IgnoreCase);
+                        input = Regex.Replace(input, Regex.Escape("`S" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.WorldDat.S[i].Value, RegexOptions.IgnoreCase);
                     }
                 }
                 if (inputUpper.Contains("`T"))
                 {
-                    foreach (KeyValuePair<string, byte> KVP in RTGlobal.T)
+                    for (int i = 0; i < Global.Player.T.Length; i++)
                     {
-                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                        input = Regex.Replace(input, Regex.Escape("`T" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.Player.T[i].ToString(), RegexOptions.IgnoreCase);
                     }
                 }
                 if (inputUpper.Contains("`V"))
                 {
-                    foreach (KeyValuePair<string, int> KVP in RTGlobal.V)
+                    for (int i = 0; i < Global.WorldDat.V.Length; i++)
                     {
-                        input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                        input = Regex.Replace(input, Regex.Escape("`V" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.WorldDat.V[i].ToString(), RegexOptions.IgnoreCase);
                     }
                 }
             }

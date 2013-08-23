@@ -17,18 +17,6 @@ namespace LORD2
         // Ref files
         public static Dictionary<string, RTRefFile> RefFiles = new Dictionary<string, RTRefFile>(StringComparer.OrdinalIgnoreCase);
 
-        // World variables
-        public static Dictionary<string, string> S = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        public static Dictionary<string, Int32> V = new Dictionary<string, Int32>(StringComparer.OrdinalIgnoreCase);
-
-        // Player variables
-        public static Dictionary<string, Int32> P = new Dictionary<string, Int32>(StringComparer.OrdinalIgnoreCase);
-        public static Dictionary<string, byte> T = new Dictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
-        public static Dictionary<string, Int16> I = new Dictionary<string, Int16>(StringComparer.OrdinalIgnoreCase);
-
-        // Item variables
-        public static Dictionary<string, string> PLUS = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
         // Other variables
         public static Dictionary<string, string> ReadOnlyVariables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public static Dictionary<string, string> LanguageVariables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -60,14 +48,6 @@ namespace LORD2
                     Crt.ReadKey();
                 }
             }
-
-            // Init global variables
-            for (int i = 1; i <= 99; i++) I.Add("`I" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
-            for (int i = 1; i <= 99; i++) P.Add("`P" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
-            for (int i = 1; i <= 99; i++) PLUS.Add("`+" + StringUtils.PadLeft(i.ToString(), '0', 2), "");
-            for (int i = 1; i <= 10; i++) S.Add("`S" + StringUtils.PadLeft(i.ToString(), '0', 2), "");
-            for (int i = 1; i <= 99; i++) T.Add("`T" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
-            for (int i = 1; i <= 40; i++) V.Add("`V" + StringUtils.PadLeft(i.ToString(), '0', 2), 0);
 
             // Read-only variables
             ReadOnlyVariables.Add("LOCAL", (Door.Local() ? "5" : "0"));

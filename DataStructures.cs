@@ -485,11 +485,11 @@ namespace LORD2
         public Int16 X;
         public Int16 Y;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 99)]
-        public Int16[] Item;
+        public Int16[] I;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 99)]
         public Int32[] P;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 99)]
-        public Byte[] B;
+        public Byte[] T;
         public Int32 LastSaved;
         public Int32 LastDayPlayed;
         public Int16 LastMap; // last VISIBLE map player was on
@@ -505,7 +505,7 @@ namespace LORD2
             _RealName = new Byte[40];
             _RealNameLength = 0;
             ArmourNumber = 0;
-            B = new Byte[99];
+            T = new Byte[99];
             Bank = 0;
             Battle = 0;
             Busy = 0;
@@ -515,7 +515,7 @@ namespace LORD2
             Experience = 0;
             Extra = new Char[354];
             Gold = 0;
-            Item = new Int16[99];
+            I = new Int16[99];
             LastDayOn = 0;
             LastDayPlayed = 0;
             LastMap = 155;
@@ -591,6 +591,33 @@ namespace LORD2
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    public struct STRING80
+    {
+        private Byte _Length;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
+        private Byte[] _Value;
+
+        public STRING80(bool unused)
+        {
+            _Length = 0;
+            _Value = new Byte[80];
+        }
+
+        public string Value
+        {
+            get
+            {
+                return RMEncoding.Ansi.GetString(_Value, 0, _Length);
+            }
+            set
+            {
+                _Length = (byte)Math.Min(value.Length, _Value.Length);
+                RMEncoding.Ansi.GetBytes(value, 0, _Length, _Value, 0);
+            }
+        }
+    }
+    
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
     public struct WorldDatRecord
     {
         private Byte _NameLength;
@@ -600,36 +627,8 @@ namespace LORD2
         public Int16[] Location;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 40)]
         public Int32[] V;
-        private Byte _S1Length;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
-        private Byte[] _S1;
-        private Byte _S2Length;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
-        private Byte[] _S2;
-        private Byte _S3Length;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
-        private Byte[] _S3;
-        private Byte _S4Length;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
-        private Byte[] _S4;
-        private Byte _S5Length;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
-        private Byte[] _S5;
-        private Byte _S6Length;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
-        private Byte[] _S6;
-        private Byte _S7Length;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
-        private Byte[] _S7;
-        private Byte _S8Length;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
-        private Byte[] _S8;
-        private Byte _S9Length;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
-        private Byte[] _S9;
-        private Byte _S10Length;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 80)]
-        private Byte[] _S10;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 10)]
+        public STRING80[] S;
         public Int32 Time; // Literally yyyy+mm+dd, ie 2013+08+20 = 2041
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1600)]
         public Byte[] Show; // Show up on the player's "auto map"?
@@ -640,26 +639,7 @@ namespace LORD2
         {
             _Name = new Byte[60];
             _NameLength = 0;
-            _S1 = new Byte[80];
-            _S1Length = 0;
-            _S2 = new Byte[80];
-            _S2Length = 0;
-            _S3 = new Byte[80];
-            _S3Length = 0;
-            _S4 = new Byte[80];
-            _S4Length = 0;
-            _S5 = new Byte[80];
-            _S5Length = 0;
-            _S6 = new Byte[80];
-            _S6Length = 0;
-            _S7 = new Byte[80];
-            _S7Length = 0;
-            _S8 = new Byte[80];
-            _S8Length = 0;
-            _S9 = new Byte[80];
-            _S9Length = 0;
-            _S10 = new Byte[80];
-            _S10Length = 0;
+            S = new STRING80[10];
             Extra = new Char[396];
             Location = new Int16[1600];
             Show = new Byte[1600];
@@ -679,16 +659,5 @@ namespace LORD2
                 RMEncoding.Ansi.GetBytes(value, 0, _NameLength, _Name, 0);
             }
         }
-
-        public string S1 { get { return RMEncoding.Ansi.GetString(_S1, 0, _S1Length); } }
-        public string S2 { get { return RMEncoding.Ansi.GetString(_S2, 0, _S2Length); } }
-        public string S3 { get { return RMEncoding.Ansi.GetString(_S3, 0, _S3Length); } }
-        public string S4 { get { return RMEncoding.Ansi.GetString(_S4, 0, _S4Length); } }
-        public string S5 { get { return RMEncoding.Ansi.GetString(_S5, 0, _S5Length); } }
-        public string S6 { get { return RMEncoding.Ansi.GetString(_S6, 0, _S6Length); } }
-        public string S7 { get { return RMEncoding.Ansi.GetString(_S7, 0, _S7Length); } }
-        public string S8 { get { return RMEncoding.Ansi.GetString(_S8, 0, _S8Length); } }
-        public string S9 { get { return RMEncoding.Ansi.GetString(_S9, 0, _S9Length); } }
-        public string S10 { get { return RMEncoding.Ansi.GetString(_S10, 0, _S10Length); } }
     }
 }

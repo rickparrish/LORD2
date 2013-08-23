@@ -4,14 +4,16 @@ using System.Text;
 
 namespace LORD2
 {
-    public class RTRSection
+    public class RTRefSection
     {
         public Dictionary<string, int> Labels;
+        public string Name;
         public List<string> Script;
 
-        public RTRSection()
+        public RTRefSection(string name)
         {
             Labels = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            Name = name;
             Script = new List<string>();
         }
     }

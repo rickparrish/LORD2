@@ -1,4 +1,4 @@
-﻿// TODO Add structure for IGM Data, UPDATE.TMP
+﻿// TODO Add structure for UPDATE.TMP
 using RandM.RMLib;
 using System;
 using System.IO;
@@ -324,7 +324,7 @@ namespace LORD2
         private Byte _BatNameLength; // Ref file section header
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
         private Byte[] _BatName;
-        private Byte _Safe; // True if players cannot fight on this screen TODO is bool OK?
+        private Byte _Safe; // True if players cannot fight on this screen
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 469)]
         public Char[] Extra;
 

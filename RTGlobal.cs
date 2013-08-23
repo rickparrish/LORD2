@@ -15,7 +15,7 @@ namespace LORD2
         public static EventHandler OnUPDATE = null;
 
         // Ref files
-        public static Dictionary<string, RTRFile> RefFiles = new Dictionary<string, RTRFile>(StringComparer.OrdinalIgnoreCase);
+        public static Dictionary<string, RTRefFile> RefFiles = new Dictionary<string, RTRefFile>(StringComparer.OrdinalIgnoreCase);
 
         // World variables
         public static Dictionary<string, string> S = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -132,11 +132,11 @@ namespace LORD2
             RTReader RTR = new RTReader();
 
             // A place to store all the sections found in this file
-            RTRFile NewFile = new RTRFile(fileName);
+            RTRefFile NewFile = new RTRefFile(fileName);
 
             // Where to store the info for the section we're currently working on
             string NewSectionName = "_HEADER";
-            RTRSection NewSection = new RTRSection();
+            RTRefSection NewSection = new RTRefSection(NewSectionName);
 
             // Loop through the file
             string[] Lines = FileUtils.FileReadAllLines(fileName, RMEncoding.Ansi);
@@ -162,7 +162,7 @@ namespace LORD2
 
                     // Get new section name (presumes only one word headers allowed, trims @# off start) and reset script block
                     NewSectionName = Line.Trim().Split(' ')[0].Substring(2);
-                    NewSection = new RTRSection();
+                    NewSection = new RTRefSection(NewSectionName);
                 }
                 else if (LineTrimmed.StartsWith("@LABEL "))
                 {
@@ -178,7 +178,7 @@ namespace LORD2
                     if (Debugger.IsAttached)
                     {
                         // Also record command usage
-                        // TODO @DO and @IF should be broken down
+                        // TODO @IF should be broken down
                         string[] Tokens = LineTrimmed.Split(' ');
                         if (Tokens[0] == "@DO")
                         {

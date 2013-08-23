@@ -44,8 +44,8 @@
     <Compile Include="RTChoiceOption.cs" />
     <Compile Include="RTGlobal.cs" />
     <Compile Include="RTReader.cs" />
-    <Compile Include="RTRFile.cs" />
-    <Compile Include="RTRSection.cs" />
+    <Compile Include="RTRefFile.cs" />
+    <Compile Include="RTRefSection.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DLL\RMLib\RMLib.csproj">

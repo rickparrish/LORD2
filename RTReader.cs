@@ -12,8 +12,8 @@ namespace LORD2
         internal Dictionary<string, Action<string[]>> _DOCommands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
 
         private int _CurrentLineNumber = 0;
-        private RTRFile _CurrentFile = null;
-        private RTRSection _CurrentSection = null;
+        private RTRefFile _CurrentFile = null;
+        private RTRefSection _CurrentSection = null;
         private int _InBEGINCount = 0;
         private bool _InCHOICE = false;
         private List<RTChoiceOption> _InCHOICEOptions = new List<RTChoiceOption>();
@@ -718,7 +718,7 @@ namespace LORD2
             }
             else
             {
-                foreach (KeyValuePair<string, RTRSection> KVP in _CurrentFile.Sections)
+                foreach (KeyValuePair<string, RTRefSection> KVP in _CurrentFile.Sections)
                 {
                     if (KVP.Value.Labels.ContainsKey(tokens[2]))
                     {

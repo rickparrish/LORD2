@@ -144,8 +144,8 @@ namespace LORD2
             // Initialize the @IF commands dictionary
             // @IF <COMMAND> COMMANDS
             _IFCommands.Add("BITCHECK", CommandIF_BITCHECK);
-            _IFCommands.Add("BLOCKPASSABLE", LogUnimplementedFunc);
-            _IFCommands.Add("CHECKDUPE", LogUnimplementedFunc);
+            _IFCommands.Add("BLOCKPASSABLE", CommandIF_BLOCKPASSABLE);
+            _IFCommands.Add("CHECKDUPE", CommandIF_CHECKDUPE);
             // @IF <SOMETHING> <COMMAND> COMMANDS
             _IFCommands.Add("EQUALS", CommandIF_IS);
             _IFCommands.Add("EXIST", CommandIF_EXIST);
@@ -1264,17 +1264,20 @@ namespace LORD2
         private bool CommandIF_BLOCKPASSABLE(string[] tokens)
         {
             /* @if blockpassable <is or not> <0 or 1> */
-            // TODO Check if global x and y is passable (used by smackrod)
-            // TODO Implement
-            return false;
+            // TODO Any other terrains walkable?
+            return (Global.CurrentMap.W[(Global.Player.Y - 1) + ((Global.Player.X - 1) * 20)].Terrain == 1);
         }
 
         private bool CommandIF_CHECKDUPE(string[] tokens)
         {
             /* @if checkdupe <`s variable> <true or false>
                 Check if the given player name already exists */
-            // TODO Implement
-            return false;
+            string GameName = TranslateVariables(tokens[2]);
+            bool TrueFalse = Convert.ToBoolean(TranslateVariables(tokens[3]));
+
+            TraderDatRecord TDR;
+            bool Exists = (Global.LoadPlayerByGameName(GameName, out TDR) != -1);
+            return (Exists == TrueFalse);
         }
 
         private bool CommandIF_EXIST(string[] tokens)

@@ -30,16 +30,16 @@ namespace LORD2
                     RTGlobal.OnUPDATE += RTR_OnUPDATE;
 
                     // Check if user has a Global.Player already
-                    bool PlayerLoaded = Global.LoadPlayer(out Global.Player);
-                    if (!PlayerLoaded)
+                    Global.PlayerNumber = Global.LoadPlayerByRealName(Door.DropInfo.RealName, out Global.Player);
+                    if (Global.PlayerNumber == -1)
                     {
                         // Nope, so try to get them to create one
                         RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
-                        PlayerLoaded = Global.LoadPlayer(out Global.Player);
+                        Global.PlayerNumber = Global.LoadPlayerByRealName(Door.DropInfo.RealName, out Global.Player);
                     }
 
                     // Now check again to see if the user has a Global.Player (either because they already had one, or because they just created one)
-                    if (PlayerLoaded)
+                    if (Global.PlayerNumber != -1)
                     {
                         // Global.Player exists, so start the game
                         RTR.RunSection("GAMETXT.REF", "STARTGAME");

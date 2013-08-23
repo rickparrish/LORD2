@@ -21,6 +21,7 @@ namespace LORD2
         public static int LastX = 0;
         public static int LastY = 0;
         public static TraderDatRecord Player;
+        public static int PlayerNumber;
         public static List<MapDatRecord> MapDat = new List<MapDatRecord>();
         public static int STime = DateTime.Now.Year + DateTime.Now.Month + DateTime.Now.Day;
         public static WorldDatRecord WorldDat;
@@ -160,8 +161,10 @@ namespace LORD2
             CurrentMap = MapDat[MapBlockNumber - 1]; // 0 based array access
         }
 
-        public static bool LoadPlayer(out TraderDatRecord record)
+        public static int LoadPlayerByGameName(string name, out TraderDatRecord record)
         {
+            int PlayerNumber = 0;
+
             if (File.Exists(Global.TraderDatFileName))
             {
                 using (FileStream FS = new FileStream(Global.TraderDatFileName, FileMode.Open))
@@ -169,11 +172,12 @@ namespace LORD2
                     long FSLength = FS.Length;
                     while (FS.Position < FSLength)
                     {
+                        PlayerNumber += 1;
                         TraderDatRecord TDR = DataStructures.ReadStruct<TraderDatRecord>(FS);
-                        if (TDR.RealName.ToUpper() == Door.DropInfo.Alias.ToUpper())
+                        if (Door.StripSeth(TDR.Name.Trim().ToUpper()) == Door.StripSeth(name.Trim().ToUpper()))
                         {
                             record = TDR;
-                            return true;
+                            return PlayerNumber;
                         }
                     }
                 }
@@ -181,7 +185,34 @@ namespace LORD2
 
             // If we get here, user doesn't have an account yet
             record = new TraderDatRecord(true);
-            return false;
+            return -1;
+        }
+
+        public static int LoadPlayerByRealName(string name, out TraderDatRecord record)
+        {
+            int PlayerNumber = 0;
+
+            if (File.Exists(Global.TraderDatFileName))
+            {
+                using (FileStream FS = new FileStream(Global.TraderDatFileName, FileMode.Open))
+                {
+                    long FSLength = FS.Length;
+                    while (FS.Position < FSLength)
+                    {
+                        PlayerNumber += 1;
+                        TraderDatRecord TDR = DataStructures.ReadStruct<TraderDatRecord>(FS);
+                        if (TDR.RealName.Trim().ToUpper() == name.Trim().ToUpper())
+                        {
+                            record = TDR;
+                            return PlayerNumber;
+                        }
+                    }
+                }
+            }
+
+            // If we get here, user doesn't have an account yet
+            record = new TraderDatRecord(true);
+            return -1;
         }
     }
 }

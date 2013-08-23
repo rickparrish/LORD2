@@ -72,7 +72,7 @@ namespace LORD2
             _Commands.Add("@LABEL", CommandLABEL);
             _Commands.Add("@LOADCURSOR", LogUnimplemented);
             _Commands.Add("@LOADGLOBALS", LogUnused);
-            _Commands.Add("@LOADMAP", LogUnimplemented);
+            _Commands.Add("@LOADMAP", CommandLOADMAP);
             _Commands.Add("@LOADWORLD", LogUnused);
             _Commands.Add("@LORDRANK", LogUnimplemented);
             _Commands.Add("@MOREMAP", LogUnused);
@@ -1472,7 +1472,7 @@ namespace LORD2
                 The L2 engine will display a runtime error and close the door.   Be SURE to 
                 change the map variable too!!  Using this and changing the X and Y coordinates 
                 effectivly lets you do a 'warp' from a .ref file. */
-            // TODO Implement
+            Global.LoadMap(Convert.ToInt32(TranslateVariables(tokens[1])));
         }
 
         private void CommandLOADWORLD(string[] tokens)

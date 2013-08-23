@@ -8,12 +8,12 @@ namespace LORD2
 {
     public static class Global
     {
-        public static string ItemsDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "items.dat");
-        public static string MapDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "map.dat");
-        public static string STimeDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "stime.dat");
-        public static string TimeDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "time.dat");
-        public static string TraderDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "trader.dat");
-        public static string WorldDatFileName = StringUtils.PathCombine(ProcessUtils.StartupPath, "world.dat");
+        public static string ItemsDatFileName = Global.GetSafeAbsolutePath("items.dat");
+        public static string MapDatFileName = Global.GetSafeAbsolutePath("map.dat");
+        public static string STimeDatFileName = Global.GetSafeAbsolutePath("stime.dat");
+        public static string TimeDatFileName = Global.GetSafeAbsolutePath("time.dat");
+        public static string TraderDatFileName = Global.GetSafeAbsolutePath("trader.dat");
+        public static string WorldDatFileName = Global.GetSafeAbsolutePath("world.dat");
 
         public static MapDatRecord CurrentMap;
         public static List<ItemsDatRecord> ItemsDat = new List<ItemsDatRecord>();
@@ -24,7 +24,7 @@ namespace LORD2
         public static int STime = DateTime.Now.Year + DateTime.Now.Month + DateTime.Now.Day;
         public static WorldDatRecord WorldDat;
 
-        public static string GetSafeAbsolutePath(string fileName)
+        public static string GetSafeAbsolutePath(string relativeFileName)
         {
             string Result = "";
 
@@ -33,10 +33,16 @@ namespace LORD2
                 // Get absolute path for the given relative path
                 string SavedCurrentDirectory = Environment.CurrentDirectory;
                 Environment.CurrentDirectory = ProcessUtils.StartupPath;
-                string AbsoluteFileName = new FileInfo(fileName).FullName;
+                string AbsoluteFileName = new FileInfo(relativeFileName).FullName;
                 Environment.CurrentDirectory = SavedCurrentDirectory;
 
-                if (AbsoluteFileName.Contains(ProcessUtils.StartupPath)) Result = AbsoluteFileName;
+                if (AbsoluteFileName.Contains(ProcessUtils.StartupPath))
+                {
+                    // Path is in the LORD2 directory (or a subdirectory), so lowercase the filename so we don't have mixed case usage (for Linux)
+                    string Directory = Path.GetDirectoryName(AbsoluteFileName);
+                    string FileName = Path.GetFileName(AbsoluteFileName).ToLower();
+                    Result = StringUtils.PathCombine(Directory, FileName);
+                }
             }
             catch
             {

@@ -209,6 +209,57 @@ namespace LORD2
                                 _UnknownCommandUsage[DOName] = _UnknownCommandUsage[DOName] + 1;
                             } 
                         }
+                        else if (Tokens[0] == "@IF")
+                        {
+                            // Get the @IF command
+                            string Command = string.Join(" ", Tokens);
+                            string IFName = Command;
+                            if (RTR._IFCommands.ContainsKey(Tokens[1]))
+                            {
+                                Command = Tokens[1];
+                                IFName = "@IF " + Command;
+                            }
+                            else if (RTR._IFCommands.ContainsKey(Tokens[2]))
+                            {
+                                Command = Tokens[2];
+                                IFName = "@IF . " + Command;
+                            }
+
+                            // Determine if @IF command is known
+                            if (RTR._IFCommands.ContainsKey(Command))
+                            {
+                                if (RTR._IFCommands[Command].Method.Name == "LogUnimplementedFunc")
+                                {
+                                    // Known, but not yet implemented
+                                    if (!_UnimplementedCommandUsage.ContainsKey(IFName)) _UnimplementedCommandUsage[IFName] = 0;
+                                    _UnimplementedCommandUsage[IFName] = _UnimplementedCommandUsage[IFName] + 1;
+                                }
+                                else if (RTR._IFCommands[Command].Method.Name == "LogUnused")
+                                {
+                                    // Known, but not known to be used
+                                    if (!_UnusedCommandUsage.ContainsKey(IFName)) _UnusedCommandUsage[IFName] = 0;
+                                    _UnusedCommandUsage[IFName] = _UnusedCommandUsage[IFName] + 1;
+                                }
+                                else if (RTR._IFCommands[Command].Method.Name.StartsWith("Command"))
+                                {
+                                    // Known and implemented
+                                    if (!_ImplementedCommandUsage.ContainsKey(IFName)) _ImplementedCommandUsage[IFName] = 0;
+                                    _ImplementedCommandUsage[IFName] = _ImplementedCommandUsage[IFName] + 1;
+                                }
+                                else
+                                {
+                                    // Should never happen
+                                    Crt.WriteLn("What's up with this? " + string.Join(" ", Tokens));
+                                    Crt.ReadKey();
+                                }
+                            }
+                            else
+                            {
+                                // Unknown
+                                if (!_UnknownCommandUsage.ContainsKey(IFName)) _UnknownCommandUsage[IFName] = 0;
+                                _UnknownCommandUsage[IFName] = _UnknownCommandUsage[IFName] + 1;
+                            }
+                        }
                         else
                         {
                             if (RTR._Commands.ContainsKey(Tokens[0]))

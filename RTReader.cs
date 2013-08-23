@@ -10,6 +10,7 @@ namespace LORD2
     {
         internal Dictionary<string, Action<string[]>> _Commands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
         internal Dictionary<string, Action<string[]>> _DOCommands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
+        internal Dictionary<string, Func<string[], bool>> _IFCommands = new Dictionary<string, Func<string[], bool>>(StringComparer.OrdinalIgnoreCase);
 
         private int _CurrentLineNumber = 0;
         private RTRefFile _CurrentFile = null;
@@ -139,6 +140,25 @@ namespace LORD2
             _DOCommands.Add("ADD", CommandDO_ADD);
             _DOCommands.Add("IS", CommandDO_IS);
             _DOCommands.Add("RANDOM", CommandDO_RANDOM);
+
+            // Initialize the @IF commands dictionary
+            // @IF <COMMAND> COMMANDS
+            _IFCommands.Add("BITCHECK", CommandIF_BITCHECK);
+            _IFCommands.Add("BLOCKPASSABLE", LogUnimplementedFunc);
+            _IFCommands.Add("CHECKDUPE", LogUnimplementedFunc);
+            // @IF <SOMETHING> <COMMAND> COMMANDS
+            _IFCommands.Add("EQUALS", CommandIF_IS);
+            _IFCommands.Add("EXIST", CommandIF_EXIST);
+            _IFCommands.Add("EXISTS", CommandIF_EXIST);
+            _IFCommands.Add("INSIDE", CommandIF_INSIDE);
+            _IFCommands.Add("IS", CommandIF_IS);
+            _IFCommands.Add("LESS", CommandIF_LESS);
+            _IFCommands.Add("MORE", CommandIF_MORE);
+            _IFCommands.Add("NOT", CommandIF_NOT);
+            _IFCommands.Add("=", CommandIF_IS);
+            _IFCommands.Add("<", CommandIF_LESS);
+            _IFCommands.Add(">", CommandIF_MORE);
+
         }
 
         private void AssignVariable(string variable, string value)
@@ -487,7 +507,7 @@ namespace LORD2
                 }
                 else
                 {
-                    using (FileStream FS = new FileStream(FileName,FileMode.Create, FileAccess.Write))
+                    using (FileStream FS = new FileStream(FileName, FileMode.Create, FileAccess.Write))
                     {
                         IGM_DATA IGMD = new IGM_DATA(true);
                         IGMD.LastUsed = DateTime.Now.Month + DateTime.Now.Day;
@@ -572,7 +592,7 @@ namespace LORD2
                         // Read file
                         IGM_DATA IGMD = DataStructures.ReadStruct<IGM_DATA>(FS);
                         IGMD.Data[Convert.ToInt32(TranslateVariables(tokens[2])) - 1] = Convert.ToInt32(TranslateVariables(tokens[3]));
-                        
+
                         // Write file
                         FS.Position = 0;
                         DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
@@ -1201,110 +1221,18 @@ namespace LORD2
             /* @IF <Varible> <Math> <Thing the varible must be, or more or less then, or
                 another varible>  (Possible math functions: EQUALS, MORE, LESS, NOT) */
             bool Result = false;
-            string Left = TranslateVariables(tokens[1]);
-            string Right = TranslateVariables(tokens[3]);
-            int LeftInt = 0;
-            int RightInt = 0;
 
-            // TODO This is to try to detect unknown variables in the variable position (if the before and after translation are the same, it's probably an unknown variable)
-            if (tokens[1] == Left)
+            if (_IFCommands.ContainsKey(tokens[1]))
             {
-                if (tokens[2].ToUpper() == "EXIST")
-                {
-                    // Ignore, tokens[1] was a literal filename
-                }
-                else if (tokens[2].ToUpper() == "EXISTS")
-                {
-                    // Ignore, tokens[1] was a literal filename
-                }
-                else
-                {
-                    // TODO Implement
-                }
+                Result = _IFCommands[tokens[1]](tokens);
             }
-
-            switch (tokens[2].ToUpper())
+            else if (_IFCommands.ContainsKey(tokens[2]))
             {
-                case "EQUALS":
-                case "IS":
-                case "=":
-                    if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
-                    {
-                        Result = (LeftInt == RightInt);
-                    }
-                    else
-                    {
-                        Result = (Left == Right);
-                    }
-                    break;
-                case "EXIST":
-                case "EXISTS":
-                    /* Undocumented.  Checks if given file exists */
-                    string FileName = Global.GetSafeAbsolutePath(Left);
-                    bool TrueFalse = Convert.ToBoolean(Right.ToUpper());
-                    Result = (File.Exists(FileName) == TrueFalse);
-                    break;
-                case "INSIDE":
-                    /* @IF <Word or variable> INSIDE <Word or variable>
-                        This allows you to search a string for something inside of it.  Not case 
-                        sensitive. */
-                    Result = Right.ToUpper().Contains(Left.ToUpper());
-                    break;
-                case "LESS":
-                case "<":
-                    if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
-                    {
-                        Result = (LeftInt < RightInt);
-                    }
-                    else
-                    {
-                        throw new ArgumentException("@IF LESS arguments were not numeric");
-                    }
-                    break;
-                case "MORE":
-                case ">":
-                    if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
-                    {
-                        Result = (LeftInt > RightInt);
-                    }
-                    else
-                    {
-                        throw new ArgumentException("@IF MORE arguments were not numeric");
-                    }
-                    break;
-                case "NOT":
-                    if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
-                    {
-                        Result = (LeftInt != RightInt);
-                    }
-                    else
-                    {
-                        Result = (Left != Right);
-                    }
-                    break;
-                default:
-                    switch (tokens[1].ToUpper())
-                    {
-                        case "BITCHECK":
-                            /* @IF bitcheck <`t variable> <bit number> <0 or 1>
-                                Check if the given bit is set or not in the given `t variable */
-                            // TODO Untested
-                            Result = ((Convert.ToInt32(TranslateVariables(tokens[2])) & (1 << Convert.ToInt32(TranslateVariables(tokens[3])))) == Convert.ToInt32(TranslateVariables(tokens[4])));
-                            break;
-                        case "BLOCKPASSABLE":
-                            // TODO Check if global x and y is passable (used by smackrod)
-                            LogUnimplemented(tokens);
-                            break;
-                        case "CHECKDUPE":
-                            /* @if checkdupe <`s variable> <true or false>
-                                Check if the given player name already exists */
-                            LogUnimplemented(tokens);
-                            break;
-                        default:
-                            LogMissing(tokens);
-                            break;
-                    }
-                    break;
+                Result = _IFCommands[tokens[2]](tokens);
+            }
+            else
+            {
+                LogMissing(tokens);
             }
 
             // Check if it's an IF block, or inline IF
@@ -1322,6 +1250,120 @@ namespace LORD2
                     string[] DOtokens = ("@DO " + string.Join(" ", tokens, DOOffset, tokens.Length - DOOffset)).Split(' ');
                     CommandDO(DOtokens);
                 }
+            }
+        }
+
+        private bool CommandIF_BITCHECK(string[] tokens)
+        {
+            /* @IF bitcheck <`t variable> <bit number> <0 or 1>
+                Check if the given bit is set or not in the given `t variable */
+            // TODO Untested
+            return ((Convert.ToInt32(TranslateVariables(tokens[2])) & (1 << Convert.ToInt32(TranslateVariables(tokens[3])))) == Convert.ToInt32(TranslateVariables(tokens[4])));
+        }
+
+        private bool CommandIF_BLOCKPASSABLE(string[] tokens)
+        {
+            /* @if blockpassable <is or not> <0 or 1> */
+            // TODO Check if global x and y is passable (used by smackrod)
+            // TODO Implement
+            return false;
+        }
+
+        private bool CommandIF_CHECKDUPE(string[] tokens)
+        {
+            /* @if checkdupe <`s variable> <true or false>
+                Check if the given player name already exists */
+            // TODO Implement
+            return false;
+        }
+
+        private bool CommandIF_EXIST(string[] tokens)
+        {
+            /* Undocumented.  Checks if given file exists */
+            string Left = TranslateVariables(tokens[1]);
+            string Right = TranslateVariables(tokens[3]);
+
+            string FileName = Global.GetSafeAbsolutePath(Left);
+            bool TrueFalse = Convert.ToBoolean(Right.ToUpper());
+            return (File.Exists(FileName) == TrueFalse);
+        }
+
+        private bool CommandIF_INSIDE(string[] tokens)
+        {
+            /* @IF <Word or variable> INSIDE <Word or variable>
+                This allows you to search a string for something inside of it.  Not case 
+                sensitive. */
+            string Left = TranslateVariables(tokens[1]);
+            string Right = TranslateVariables(tokens[3]);
+
+            return Right.ToUpper().Contains(Left.ToUpper());
+        }
+
+        private bool CommandIF_IS(string[] tokens)
+        {
+            string Left = TranslateVariables(tokens[1]);
+            string Right = TranslateVariables(tokens[3]);
+            int LeftInt;
+            int RightInt;
+
+            if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
+            {
+                return (LeftInt == RightInt);
+            }
+            else
+            {
+                return (Left == Right);
+            }
+        }
+
+        private bool CommandIF_LESS(string[] tokens)
+        {
+            string Left = TranslateVariables(tokens[1]);
+            string Right = TranslateVariables(tokens[3]);
+            int LeftInt;
+            int RightInt;
+
+            if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
+            {
+                return (LeftInt < RightInt);
+            }
+            else
+            {
+                throw new ArgumentException("@IF LESS arguments were not numeric");
+            }
+        }
+
+        private bool CommandIF_MORE(string[] tokens)
+        {
+            string Left = TranslateVariables(tokens[1]);
+            string Right = TranslateVariables(tokens[3]);
+            int LeftInt;
+            int RightInt;
+
+            if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
+            {
+                return (LeftInt > RightInt);
+            }
+            else
+            {
+                throw new ArgumentException("@IF MORE arguments were not numeric");
+            }
+        }
+
+        private bool CommandIF_NOT(string[] tokens)
+        {
+            string Left = TranslateVariables(tokens[1]);
+            string Right = TranslateVariables(tokens[3]);
+            int LeftInt;
+            int RightInt;
+
+            if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
+            {
+                return (LeftInt != RightInt);
+            }
+            else
+            {
+                return (Left != Right);
             }
         }
 
@@ -1982,6 +2024,15 @@ namespace LORD2
             Crt.FastWrite(StringUtils.PadRight(Output, ' ', 80), 1, 25, 31);
             Crt.ReadKey();
             Crt.FastWrite(new string(' ', 80), 1, 25, 0);
+        }
+
+        private bool LogUnimplementedFunc(string[] tokens)
+        {
+            string Output = "UNIMPLEMENTED (hit a key): " + string.Join(" ", tokens);
+            Crt.FastWrite(StringUtils.PadRight(Output, ' ', 80), 1, 25, 31);
+            Crt.ReadKey();
+            Crt.FastWrite(new string(' ', 80), 1, 25, 0);
+            return false;
         }
 
         public int RunSection(string fileName, string sectionName)

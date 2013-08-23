@@ -195,7 +195,6 @@ namespace LORD2
             }
             else
             {
-                // TODO Any other terrains walkable?
                 if (Global.CurrentMap.W[(y - 1) + ((x - 1) * 20)].Terrain == 1)
                 {
                     DrawPlayer(x, y);

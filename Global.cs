@@ -188,6 +188,33 @@ namespace LORD2
             return -1;
         }
 
+        public static int LoadPlayerByPlayerNumber(int requestedPlayerNumber, out TraderDatRecord record)
+        {
+            int PlayerNumber = 0;
+
+            if (File.Exists(Global.TraderDatFileName))
+            {
+                using (FileStream FS = new FileStream(Global.TraderDatFileName, FileMode.Open))
+                {
+                    long FSLength = FS.Length;
+                    while (FS.Position < FSLength)
+                    {
+                        PlayerNumber += 1;
+                        TraderDatRecord TDR = DataStructures.ReadStruct<TraderDatRecord>(FS);
+                        if (PlayerNumber == requestedPlayerNumber)
+                        {
+                            record = TDR;
+                            return PlayerNumber;
+                        }
+                    }
+                }
+            }
+
+            // If we get here, user doesn't have an account yet
+            record = new TraderDatRecord(true);
+            return -1;
+        }
+
         public static int LoadPlayerByRealName(string name, out TraderDatRecord record)
         {
             int PlayerNumber = 0;

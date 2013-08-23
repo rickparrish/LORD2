@@ -158,7 +158,6 @@ namespace LORD2
                     if (Debugger.IsAttached)
                     {
                         // Also record command usage
-                        // TODO @IF should be broken down
                         string[] Tokens = LineTrimmed.Split(' ');
                         if (Tokens[0] == "@DO")
                         {

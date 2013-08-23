@@ -163,76 +163,55 @@ namespace LORD2
 
         private void AssignVariable(string variable, string value)
         {
-            // Split while we still have the raw input string (in case we're doing a LENGTH operation)
-            string[] values = value.Split(' ');
-
-            // Translate the input string
-            value = TranslateVariables(value);
-
-            // Check for LENGTH operator
-            if ((values.Length == 2) && (values[1].StartsWith("`")))
-            {
-                if (values[0].ToUpper() == "LENGTH")
-                {
-                    /* @DO <number variable> IS LENGTH <String variable>
-                        Gets length, smart way. */
-                    values[0] = Door.StripSeth(TranslateVariables(values[1])).Length.ToString();
-                }
-                else if (values[0].ToUpper() == "REALLENGTH")
-                {
-                    /* @DO <number variable> IS REALLENGTH <String variable>
-                        Gets length dumb way. (includes '`' codes without deciphering them.) */
-                    values[0] = TranslateVariables(values[1]).Length.ToString();
-                }
-            }
-            else
-            {
-                // Translate the first split input variable, which is still raw (and may be used by number variables below)
-                values[0] = TranslateVariables(values[0]);
-            }
+            // TODO Instead of translating before calling this function, maybe this function should translate and then
+            //      other functions could pass in the raw string
 
             // See which variables to update
             string VariableUpper = variable.Trim().ToUpper();
-            if (VariableUpper.StartsWith("`I"))
-            {
-                // Player int
-                Global.Player.I[Convert.ToInt32(VariableUpper.Replace("`I", "")) - 1] = Convert.ToInt16(values[0]);
-            }
             if (VariableUpper.StartsWith("`P"))
             {
                 // Player longint
-                Global.Player.P[Convert.ToInt32(VariableUpper.Replace("`P", "")) - 1] = Convert.ToInt32(values[0]);
+                Global.Player.P[Convert.ToInt32(VariableUpper.Replace("`P", "")) - 1] = Convert.ToInt32(value.Split(' ')[0]);
+                return;
             }
             if (VariableUpper.StartsWith("`T"))
             {
                 // Player byte
-                Global.Player.T[Convert.ToInt32(VariableUpper.Replace("`T", "")) - 1] = Convert.ToByte(values[0]);
+                Global.Player.T[Convert.ToInt32(VariableUpper.Replace("`T", "")) - 1] = Convert.ToByte(value.Split(' ')[0]);
+                return;
             }
-
+            if (VariableUpper.StartsWith("`S"))
+            {
+                // Global string
+                Global.WorldDat.S[Convert.ToInt32(VariableUpper.Replace("`S", "")) - 1].Value = value;
+                return;
+            }
+            if (VariableUpper.StartsWith("`V"))
+            {
+                // Global longint
+                Global.WorldDat.V[Convert.ToInt32(VariableUpper.Replace("`V", "")) - 1] = Convert.ToInt32(value.Split(' ')[0]);
+                return;
+            }
+            if (VariableUpper.StartsWith("`I"))
+            {
+                // Player int
+                Global.Player.I[Convert.ToInt32(VariableUpper.Replace("`I", "")) - 1] = Convert.ToInt16(value.Split(' ')[0]);
+                return;
+            }
             if (VariableUpper.StartsWith("`+"))
             {
                 // Global item name
                 ItemsDatRecord IDR = Global.ItemsDat[Convert.ToInt32(VariableUpper.Replace("`+", "")) - 1];
                 IDR.Name = value;
                 Global.ItemsDat[Convert.ToInt32(VariableUpper.Replace("`+", "")) - 1] = IDR;
+                return;
             }
-
-            if (VariableUpper.StartsWith("`S"))
-            {
-                // Global string
-                Global.WorldDat.S[Convert.ToInt32(VariableUpper.Replace("`S", "")) - 1].Value = value;
-            }
-            if (VariableUpper.StartsWith("`V"))
-            {
-                // Global longint
-                Global.WorldDat.V[Convert.ToInt32(VariableUpper.Replace("`V", "")) - 1] = Convert.ToInt32(values[0]);
-            }
-
             if (RTGlobal.LanguageVariables.ContainsKey(variable))
             {
                 // TODO Depending on what got set here, other global variables may need to be set (ie is player dead, their x/y location, their map)
                 // TODO Maybe they shouldn't be variables, and there should just be a long list of if variable == xyz assigning directly into the player record
-                RTGlobal.LanguageVariables[variable] = values[0]; // These variables only ever hold a single value, so anything after values[0] is likely a comment
+                RTGlobal.LanguageVariables[variable] = value.Split(' ')[0]; // These variables only ever hold a single value, so anything after values[0] is likely a comment
+                return;
             }
         }
 
@@ -788,17 +767,52 @@ namespace LORD2
         private void CommandDO_IS(string[] tokens)
         {
             /* @DO <Number To Change> <How To Change It> <Change With What> */
-            /* TODO @DO `s01 is getname 8
-                This would get the name of player 8 and put it in `s01.  This only works with 
-                `s variables.  The account number can be a `p variable. */
-            /* TODO @DO `p20 is deleted 8
-                Puts 1 (player is deleted) or 0 (player is not deleted) in `p20.  This only 
-                works with `p variables.  The account number can be a `p variable. */
-            /* TODO @DO <number variable> IS LENGTH <String variable>
-                Gets length, smart way. */
-            /* TODO @DO <number variable> IS REALLENGTH <String variable>
-                Gets length dumb way. (includes '`' codes without deciphering them.) */
-            AssignVariable(tokens[1], string.Join(" ", tokens, 3, tokens.Length - 3));
+            if (tokens[3].ToUpper() == "DELETED")
+            {
+                /* @DO `p20 is deleted 8
+                    Puts 1 (player is deleted) or 0 (player is not deleted) in `p20.  This only 
+                    works with `p variables.  The account number can be a `p variable. */
+                int PlayerNumber = Convert.ToInt32(TranslateVariables(tokens[4]));
+
+                TraderDatRecord TDR;
+                if (PlayerNumber == Global.LoadPlayerByPlayerNumber(PlayerNumber, out TDR))
+                {
+                    AssignVariable(tokens[1], TDR.Deleted == 0 ? "0" : "1");
+                }
+                else
+                {
+                    AssignVariable(tokens[1], "0");
+                }
+            }
+            else if (tokens[3].ToUpper() == "GETNAME")
+            {
+                /* @DO `s01 is getname 8
+                    This would get the name of player 8 and put it in `s01.  This only works with 
+                    `s variables.  The account number can be a `p variable. */
+                int PlayerNumber = Convert.ToInt32(TranslateVariables(tokens[4]));
+
+                TraderDatRecord TDR;
+                if (PlayerNumber == Global.LoadPlayerByPlayerNumber(PlayerNumber, out TDR))
+                {
+                    AssignVariable(tokens[1], TDR.Name);
+                }
+            }
+            else if (tokens[3].ToUpper() == "LENGTH")
+            {
+                /* @DO <number variable> IS LENGTH <String variable>
+                    Gets length, smart way. */
+                AssignVariable(tokens[1], Door.StripSeth(TranslateVariables(tokens[4])).Length.ToString());
+            }
+            else if (tokens[3].ToUpper() == "REALLENGTH")
+            {
+                /* @DO <number variable> IS REALLENGTH <String variable>
+                    Gets length dumb way. (includes '`' codes without deciphering them.) */
+                AssignVariable(tokens[1], TranslateVariables(tokens[4]).Length.ToString());
+            }
+            else
+            {
+                AssignVariable(tokens[1], string.Join(" ", tokens, 3, tokens.Length - 3));
+            }
         }
 
         private void CommandDO_MOVE(string[] tokens)
@@ -1264,7 +1278,6 @@ namespace LORD2
         private bool CommandIF_BLOCKPASSABLE(string[] tokens)
         {
             /* @if blockpassable <is or not> <0 or 1> */
-            // TODO Any other terrains walkable?
             return (Global.CurrentMap.W[(Global.Player.Y - 1) + ((Global.Player.X - 1) * 20)].Terrain == 1);
         }
 
@@ -2204,6 +2217,7 @@ namespace LORD2
 
         private string TranslateVariables(string input)
         {
+            // TODO commas get added to numbers (ie 123456 is 123,456)
             string inputUpper = input.ToUpper();
 
             if (input.Contains("`"))

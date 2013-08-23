@@ -13,6 +13,7 @@ namespace LORD2
         public static string STimeDatFileName = Global.GetSafeAbsolutePath("stime.dat");
         public static string TimeDatFileName = Global.GetSafeAbsolutePath("time.dat");
         public static string TraderDatFileName = Global.GetSafeAbsolutePath("trader.dat");
+        public static string UpdateTmpFileName = Global.GetSafeAbsolutePath("update.tmp");
         public static string WorldDatFileName = Global.GetSafeAbsolutePath("world.dat");
 
         public static MapDatRecord CurrentMap;
@@ -221,7 +222,7 @@ namespace LORD2
             }
 
             // If we get here, user doesn't have an account yet
-            record = new TraderDatRecord();
+            record = new TraderDatRecord(true);
             return false;
         }
     }

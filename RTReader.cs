@@ -38,7 +38,7 @@ namespace LORD2
         {
             // Initialize the commands dictionary
             _Commands.Add("@", CommandNOP);
-            _Commands.Add("@ADDCHAR", LogUnimplemented);
+            _Commands.Add("@ADDCHAR", CommandADDCHAR);
             _Commands.Add("@BEGIN", CommandBEGIN);
             _Commands.Add("@BITSET", CommandBITSET);
             _Commands.Add("@BUSY", LogUnimplemented);
@@ -206,8 +206,34 @@ namespace LORD2
                 @READSTRING, @DO COPYTONAME, set appropriate variables including the player's 
                 X and Y coordinates and map block number before issuing this command.  Failure 
                 to do this can result in a corrupted TRADER.DAT file. */
-            // TODO Add record to UPDATE.TMP and TRADER.DAT
-            // TODO Implement
+            // TODO a race condition could cause these two inserts to be out of sync
+
+            TraderDatRecord TDR = new TraderDatRecord(true);
+            TDR.Name = TranslateVariables("`N");
+            TDR.RealName = Door.DropInfo.Alias;
+            TDR.Map = 155; // TODO Should come from global variable
+            TDR.SexMale = 1; // TODO Should come from global variable
+            TDR.X = 27; // TODO Should come from global variable
+            TDR.Y = 7; // TODO Should come from global variable
+            for (int i = 0; i < TDR.P.Length; i++)
+            {
+                TDR.P[i] = RTGlobal.P["`P" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)];
+            }
+            using (FileStream FS = new FileStream(Global.TraderDatFileName, FileMode.OpenOrCreate, FileAccess.Write))
+            {
+                FS.Position = FS.Length;
+                DataStructures.WriteStruct<TraderDatRecord>(FS, TDR);
+            }
+
+            UpdateTmpRecord UTR = new UpdateTmpRecord(true);
+            UTR.Map = 155; // TODO Should come from global variable
+            UTR.X = 27; // TODO Should come from global variable
+            UTR.Y = 7; // TODO Should come from global variable
+            using (FileStream FS = new FileStream(Global.UpdateTmpFileName, FileMode.OpenOrCreate, FileAccess.Write))
+            {
+                FS.Position = FS.Length;
+                DataStructures.WriteStruct<UpdateTmpRecord>(FS, UTR);
+            }
         }
 
         private void CommandBEGIN(string[] tokens)
@@ -450,14 +476,12 @@ namespace LORD2
                 {
                     using (FileStream FS = new FileStream(FileName,FileMode.Create, FileAccess.Write))
                     {
-                        IGM_DATA IGMD = new IGM_DATA();
+                        IGM_DATA IGMD = new IGM_DATA(true);
                         IGMD.LastUsed = DateTime.Now.Month + DateTime.Now.Day;
-                        IGMD.Data = new Int32[200];
                         for (int i = 0; i < IGMD.Data.Length; i++)
                         {
                             IGMD.Data[i] = 0;
                         }
-                        IGMD.Extra = new Char[200];
                         for (int i = 0; i < IGMD.Extra.Length; i++)
                         {
                             IGMD.Extra[i] = '\0';
@@ -502,14 +526,12 @@ namespace LORD2
                 {
                     using (FileStream FS = new FileStream(FileName, FileMode.Create, FileAccess.Write))
                     {
-                        IGM_DATA IGMD = new IGM_DATA();
+                        IGM_DATA IGMD = new IGM_DATA(true);
                         IGMD.LastUsed = DateTime.Now.Month + DateTime.Now.Day;
-                        IGMD.Data = new Int32[200];
                         for (int i = 0; i < IGMD.Data.Length; i++)
                         {
                             IGMD.Data[i] = 0;
                         }
-                        IGMD.Extra = new Char[200];
                         for (int i = 0; i < IGMD.Extra.Length; i++)
                         {
                             IGMD.Extra[i] = '\0';
@@ -547,15 +569,13 @@ namespace LORD2
                 {
                     using (FileStream FS = new FileStream(FileName, FileMode.Create, FileAccess.Write))
                     {
-                        IGM_DATA IGMD = new IGM_DATA();
+                        IGM_DATA IGMD = new IGM_DATA(true);
                         IGMD.LastUsed = DateTime.Now.Month + DateTime.Now.Day;
-                        IGMD.Data = new Int32[200];
                         for (int i = 0; i < IGMD.Data.Length; i++)
                         {
                             IGMD.Data[i] = 0;
                         }
                         IGMD.Data[Convert.ToInt32(TranslateVariables(tokens[2])) - 1] = Convert.ToInt32(TranslateVariables(tokens[3]));
-                        IGMD.Extra = new Char[200];
                         for (int i = 0; i < IGMD.Extra.Length; i++)
                         {
                             IGMD.Extra[i] = '\0';

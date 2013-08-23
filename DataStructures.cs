@@ -1,5 +1,4 @@
-﻿// TODO Add structure for UPDATE.TMP
-using RandM.RMLib;
+﻿using RandM.RMLib;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -62,6 +61,12 @@ namespace LORD2
                 return false;
             }
 
+            int UpdateTmpRecordSize = Marshal.SizeOf(typeof(UpdateTmpRecord));
+            if (UpdateTmpRecordSize != 7)
+            {
+                Crt.WriteLn("UpdateTmpRecord is " + UpdateTmpRecordSize + ", expected 7");
+                return false;
+            }
 
             int WorldDatRecordSize = Marshal.SizeOf(typeof(WorldDatRecord));
             if (WorldDatRecordSize != 6231)
@@ -91,6 +96,13 @@ namespace LORD2
         public Int32[] Data;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 200)]
         public Char[] Extra;
+
+        public IGM_DATA(bool unused)
+        {
+            Data = new Int32[200];
+            Extra = new Char[200];
+            LastUsed = 0;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
@@ -125,6 +137,33 @@ namespace LORD2
         private Byte _DontDrop; // True if item cannot be dropped (quest item)
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 37)]
         public Char[] Extra;
+
+        public ItemsDatRecord(bool unused)
+        {
+            _Action = new Byte[40];
+            _ActionLength = 0;
+            _Armour = 0;
+            _Description = new Byte[30];
+            _DescriptionLength = 0;
+            _DontDrop = 0;
+            _Name = new Byte[30];
+            _NameLength = 0;
+            _RefName = new Byte[12];
+            _RefNameLength = 0;
+            _Sell = 0;
+            _UseAction = new Byte[30];
+            _UseActionLength = 0;
+            _Used = 0;
+            _UseOnce = 0;
+            _Weapon = 0;
+            Breakage = 0;
+            Defense = 0;
+            Eat = 0;
+            Extra = new Char[37];
+            MaxBuy = 0;
+            Strength = 0;
+            Value = 0;
+        }
 
         public string Action
         {
@@ -262,6 +301,15 @@ namespace LORD2
         public Char Character;
         public Int16 T; // Unknown what this is
         public SByte Terrain; // 0 = unpassable, 1 = grass, 2 = rocky, 3 = water, 4 = ocean, 5 = forest
+
+        public MAP_INFO(bool unused)
+        {
+            BackgroundColour = 0;
+            Character = '\0';
+            ForegroundColour = 0;
+            T = 0;
+            Terrain = 0;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
@@ -280,6 +328,20 @@ namespace LORD2
         private Byte[] _RefFile;
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 100)]
         public Char[] Extra;
+
+        public SPECIAL_STRUCT(bool unused)
+        {
+            _RefFile = new Byte[12];
+            _RefFileLength = 0;
+            _RefName = new Byte[12];
+            _RefNameLength = 0;
+            Extra = new Char[100];
+            HotSpotX = 0;
+            HotSpotY = 0;
+            WarpMap = 0;
+            WarpX = 0;
+            WarpY = 0;
+        }
 
         public string RefFile
         {
@@ -327,6 +389,21 @@ namespace LORD2
         private Byte _Safe; // True if players cannot fight on this screen
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 469)]
         public Char[] Extra;
+
+        public MapDatRecord(bool unused)
+        {
+            _BatFile = new Byte[12];
+            _BatFileLength = 0;
+            _BatName = new Byte[12];
+            _BatNameLength = 0;
+            _Name = new Byte[30];
+            _NameLength = 0;
+            _Safe = 0;
+            BattleOdds = 0;
+            Extra = new Char[469];
+            Special = new SPECIAL_STRUCT[10];
+            W = new MAP_INFO[1600];
+        }
 
         public string BatFile
         {
@@ -377,7 +454,6 @@ namespace LORD2
         }
     }
 
-    // TODO Setters are untested
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
     public struct TraderDatRecord
     {
@@ -420,6 +496,41 @@ namespace LORD2
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 354)]
         public Char[] Extra;
 
+        public TraderDatRecord(bool unused)
+        {
+            _Name = new Byte[25];
+            _NameLength = 0;
+            _Race = new Byte[30];
+            _RaceLength = 0;
+            _RealName = new Byte[40];
+            _RealNameLength = 0;
+            ArmourNumber = 0;
+            B = new Byte[99];
+            Bank = 0;
+            Battle = 0;
+            Busy = 0;
+            Dead = 0;
+            Deleted = 0;
+            E6 = 0;
+            Experience = 0;
+            Extra = new Char[354];
+            Gold = 0;
+            Item = new Int16[99];
+            LastDayOn = 0;
+            LastDayPlayed = 0;
+            LastMap = 155;
+            LastSaved = 0;
+            Love = 0;
+            Map = 0;
+            Nice = 0;
+            OnNow = 0;
+            P = new Int32[99];
+            SexMale = 0;
+            WeaponNumber = 0;
+            X = 0;
+            Y = 0;
+        }
+
         public string Name
         {
             get
@@ -455,6 +566,27 @@ namespace LORD2
                 _RealNameLength = (byte)Math.Min(value.Length, _RealName.Length);
                 RMEncoding.Ansi.GetBytes(value, 0, _RealNameLength, _RealName, 0);
             }
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
+    public struct UpdateTmpRecord
+    {
+        public SByte X;
+        public SByte Y;
+        public Int16 Map;
+        public Byte OnNow;
+        public Byte Busy;
+        public Byte Battle;
+
+        public UpdateTmpRecord(bool unused)
+        {
+            Battle = 0;
+            Busy = 0;
+            Map = 0;
+            OnNow = 0;
+            X = 0;
+            Y = 0;
         }
     }
 
@@ -503,6 +635,37 @@ namespace LORD2
         public Byte[] Show; // Show up on the player's "auto map"?
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 396)]
         public Char[] Extra;
+
+        public WorldDatRecord(bool unused)
+        {
+            _Name = new Byte[60];
+            _NameLength = 0;
+            _S1 = new Byte[80];
+            _S1Length = 0;
+            _S2 = new Byte[80];
+            _S2Length = 0;
+            _S3 = new Byte[80];
+            _S3Length = 0;
+            _S4 = new Byte[80];
+            _S4Length = 0;
+            _S5 = new Byte[80];
+            _S5Length = 0;
+            _S6 = new Byte[80];
+            _S6Length = 0;
+            _S7 = new Byte[80];
+            _S7Length = 0;
+            _S8 = new Byte[80];
+            _S8Length = 0;
+            _S9 = new Byte[80];
+            _S9Length = 0;
+            _S10 = new Byte[80];
+            _S10Length = 0;
+            Extra = new Char[396];
+            Location = new Int16[1600];
+            Show = new Byte[1600];
+            Time = 0;
+            V = new Int32[40];
+        }
 
         public string Name
         {

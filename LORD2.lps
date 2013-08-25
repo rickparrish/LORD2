@@ -1,0 +1,179 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <ProjectSession>
+    <PathDelim Value="\"/>
+    <Version Value="9"/>
+    <BuildModes Active="Win32"/>
+    <Units Count="7">
+      <Unit0>
+        <Filename Value="LORD2.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="LORD2"/>
+        <IsVisibleTab Value="True"/>
+        <EditorIndex Value="0"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="11"/>
+        <CursorPos X="1" Y="23"/>
+        <UsageCount Value="21"/>
+        <Loaded Value="True"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="Y:\lazarus\fpc\2.6.2\source\packages\fcl-base\src\custapp.pp"/>
+        <UnitName Value="CustApp"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="61"/>
+        <CursorPos X="14" Y="68"/>
+        <UsageCount Value="10"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="manndoor\units\manndoor.pas"/>
+        <UnitName Value="MannDoor"/>
+        <EditorIndex Value="1"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="1"/>
+        <CursorPos X="1" Y="1"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="manndoor\units\elecom\elenorm.pas"/>
+        <UnitName Value="EleNORM"/>
+        <EditorIndex Value="4"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="149"/>
+        <CursorPos X="32" Y="158"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="manndoor\units\win32\wc5.pas"/>
+        <UnitName Value="WC5"/>
+        <EditorIndex Value="2"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="101"/>
+        <CursorPos X="11" Y="111"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+        <DefaultSyntaxHighlighter Value="Delphi"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="Y:\lazarus\fpc\2.6.2\source\rtl\win\wininc\func.inc"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="51"/>
+        <CursorPos X="10" Y="61"/>
+        <UsageCount Value="10"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="manndoor\units\elecom\w32sock.pas"/>
+        <UnitName Value="W32sock"/>
+        <EditorIndex Value="3"/>
+        <WindowIndex Value="0"/>
+        <TopLine Value="131"/>
+        <CursorPos X="27" Y="138"/>
+        <UsageCount Value="10"/>
+        <Loaded Value="True"/>
+      </Unit6>
+    </Units>
+    <General>
+      <ActiveWindowIndexAtStart Value="0"/>
+    </General>
+    <JumpHistory Count="24" HistoryIndex="23">
+      <Position1>
+        <Filename Value="LORD2.lpr"/>
+        <Caret Line="5" Column="27" TopLine="1"/>
+      </Position1>
+      <Position2>
+        <Filename Value="LORD2.lpr"/>
+        <Caret Line="18" Column="20" TopLine="2"/>
+      </Position2>
+      <Position3>
+        <Filename Value="LORD2.lpr"/>
+        <Caret Line="32" Column="19" TopLine="30"/>
+      </Position3>
+      <Position4>
+        <Filename Value="LORD2.lpr"/>
+        <Caret Line="11" Column="3" TopLine="1"/>
+      </Position4>
+      <Position5>
+        <Filename Value="manndoor\units\manndoor.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
+      </Position5>
+      <Position6>
+        <Filename Value="manndoor\units\manndoor.pas"/>
+        <Caret Line="8" Column="33" TopLine="1"/>
+      </Position6>
+      <Position7>
+        <Filename Value="manndoor\units\manndoor.pas"/>
+        <Caret Line="7" Column="3" TopLine="1"/>
+      </Position7>
+      <Position8>
+        <Filename Value="manndoor\units\elecom\elenorm.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
+      </Position8>
+      <Position9>
+        <Filename Value="manndoor\units\manndoor.pas"/>
+        <Caret Line="7" Column="16" TopLine="1"/>
+      </Position9>
+      <Position10>
+        <Filename Value="manndoor\units\win32\wc5.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
+      </Position10>
+      <Position11>
+        <Filename Value="manndoor\units\win32\wc5.pas"/>
+        <Caret Line="112" Column="11" TopLine="101"/>
+      </Position11>
+      <Position12>
+        <Filename Value="manndoor\units\win32\wc5.pas"/>
+        <Caret Line="111" Column="11" TopLine="101"/>
+      </Position12>
+      <Position13>
+        <Filename Value="manndoor\units\win32\wc5.pas"/>
+        <Caret Line="112" Column="11" TopLine="101"/>
+      </Position13>
+      <Position14>
+        <Filename Value="manndoor\units\win32\wc5.pas"/>
+        <Caret Line="111" Column="43" TopLine="101"/>
+      </Position14>
+      <Position15>
+        <Filename Value="manndoor\units\elecom\w32sock.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
+      </Position15>
+      <Position16>
+        <Filename Value="manndoor\units\elecom\w32sock.pas"/>
+        <Caret Line="141" Column="10" TopLine="30"/>
+      </Position16>
+      <Position17>
+        <Filename Value="LORD2.lpr"/>
+        <Caret Line="36" Column="13" TopLine="25"/>
+      </Position17>
+      <Position18>
+        <Filename Value="manndoor\units\manndoor.pas"/>
+        <Caret Line="10" Column="25" TopLine="1"/>
+      </Position18>
+      <Position19>
+        <Filename Value="manndoor\units\manndoor.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
+      </Position19>
+      <Position20>
+        <Filename Value="manndoor\units\manndoor.pas"/>
+        <Caret Line="794" Column="30" TopLine="712"/>
+      </Position20>
+      <Position21>
+        <Filename Value="manndoor\units\manndoor.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
+      </Position21>
+      <Position22>
+        <Filename Value="manndoor\units\manndoor.pas"/>
+        <Caret Line="797" Column="35" TopLine="781"/>
+      </Position22>
+      <Position23>
+        <Filename Value="manndoor\units\manndoor.pas"/>
+        <Caret Line="808" Column="17" TopLine="795"/>
+      </Position23>
+      <Position24>
+        <Filename Value="LORD2.lpr"/>
+        <Caret Line="36" Column="1" TopLine="26"/>
+      </Position24>
+    </JumpHistory>
+  </ProjectSession>
+</CONFIG>

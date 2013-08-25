@@ -1,0 +1,130 @@
+<html>
+  <head>
+    <title>Change Log</title>
+  </head>
+  <body>
+    <h1 align="center">MannDoor v6.06.15</h1>
+    <table align="center" width="600">
+      <tr>
+        <td>
+          <br />
+          <h3>v6.06.15 - June 15th, 2006</h3>
+          <blockquote>
+            <b>General Changes</b>
+            <ul>
+            	<li>NOTE: All updates provided by Michael Preslar</li>
+              <li>DDPlus compatability units updated</li>
+            </ul>
+
+            <b>MANNDOOR.PAS</b>
+            <ul>
+              <li>Read more info from LORD's INFO.* file</li>
+              <li>DropInfo.Baud added and implemented</li>
+              <li>Session.DoIdleCheck added.  Disabling this with stop idle timeout warnings/disconnects</li>
+              <li>mStartUp defaults to local mode, so -L parameter no longer required</li>
+              <li>Added MOREPrompts structure that lets you customize the &lt;MORE&gt; prompts used by the mMore() procedure.  No more ugly ANSI shown to ASCII users</li>
+              <li>DoEvents() renamed to mDoEvents() and made public.  If you have a function that doesn't call mReadKey for an extended period of time, you should manually call mDoEvents to update the status bar / check for idle timeout / etc</li>
+              <li>mDisplayFile() now takes a second parameter which determines after how many lines the display will pause with a call to mMore().  Use 0 to disable pausing</li>
+              <li>mWrite() now natively supports Seth ` codes (automatically calls SethToPipe() before PipeToAnsi())</li>
+              <li>DropInfo.MaxTime now defaults to 3600 (1 hour).  So local logins now default to 1 hour, remote sessions are overwritten when mStartUp reads the dropfile</li>
+            </ul>
+
+            <b>MSTRINGS.PAS</b>
+            <ul>
+              <li>SethToPipe() now supports "change background" code `r# (where # is 0 through 7)</li>
+            </ul>
+          </blockquote>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <br />
+          <h3>v4.05.20 - May 20th, 2004</h3>
+          <blockquote>
+            <b>General Changes</b>
+            <ul>
+              <li>Virtual Pascal v2.1 build 279 support added</li>
+            </ul>
+          </blockquote>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <br />
+          <h3>v3.08.30 - August 30th, 2003</h3>
+          <blockquote>
+            <b>General Changes</b>
+            <ul>
+              <li>OS2 support added</li>
+              <li>WINServer support added</li>
+            </ul>
+
+            <b>MANSI.PAS</b>
+            <ul>
+              <li>Fixed aGotoX() and aGotoY() to work on any size screen</li>
+              <li>Made aClrScr() also perform aGotoXY(1, 1) to accomodate some *nix telnet clients that do not home the cursor properly</li>
+            </ul>
+
+            <b>MANNDOOR.PAS</b>
+            <ul>
+              <li>Fixed bug where DoEvents was not being called under *nix platforms</li>
+              <li>Added support for reading DOOR.SYS dropfiles</li>
+              <li>Implemented a custom ExitProc to reset the text colour to gray, to move the cursor to the bottom of the screen, and to dispose of the com object</li>
+            </ul>
+          </blockquote>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <br />
+          <h3>v3.06.08 - June 8th, 2003</h3>
+          <blockquote>
+            <b>General Changes</b>
+            <ul>
+              <li>Directory structure changed</li>
+              <li>Delphi compatability added</li>
+              <li>EleCom upgraded to 1.3</li>
+              <li>DDPlus compatability units contributed by Michael Preslar</li>
+              <li>INIFILES.PAS and MWINSOCK.PAS removed</li>
+            </ul>
+
+            <b>LORDSTRC.PAS</b>
+            <ul>
+              <li>Renamed classes and functions to indicate they are for LORD</li>
+              <li>Fixed 100% CPU usage when data files are in use</li>
+              <li>Structures use SmallWord and SmallInt from COMPAT.PAS to guarantee proper record size across compilers/platforms</li>
+            </ul>
+
+            <b>MANNDOOR.PAS</b>
+            <ul>
+              <li>SysOp keys properly disabled for *nix platforms in all cases</li>
+              <li>"Magic Escape" written at startup on *nix platforms to make ANSI look "more normal"</li>
+              <li>TStatusBar, TSysopKeys, mOnChat, mOnSysopKick, mOnSysopHangup removed in favour of a more configurable system</li>
+              <li>mOnSysopKey event added to replace above mentioned items</li>
+              <li>Default status bar updated</li>
+              <li>Internal chat removed (it wasn't very good anyway)</li>
+              <li>mOnCLP event was added to ease parsing of command-line parameters</li>
+            </ul>
+
+            <b>MANSI.PAS</b>
+            <ul>
+              <li>Fixed ESC[A/B/C/D to work on any size screen</li>
+              <li>aWrite() now buffers text which dramatically increases output speed</li>
+            </ul>
+
+            <b>MSTRINGS.PAS</b>
+            <ul>
+              <li>Fixed Center() and Right() to work on any size screen</li>
+              <li>Trunc(x / y) replaced with x div y in many places</li>
+            </ul>
+
+            <b>MUTILS.PAS</b>
+            <ul>
+              <li>Fixed MSecToday() to work on 16bit compilers</li>
+            </ul>
+          </blockquote>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

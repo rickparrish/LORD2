@@ -1,0 +1,42 @@
+
+(*
+From Michael:
+Note: There is lots of other stuff that ddplus has that I havent added.
+These are what Lord use..
+*)
+
+{$H-}
+
+procedure initdoordriver;
+procedure sWrite(ALine: string);
+procedure sWriteLn(ALine: string);
+procedure swritexy(x,y:byte; Aline: string);
+procedure sclrscr;
+procedure sclreol;
+procedure sread_char(var ach: char);
+procedure sread_ch(var ach: char);
+procedure set_Background(AColour: Byte);
+procedure set_foreground(AColour: Byte);
+procedure sgoto_xy(ax,ay:byte);
+procedure prompt(var AStr:string; len:integer; pc: boolean);
+procedure sread_num_byte(var Abyte:byte);
+procedure sread_num(var AInt:system.integer);
+procedure sread_num_longint(var Along:system.longint);
+procedure sread(var s: string);
+procedure displayfile(fn:string);
+Procedure Clear_Region(x,a,b:byte);
+
+function time_left:longint;
+function skeypressed:boolean;
+function last_local:boolean;
+
+const graphics : byte = 1;
+const user_first_name : string = 'SYSOP';
+const user_last_name : string = '';
+const com_port : longint = 0;
+const node_num : longint = 0;
+const baud_rate : longint = 0;
+const lockbaud : longint = 0;
+const local : boolean = true;
+
+{$H+}

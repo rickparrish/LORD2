@@ -1,0 +1,153 @@
+
+{$H-}
+
+procedure initdoordriver;
+begin
+  mstartup;
+  user_first_name := dropinfo.realname;
+  user_last_name := '';
+
+  com_port := dropinfo.comnum;
+  node_num := dropinfo.node;
+  baud_rate := dropinfo.baud;
+  lockbaud := dropinfo.baud;
+
+  local := (dropinfo.comtype=0);
+  graphics := ord(dropinfo.emulation);
+
+  (* If local, assume ansi *)
+  if local then graphics := 2;
+
+  (* when com_port = -1, no dropfile was used. *)
+  if com_port = -1 then dropinfo.maxtime := 3600;
+
+end;
+
+procedure swrite(aline: string);
+begin
+  mwrite(aline);
+end;
+
+procedure swriteln(aline: string);
+begin
+  mwriteln(aline);
+end;
+
+procedure swritexy(x,y:byte; ALine: string);
+begin
+  mgotoxy(x,y);
+  mwrite(aline);
+end;
+
+procedure sread_char(var ach: char);
+begin
+  ach := mreadkey;
+end;
+
+procedure sread_ch(var ach: char);
+begin
+  ach := mreadkey;
+end;
+
+function time_left:longint;
+begin
+  time_left := mtimeleft;
+end;
+
+function skeypressed:boolean;
+begin
+  skeypressed:=mkeypressed;
+end;
+
+procedure prompt(var AStr:string; len:integer; pc: boolean);
+begin
+  if pc then
+    astr := minput(astr,CHARS_ALL,'*',len,len,crt.textattr)
+  else
+    astr := minput(astr,CHARS_ALL,#0,len,len,crt.textattr);
+end;
+
+procedure sclreol;
+begin
+  mclreol;
+end;
+
+procedure sread_num_byte(var Abyte:byte);
+begin
+  abyte := strtoint(minput('',CHARS_NUMERIC,#0,3,3,crt.textattr));
+end;
+
+procedure sread_num(var AInt:system.integer);
+begin
+  aint := strtoint(minput('',CHARS_NUMERIC,#0,5,5,crt.textattr));
+end;
+
+procedure sread_num_longint(var Along:longint);
+begin
+  along := strtoint(minput('',CHARS_NUMERIC,#0,10,10,crt.textattr));
+end;
+
+procedure displayfile(fn:string);
+begin
+  mdisplayfile(fn,23);
+end;
+
+Procedure Clear_Region(x,a,b:byte);
+var
+  i : byte;
+begin
+  for i := a to b do
+    begin
+      mGotoXY(x,i);
+      mclreol;
+    end;
+end;
+
+procedure sread(var s: string);
+var
+ ch: char;
+begin;
+  s:='';
+  repeat;
+    ch := mreadkey;
+    if (ch<>#8) and (ch<>^M) then
+    begin;
+      s:=s+ch;
+      mwrite(ch+'');
+    end;
+
+    if (ch=#8) and ( length(s) > 0 ) then
+    begin
+      delete(s,length(s),1);
+      mwrite(chr(8)+' '+chr(8));
+    end;
+  until (ch=^M);
+  mwriteln('');
+end;
+
+function last_local:boolean;
+begin
+  last_local := (lastkey.location = lkremote);
+end;
+
+procedure sclrscr;
+begin
+  mclrscr;
+end;
+
+procedure set_Background(AColour: Byte);
+begin
+  mTextBackground(AColour);
+end;
+
+procedure set_foreground(AColour: Byte);
+begin
+  mTextColor(AColour);
+end;
+
+procedure sgoto_xy(ax,ay:byte);
+begin
+  mgotoxy(ax,ay);
+end;
+
+{$H+}

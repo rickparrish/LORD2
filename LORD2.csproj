@@ -47,6 +47,7 @@
     <Compile Include="RTReader.cs" />
     <Compile Include="RTRefFile.cs" />
     <Compile Include="RTRefSection.cs" />
+    <Compile Include="RTVariable.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DLL\RMLib\RMLib.csproj">

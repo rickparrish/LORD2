@@ -206,11 +206,9 @@ namespace LORD2
                 Global.ItemsDat[Convert.ToInt32(VariableUpper.Replace("`+", "")) - 1] = IDR;
                 return;
             }
-            if (RTGlobal.LanguageVariables.ContainsKey(variable))
+            if (RTGlobal.Variables.ContainsKey(variable))
             {
-                // TODO Depending on what got set here, other global variables may need to be set (ie is player dead, their x/y location, their map)
-                // TODO Maybe they shouldn't be variables, and there should just be a long list of if variable == xyz assigning directly into the player record
-                RTGlobal.LanguageVariables[variable] = value.Split(' ')[0]; // These variables only ever hold a single value, so anything after values[0] is likely a comment
+                if (RTGlobal.Variables[variable].Set != null) RTGlobal.Variables[variable].Set(value.Split(' ')[0]); // These variables only ever hold a single value, so anything after values[0] is likely a comment
                 return;
             }
         }
@@ -674,7 +672,7 @@ namespace LORD2
                 allow a player to change his name or to get the name a new player wants to go 
                 by.  It is also useful in the @#newplayer routine to get the alias the player 
                 wants to go by in the game. */
-            RTGlobal.ReadOnlyVariables["`N"] = TranslateVariables("`S10");
+            Global.Player.Name = TranslateVariables("`S10");
         }
 
         private void CommandDO_DELETE(string[] tokens)
@@ -1954,8 +1952,7 @@ namespace LORD2
             Door.CursorRight(LastVisibleLength);
 
             // Update global variable responses
-            RTGlobal.ReadOnlyVariables["RESPONCE"] = SelectedIndex.ToString();
-            RTGlobal.ReadOnlyVariables["RESPONSE"] = SelectedIndex.ToString();
+            RTGlobal.RESPONSE = SelectedIndex.ToString();
         }
 
         private void EndREADFILE()
@@ -2265,20 +2262,13 @@ namespace LORD2
                     }
                 }
             }
-            foreach (KeyValuePair<string, string> KVP in RTGlobal.LanguageVariables)
+            foreach (KeyValuePair<string, RTVariable> KVP in RTGlobal.Variables)
             {
-                // TODO This shouldn't happen for @SHOW and @DO WRITE, so maybe we need a TranslateVariables() that excludes this, and TranslateVariablesForLogic() that includes this (then any non-output code would use the logic call)
-                // TODO Since we look for an exact match, it may not matter anyway (since what are the odds a @SHOW only has the word MAP on a line, for example)
-                // TODO These need to be kept in sync (for example if c# code changes Global.Player.Bank)
-                // TODO Maybe they shouldn't be variables, and there should just be a long list of Regex.Replaces for each variable, linking directly into the player record
-                if (inputUpper == KVP.Key.ToUpper()) input = KVP.Value;
-            }
-            foreach (KeyValuePair<string, string> KVP in RTGlobal.ReadOnlyVariables)
-            {
-                // TODO s& should be lowercasing the first letter, S& uppercasing
-                // TODO These need to be kept in sync (for example if c# code changes Global.Player.Bank)
-                // TODO Maybe they shouldn't be variables, and there should just be a long list of Regex.Replaces for each variable, linking directly into the player record
-                input = Regex.Replace(input, Regex.Escape(KVP.Key), KVP.Value.ToString(), RegexOptions.IgnoreCase);
+                // Returns the original string if no translation is needed/required, or the translated string if keyword was found
+                if (inputUpper.Contains(KVP.Key.ToUpper()))
+                {
+                    input = KVP.Value.Get(input);
+                }
             }
 
             return input;

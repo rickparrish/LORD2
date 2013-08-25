@@ -18,10 +18,7 @@ namespace LORD2
 
         public static MapDatRecord CurrentMap;
         public static List<ItemsDatRecord> ItemsDat = new List<ItemsDatRecord>();
-        public static int LastX = 0;
-        public static int LastY = 0;
         public static TraderDatRecord Player;
-        public static int PlayerNumber;
         public static List<MapDatRecord> MapDat = new List<MapDatRecord>();
         public static int STime = DateTime.Now.Year + DateTime.Now.Month + DateTime.Now.Day;
         public static WorldDatRecord WorldDat;
@@ -110,17 +107,16 @@ namespace LORD2
             // Load TIME.DAT
             if (File.Exists(Global.TimeDatFileName))
             {
-                int Time = Convert.ToInt32(FileUtils.FileReadAllText(Global.TimeDatFileName));
+                RTGlobal.Time = Convert.ToInt32(FileUtils.FileReadAllText(Global.TimeDatFileName));
                 if (IsNewDay) {
-                    Time += 1;
-                    FileUtils.FileWriteAllText(Global.TimeDatFileName, Time.ToString());
+                    RTGlobal.Time += 1;
+                    FileUtils.FileWriteAllText(Global.TimeDatFileName, RTGlobal.Time.ToString());
                 }
-                RTGlobal.ReadOnlyVariables["&time"] = Time.ToString();
             }
             else
             {
                 FileUtils.FileWriteAllText(Global.TimeDatFileName, "1");
-                RTGlobal.ReadOnlyVariables["&time"] = "1";
+                RTGlobal.Time = 1;
             }
 
             // Load WORLD.DAT

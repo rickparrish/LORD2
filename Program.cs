@@ -30,16 +30,16 @@ namespace LORD2
                     RTGlobal.OnUPDATE += RTR_OnUPDATE;
 
                     // Check if user has a Global.Player already
-                    Global.PlayerNumber = Global.LoadPlayerByRealName(Door.DropInfo.RealName, out Global.Player);
-                    if (Global.PlayerNumber == -1)
+                    RTGlobal.PlayerNum = Global.LoadPlayerByRealName(Door.DropInfo.RealName, out Global.Player);
+                    if (RTGlobal.PlayerNum == -1)
                     {
                         // Nope, so try to get them to create one
                         RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
-                        Global.PlayerNumber = Global.LoadPlayerByRealName(Door.DropInfo.RealName, out Global.Player);
+                        RTGlobal.PlayerNum = Global.LoadPlayerByRealName(Door.DropInfo.RealName, out Global.Player);
                     }
 
                     // Now check again to see if the user has a Global.Player (either because they already had one, or because they just created one)
-                    if (Global.PlayerNumber != -1)
+                    if (RTGlobal.PlayerNum != -1)
                     {
                         // Global.Player exists, so start the game
                         RTR.RunSection("GAMETXT.REF", "STARTGAME");
@@ -145,8 +145,8 @@ namespace LORD2
             Door.Write("\x02");
 
             // Store the last position for erasing later
-            Global.LastX = Global.Player.X;
-            Global.LastY = Global.Player.Y;
+            RTGlobal.LastX = Global.Player.X;
+            RTGlobal.LastY = Global.Player.Y;
             Global.Player.X = (short)x;
             Global.Player.Y = (short)y;
         }
@@ -234,7 +234,7 @@ namespace LORD2
 
         private static void RTR_OnMOVEBACK(object sender, System.EventArgs e)
         {
-            DrawPlayer(Global.LastX, Global.LastY);
+            DrawPlayer(RTGlobal.LastX, RTGlobal.LastY);
         }
 
         private static void RTR_OnUPDATE(object sender, System.EventArgs e)

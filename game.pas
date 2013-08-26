@@ -71,6 +71,7 @@ begin
         FG := MI.fc;
       end;
 
+      GotoXY(1, Y);
       ToSend := ToSend + MI.c;
     end;
 

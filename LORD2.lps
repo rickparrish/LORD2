@@ -11,9 +11,9 @@
         <UnitName Value="LORD2"/>
         <EditorIndex Value="0"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="44"/>
-        <CursorPos X="43" Y="53"/>
-        <UsageCount Value="24"/>
+        <TopLine Value="52"/>
+        <CursorPos X="18" Y="52"/>
+        <UsageCount Value="25"/>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit0>
@@ -72,7 +72,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="131"/>
         <CursorPos X="27" Y="138"/>
-        <UsageCount Value="11"/>
+        <UsageCount Value="12"/>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
       </Unit6>
@@ -80,10 +80,11 @@
         <Filename Value="game.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="Game"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1"/>
-        <CursorPos X="1" Y="1"/>
+        <TopLine Value="57"/>
+        <CursorPos X="26" Y="67"/>
         <UsageCount Value="23"/>
         <Loaded Value="True"/>
         <DefaultSyntaxHighlighter Value="Delphi"/>
@@ -94,21 +95,20 @@
         <UnitName Value="Struct"/>
         <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="25"/>
-        <CursorPos X="38" Y="134"/>
-        <UsageCount Value="22"/>
+        <TopLine Value="125"/>
+        <CursorPos X="1" Y="149"/>
+        <UsageCount Value="23"/>
         <Loaded Value="True"/>
       </Unit8>
       <Unit9>
         <Filename Value="rtreader.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="RTReader"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="4"/>
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
-        <CursorPos X="1" Y="16"/>
-        <UsageCount Value="21"/>
+        <CursorPos X="21" Y="9"/>
+        <UsageCount Value="22"/>
         <Loaded Value="True"/>
       </Unit9>
       <Unit10>
@@ -119,7 +119,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="21" Y="9"/>
-        <UsageCount Value="21"/>
+        <UsageCount Value="22"/>
         <Loaded Value="True"/>
       </Unit10>
     </Units>
@@ -128,124 +128,124 @@
     </General>
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
-        <Filename Value="struct.pas"/>
-        <Caret Line="82" Column="33" TopLine="66"/>
+        <Filename Value="game.pas"/>
+        <Caret Line="182" Column="1" TopLine="171"/>
       </Position1>
       <Position2>
-        <Filename Value="struct.pas"/>
-        <Caret Line="98" Column="30" TopLine="82"/>
+        <Filename Value="game.pas"/>
+        <Caret Line="165" Column="15" TopLine="156"/>
       </Position2>
       <Position3>
-        <Filename Value="struct.pas"/>
-        <Caret Line="99" Column="7" TopLine="89"/>
+        <Filename Value="game.pas"/>
+        <Caret Line="14" Column="32" TopLine="1"/>
       </Position3>
       <Position4>
-        <Filename Value="struct.pas"/>
-        <Caret Line="104" Column="30" TopLine="92"/>
+        <Filename Value="game.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position4>
       <Position5>
-        <Filename Value="struct.pas"/>
-        <Caret Line="123" Column="36" TopLine="107"/>
+        <Filename Value="game.pas"/>
+        <Caret Line="42" Column="10" TopLine="26"/>
       </Position5>
       <Position6>
         <Filename Value="game.pas"/>
-        <Caret Line="97" Column="26" TopLine="83"/>
+        <Caret Line="61" Column="10" TopLine="45"/>
       </Position6>
       <Position7>
         <Filename Value="game.pas"/>
-        <Caret Line="100" Column="21" TopLine="87"/>
+        <Caret Line="88" Column="10" TopLine="72"/>
       </Position7>
       <Position8>
         <Filename Value="game.pas"/>
-        <Caret Line="12" Column="34" TopLine="1"/>
+        <Caret Line="120" Column="12" TopLine="128"/>
       </Position8>
       <Position9>
         <Filename Value="game.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Caret Line="139" Column="12" TopLine="129"/>
       </Position9>
       <Position10>
         <Filename Value="game.pas"/>
-        <Caret Line="42" Column="10" TopLine="26"/>
+        <Caret Line="159" Column="12" TopLine="149"/>
       </Position10>
       <Position11>
         <Filename Value="game.pas"/>
-        <Caret Line="61" Column="10" TopLine="45"/>
+        <Caret Line="177" Column="12" TopLine="170"/>
       </Position11>
       <Position12>
         <Filename Value="game.pas"/>
-        <Caret Line="88" Column="10" TopLine="72"/>
+        <Caret Line="194" Column="10" TopLine="190"/>
       </Position12>
       <Position13>
-        <Filename Value="game.pas"/>
-        <Caret Line="138" Column="32" TopLine="131"/>
+        <Filename Value="LORD2.lpr"/>
+        <Caret Line="37" Column="1" TopLine="32"/>
       </Position13>
       <Position14>
-        <Filename Value="game.pas"/>
-        <Caret Line="115" Column="29" TopLine="105"/>
+        <Filename Value="rtreader.pas"/>
+        <Caret Line="8" Column="9" TopLine="1"/>
       </Position14>
       <Position15>
-        <Filename Value="game.pas"/>
-        <Caret Line="151" Column="15" TopLine="139"/>
+        <Filename Value="rtreader.pas"/>
+        <Caret Line="16" Column="6" TopLine="1"/>
       </Position15>
       <Position16>
         <Filename Value="game.pas"/>
-        <Caret Line="182" Column="1" TopLine="171"/>
+        <Caret Line="214" Column="26" TopLine="200"/>
       </Position16>
       <Position17>
         <Filename Value="game.pas"/>
-        <Caret Line="165" Column="15" TopLine="156"/>
+        <Caret Line="8" Column="39" TopLine="4"/>
       </Position17>
       <Position18>
-        <Filename Value="game.pas"/>
-        <Caret Line="14" Column="32" TopLine="1"/>
+        <Filename Value="struct.pas"/>
+        <Caret Line="134" Column="38" TopLine="46"/>
       </Position18>
       <Position19>
         <Filename Value="game.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Caret Line="72" Column="1" TopLine="72"/>
       </Position19>
       <Position20>
         <Filename Value="game.pas"/>
-        <Caret Line="42" Column="10" TopLine="26"/>
+        <Caret Line="260" Column="34" TopLine="250"/>
       </Position20>
       <Position21>
         <Filename Value="game.pas"/>
-        <Caret Line="61" Column="10" TopLine="45"/>
+        <Caret Line="11" Column="19" TopLine="2"/>
       </Position21>
       <Position22>
         <Filename Value="game.pas"/>
-        <Caret Line="88" Column="10" TopLine="72"/>
+        <Caret Line="55" Column="31" TopLine="46"/>
       </Position22>
       <Position23>
         <Filename Value="game.pas"/>
-        <Caret Line="120" Column="12" TopLine="128"/>
+        <Caret Line="8" Column="46" TopLine="1"/>
       </Position23>
       <Position24>
         <Filename Value="game.pas"/>
-        <Caret Line="139" Column="12" TopLine="129"/>
+        <Caret Line="55" Column="28" TopLine="46"/>
       </Position24>
       <Position25>
         <Filename Value="game.pas"/>
-        <Caret Line="159" Column="12" TopLine="149"/>
+        <Caret Line="62" Column="35" TopLine="49"/>
       </Position25>
       <Position26>
         <Filename Value="game.pas"/>
-        <Caret Line="177" Column="12" TopLine="170"/>
+        <Caret Line="55" Column="17" TopLine="49"/>
       </Position26>
       <Position27>
         <Filename Value="game.pas"/>
-        <Caret Line="194" Column="10" TopLine="190"/>
+        <Caret Line="56" Column="12" TopLine="47"/>
       </Position27>
       <Position28>
-        <Filename Value="LORD2.lpr"/>
-        <Caret Line="37" Column="1" TopLine="32"/>
+        <Filename Value="game.pas"/>
+        <Caret Line="8" Column="51" TopLine="1"/>
       </Position28>
       <Position29>
-        <Filename Value="rtreader.pas"/>
-        <Caret Line="8" Column="9" TopLine="1"/>
+        <Filename Value="game.pas"/>
+        <Caret Line="260" Column="10" TopLine="249"/>
       </Position29>
       <Position30>
-        <Filename Value="rtreader.pas"/>
-        <Caret Line="16" Column="6" TopLine="1"/>
+        <Filename Value="game.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>

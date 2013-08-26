@@ -49,8 +49,7 @@ begin
     if (RTGlobal.PlayerNum <> -1) then
     begin
       RTReader.Execute('GAMETXT.REF', 'STARTGAME');
-
-      mWriteLn('TODO Implement map mode');
+      Game.Start;
     end;
   end else
   begin

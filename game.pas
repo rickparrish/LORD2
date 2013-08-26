@@ -5,9 +5,10 @@ unit Game;
 interface
 
 uses
-  Struct, SysUtils, RTGlobal;
+  Struct, SysUtils, RTGlobal, MannDoor, mAnsi, Crt;
 
 var
+  CurrentMap: plan_rec;
   IsNewDay: Boolean = false;
   ItemsDat: item_rec;
   MapDat: Array of plan_rec;
@@ -16,14 +17,59 @@ var
 
 function LoadDataFiles: Boolean;
 function LoadPlayerByRealName(ARealName: String; var ARecord: user_rec): Integer;
+procedure Start;
 
 implementation
 
+procedure DrawMap; forward;
 function LoadItemsDat: Boolean; forward;
 function LoadMapDat: Boolean; forward;
 function LoadSTimeDat: Boolean; forward;
 function LoadTimeDat: Boolean; forward;
 function LoadWorldDat: Boolean; forward;
+
+procedure DrawMap;
+var
+  BG: Integer;
+  FG: Integer;
+  MI: map_info;
+  ToSend: String;
+  X, Y: Integer;
+begin
+  // Draw the map
+  BG := 0;
+  FG := 7;
+  mTextAttr(FG);
+  mClrScr;
+
+  for Y := 1 to 20 do
+  begin
+    ToSend := '';
+
+    for X := 1 to 80 do
+    begin
+      MI := CurrentMap.W[X][Y];
+
+      if (BG <> MI.bc) then
+      begin
+        ToSend := ToSend + mAnsi.aTextBackground(MI.bc);
+        Crt.TextBackground(MI.bc); // Gotta do this to ensure calls to Ansi.* work right
+        BG := MI.bc;
+      end;
+
+      if (FG <> MI.fc) then
+      begin
+        ToSend := ToSend + mAnsi.aTextColor(MI.fc);
+        Crt.TextColor(MI.fc); // Gotta do this to ensure calls to Ansi.* work right
+        FG := MI.fc;
+      end;
+
+      ToSend := ToSend + MI.c;
+    end;
+
+    mWrite(ToSend);
+  end;
+end;
 
 function LoadDataFiles: Boolean;
 begin
@@ -203,6 +249,21 @@ begin
     Result := false;
   end;
   Close(F);
+end;
+
+procedure Start;
+var
+  Ch: Char;
+begin
+  WriteLn(Player.map);
+  CurrentMap := MapDat[WorldDat.loc[Player.map]];
+  DrawMap;
+  // TODO Update; // Draw players
+
+  repeat
+    Ch := UpCase(mReadKey);
+
+  until (Ch = 'Q');
 end;
 
 end.

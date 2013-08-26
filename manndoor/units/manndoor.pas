@@ -1,5 +1,7 @@
 unit MannDoor;
 
+{$mode delphi}
+
 interface
 
 uses

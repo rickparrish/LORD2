@@ -1,5 +1,7 @@
 unit WC5;
 
+{$mode delphi}
+
 interface
 
 uses

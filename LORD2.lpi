@@ -32,12 +32,32 @@
         <FormatVersion Value="1"/>
       </local>
     </RunParams>
-    <Units Count="1">
+    <Units Count="5">
       <Unit0>
         <Filename Value="LORD2.lpr"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="LORD2"/>
       </Unit0>
+      <Unit1>
+        <Filename Value="game.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Game"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="struct.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Struct"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="rtreader.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="RTReader"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="rtglobal.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="RTGlobal"/>
+      </Unit4>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -51,11 +71,6 @@
       <OtherUnitFiles Value="manndoor\units;manndoor\units\elecom;manndoor\units\win32"/>
       <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
-    <Parsing>
-      <SyntaxOptions>
-        <SyntaxMode Value="Delphi"/>
-      </SyntaxOptions>
-    </Parsing>
     <CodeGeneration>
       <TargetCPU Value="i386"/>
       <TargetOS Value="win32"/>

@@ -5,28 +5,35 @@ unit Game;
 interface
 
 uses
-  Struct, SysUtils, RTGlobal, MannDoor, mAnsi, Crt;
+  Struct, SysUtils, RTGlobal, MannDoor, mAnsi, Crt, RTReader;
 
 var
   CurrentMap: plan_rec;
   IsNewDay: Boolean = false;
   ItemsDat: item_rec;
+  LastX: Integer;
+  LastY: Integer;
   MapDat: Array of plan_rec;
   Player: user_rec;
+  PlayerNum: Integer = -1;
+  Time: Integer = 1;
   WorldDat: world_info;
 
+procedure DrawMap;
 function LoadDataFiles: Boolean;
+procedure LoadMap(AMapNumber: Integer);
 function LoadPlayerByRealName(ARealName: String; var ARecord: user_rec): Integer;
 procedure Start;
+procedure Update;
 
 implementation
 
-procedure DrawMap; forward;
 function LoadItemsDat: Boolean; forward;
 function LoadMapDat: Boolean; forward;
 function LoadSTimeDat: Boolean; forward;
 function LoadTimeDat: Boolean; forward;
 function LoadWorldDat: Boolean; forward;
+procedure MovePlayer(AXOffset, AYOffset: Integer); forward;
 
 procedure DrawMap;
 var
@@ -97,6 +104,11 @@ begin
     Result := false;
   end;
   Close(F);
+end;
+
+procedure LoadMap(AMapNumber: Integer);
+begin
+  CurrentMap := MapDat[WorldDat.loc[AMapNumber]];
 end;
 
 function LoadMapDat: Boolean;
@@ -208,24 +220,24 @@ begin
     if (IOResult = 0) then
     begin
       ReadLn(F, S);
-      RTGlobal.Time := StrToInt(S);
+      Time := StrToInt(S);
     end;
     Close(F);
   end else
   begin
-    RTGlobal.Time := 0;
+    Time := 0;
   end;
 
   if (IsNewDay) then
   begin
-    RTGlobal.Time := RTGlobal.Time + 1;
+    Time := Time + 1;
 
     // TODO Retry if IOError
     Assign(F, 'TIME.DAT');
     {$I-}ReWrite(F);{$I+}
     if (IOResult = 0) then
     begin
-      WriteLn(F, IntToStr(RTGlobal.Time));
+      WriteLn(F, IntToStr(Time));
     end;
     Close(F);
   end;
@@ -251,19 +263,124 @@ begin
   Close(F);
 end;
 
+procedure MovePlayer(AXOffset, AYOffset: Integer);
+var
+  i, x, y: Integer;
+begin
+  x := Player.x + AXOffset;
+  y := Player.y + AYOffset;
+
+  // Check for movement to new screen
+  if (x = 0) then
+  begin
+    Player.lmap := Player.map; // TODO Only if map was visible, according to 3rdparty.doc
+    Player.map -= 1;
+    Player.X := 80;
+
+    LoadMap(Player.map);
+    DrawMap;
+    Update;
+  end else
+  if (x = 81) then
+  begin
+    Player.lmap := Player.map; // TODO Only if map was visible, according to 3rdparty.doc
+    Player.map += 1;
+    Player.X := 1;
+
+    LoadMap(Player.map);
+    DrawMap;
+    Update;
+  end else
+  if (y = 0) then
+  begin
+    Player.lmap := Player.map; // TODO Only if map was visible, according to 3rdparty.doc
+    Player.map -= 80;
+    Player.Y := 20;
+
+    LoadMap(Player.map);
+    DrawMap;
+    Update;
+  end else
+  if (y = 21) then
+  begin
+    Player.lmap := Player.map; // TODO Only if map was visible, according to 3rdparty.doc
+    Player.map += 80;
+    Player.Y := 1;
+
+    LoadMap(Player.map);
+    DrawMap;
+    Update;
+  end else
+  begin
+    if (CurrentMap.w[x][y].s = 1) then
+    begin
+      // Erase player
+      mTextBackground(CurrentMap.w[Player.x][Player.y].bc);
+      mTextColor(CurrentMap.w[Player.x][Player.y].fc);
+      mGotoXY(Player.x, Player.y);
+      mWrite(CurrentMap.w[Player.x][Player.y].c);
+
+      // Update position and draw player
+      LastX := Player.x;
+      LastY := Player.y;
+      Player.x := x;
+      Player.y := y;
+      Update;
+    end;
+  end;
+
+  // Check for special
+  for I := Low(CurrentMap.special) to High(CurrentMap.special) do
+  begin
+    if (CurrentMap.special[I].dx = x) AND (CurrentMap.special[I].dy = y) then
+    begin
+      if (CurrentMap.special[I].move_place > 0) AND (CurrentMap.special[I].x > 0) AND (CurrentMap.special[I].y > 0) then
+      begin
+        Player.lmap := Player.map; // TODO Only if map was visible, according to 3rdparty.doc
+        Player.map := CurrentMap.special[I].move_place;
+        Player.x := CurrentMap.special[I].x;
+        Player.y := CurrentMap.special[I].y;
+
+        LoadMap(Player.map);
+        DrawMap;
+        Update;
+      end else
+      if (CurrentMap.special[I].reffile <> '') AND (CurrentMap.special[I].refname <> '') then
+      begin
+        RTReader.Execute(CurrentMap.special[I].reffile, CurrentMap.special[I].refname);
+      end;
+    end;
+  end;
+end;
+
 procedure Start;
 var
   Ch: Char;
 begin
-  WriteLn(Player.map);
-  CurrentMap := MapDat[WorldDat.loc[Player.map]];
+  LoadMap(Player.map);
   DrawMap;
-  // TODO Update; // Draw players
+  Update;
 
   repeat
     Ch := UpCase(mReadKey);
-
+    case Ch of
+      '8': MovePlayer(0, -1);
+      '4': MovePlayer(-1, 0);
+      '6': MovePlayer(1, 0);
+      '2': MovePlayer(0, 1);
+    end;
   until (Ch = 'Q');
+end;
+
+procedure Update;
+begin
+  // Draw the Player
+  mTextBackground(CurrentMap.w[Player.x][Player.y].bc);
+  mTextColor(Crt.White);
+  mGotoXY(Player.x, Player.y);
+  mWrite(#02);
+
+  // TODO Draw the other players
 end;
 
 end.

@@ -1,7 +1,5 @@
 program LORD2;
 
-{$mode objfpc}{$H+}
-
 uses
   {$IFDEF UNIX}{$IFDEF UseCThreads}
   cthreads,
@@ -25,8 +23,6 @@ type
 { TLORD2 }
 
 procedure TLORD2.DoRun;
-var
-  ErrorMsg: String;
 begin
   { add your program here }
   mStartUp;

@@ -1,7 +1,5 @@
 unit Game;
 
-{$mode objfpc}{$H+}
-
 interface
 
 uses
@@ -102,6 +100,7 @@ begin
     Result := true;
   end else
   begin
+    mWriteLn('Unable to open ITEMS.DAT');
     Result := false;
   end;
   Close(F);
@@ -131,6 +130,7 @@ begin
     Result := true;
   end else
   begin
+    mWriteLn('Unable to open MAP.DAT');
     Result := false;
   end;
   Close(F);
@@ -169,7 +169,7 @@ var
   F: Text;
   S: String;
   STime: String;
-  Y, M, D, DOW: Word;
+  Y, M, D: Word;
 begin
   DecodeDate(Date, Y, M, D);
   STime := IntToStr(Y + M + D);
@@ -259,6 +259,7 @@ begin
     Result := true;
   end else
   begin
+    mWriteLn('Unable to open WORLD.DAT');
     Result := false;
   end;
   Close(F);

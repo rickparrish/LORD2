@@ -1,7 +1,5 @@
 unit MannDoor;
 
-{$mode delphi}
-
 interface
 
 uses
@@ -524,7 +522,7 @@ begin
           begin
                if (InitWC5) then
                begin
-                    if (WC5_WildcatLoggedIn(WC5User) = 1) then
+                    if (WC5_WildcatLoggedIn^(WC5User) = 1) then
                     begin
                          DropInfo.RealName := WC5User.Info.Name;
                          DropInfo.Alias := GetFName(WC5User.Info.Name);
@@ -533,7 +531,7 @@ begin
                             DropInfo.Emulation := etANSI
                          else
                              DropInfo.Emulation := etASCII;
-                         DropInfo.Node := WC5_GetNode;
+                         DropInfo.Node := WC5_GetNode^();
                     end else
                         mOpen := False;
                end else
@@ -1251,15 +1249,15 @@ begin
      ExitProc := @NewExitProc;
 
      mOnCLP := nil;
-     mOnHangup := OnHangup;
-     mOnLocalLogin := OnLocalLogin;
-     mOnStatusBar := OnStatusBar;
+     mOnHangup := @OnHangup;
+     mOnLocalLogin := @OnLocalLogin;
+     mOnStatusBar := @OnStatusBar;
      mOnSysopKey := nil;
-     mOnTimeOut := OnTimeOut;
+     mOnTimeOut := @OnTimeOut;
      mOnTimeOutWarning := nil;
-     mOnTimeUp := OnTimeUp;
+     mOnTimeUp := @OnTimeUp;
      mOnTimeUpWarning := nil;
-     mOnUsage := OnUsage;
+     mOnUsage := @OnUsage;
 
      with DropInfo do
      begin

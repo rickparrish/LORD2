@@ -1,7 +1,5 @@
 unit RTReader;
 
-{$mode objfpc}{$H+}
-
 interface
 
 uses

@@ -1,3 +1,4 @@
+*.lps
 backup/
 bin/
 lib/

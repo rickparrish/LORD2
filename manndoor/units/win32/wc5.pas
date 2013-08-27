@@ -1,7 +1,5 @@
 unit WC5;
 
-{$mode delphi}
-
 interface
 
 uses
@@ -87,15 +85,17 @@ end;
 {$IFDEF VPASCAL}{&StdCall+}{$ENDIF}
 type
   TWildcatLoggedIn = function(var WC5User: TWC5User): DWord; {$IFNDEF VPASCAL}stdcall;{$ENDIF}
+  PWildcatLoggedIn = ^TWildcatLoggedIn;
   TGetNode = function: DWord; {$IFNDEF VPASCAL}stdcall;{$ENDIF}
+  PGetNode = ^TGetNode;
 {$IFDEF VPASCAL}{&StdCall-}{$ENDIF}
 
 function InitWC5: Boolean;
 procedure DeInitWC5;
 
 var
-  WC5_WildcatLoggedIn: TWildcatLoggedIn;
-  WC5_GetNode: TGetNode;
+  WC5_WildcatLoggedIn: PWildcatLoggedIn;
+  WC5_GetNode: PGetNode;
 
 implementation
 
@@ -110,8 +110,8 @@ begin
      if (FWCSRV <> 0) then
      begin
           InitWC5 := True;
-          @WC5_WildcatLoggedIn := GetProcAddress(FWCSRV, 'WildcatLoggedIn');
-          @WC5_GetNode := GetProcAddress(FWCSRV, 'GetNode');
+          WC5_WildcatLoggedIn := GetProcAddress(FWCSRV, 'WildcatLoggedIn');
+          WC5_GetNode := GetProcAddress(FWCSRV, 'GetNode');
      end;
 end;
 

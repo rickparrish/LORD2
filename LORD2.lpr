@@ -6,7 +6,8 @@ uses
   {$ENDIF}{$ENDIF}
   Classes, SysUtils, CustApp,
   { you can add units after this }
-  MannDoor, Game, Struct, RTReader, RTGlobal, mCrt, mStrings;
+  MannDoor, Game, Struct, RTReader, RTGlobal, mCrt, mStrings, RTRefFile,
+RTRefSection, RTRefLabel;
 
 type
 

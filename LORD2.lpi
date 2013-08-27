@@ -32,7 +32,7 @@
         <FormatVersion Value="1"/>
       </local>
     </RunParams>
-    <Units Count="5">
+    <Units Count="8">
       <Unit0>
         <Filename Value="LORD2.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -58,6 +58,21 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="RTGlobal"/>
       </Unit4>
+      <Unit5>
+        <Filename Value="manndoor\units\elecom\rtreffile.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="RTRefFile"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="rtrefsection.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="RTRefSection"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="rtreflabel.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="RTRefLabel"/>
+      </Unit7>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

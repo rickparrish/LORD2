@@ -7,6 +7,7 @@ uses
 
 var
   CurrentMap: plan_rec;
+  ENEMY: String = '';
   IsNewDay: Boolean = false;
   ItemsDat: item_rec;
   LastX: Integer;
@@ -14,6 +15,7 @@ var
   MapDat: Array of plan_rec;
   Player: user_rec;
   PlayerNum: Integer = -1;
+  RESPONSE: String = '';
   Time: Integer = 1;
   WorldDat: world_info;
 
@@ -23,9 +25,14 @@ function LoadDataFiles: Boolean;
 procedure LoadMap(AMapNumber: Integer);
 function LoadPlayerByRealName(ARealName: String; var ARecord: user_rec): Integer;
 procedure Start;
+function TotalAccounts: Integer;
 procedure Update;
 
 implementation
+
+var
+  FLastTotalAccounts: Integer;
+  FTotalAccounts: Integer = 0;
 
 function LoadItemsDat: Boolean; forward;
 function LoadMapDat: Boolean; forward;
@@ -378,6 +385,15 @@ begin
       '2': MovePlayer(0, 1);
     end;
   until (Ch = 'Q');
+end;
+
+function TotalAccounts: Integer;
+begin
+  // TODO This should see if X number of seconds have elapsed since the last check
+  // TODO If so, then re-check the TRADER.DAT to get an updated count
+  FLastTotalAccounts := 0;
+  FTotalAccounts := 0;
+  Result := FTotalAccounts;
 end;
 
 procedure Update;

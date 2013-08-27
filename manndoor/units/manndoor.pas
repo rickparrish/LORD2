@@ -31,7 +31,7 @@ type
     Clean     : Boolean;        {---D-} {Is LORD In Clean Mode?}
     ComNum    : LongInt;        {ABCD-} {Comm/Socket Number}
     ComType   : Byte;           {A----} {Comm Type (0=Local, 1=Serial, 2=Socket, 3=WC5}
-    Emulation : TEmulationType; {ABCDE} {User's Emulation (eANSI or eASCII)}
+    Emulation : TEmulationType; {ABCDE} {User's Emulation (etANSI or etASCII)}
     Fairy     : Boolean;        {---D-} {Does LORD User Have Fairy?}
     MaxTime   : LongInt;        {ABCDE} {User's Time Left At Start (In Seconds)}
     Node      : LongInt;        {A-C-E} {Node Number}

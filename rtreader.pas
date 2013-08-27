@@ -169,8 +169,62 @@ uses
   Game;
 
 function TRTReader.AssignVariable(AVariable: String; AValue: String): String;
+var
+  VariableUpper: String;
+  VariableSkipTwo: String;
 begin
-  // TODO
+  // TODO Instead of translating before calling this function, maybe this function should translate and then
+  //      other functions could pass in the raw string
+  VariableUpper := UpperCase(Trim(AVariable));
+
+  // Handle variables that must match exactly
+  case VariableUpper of
+    'BANK': Game.Player.bank := StrToInt(AValue);
+    'DEAD': Game.Player.dead := StrToInt(AValue);
+    'ENEMY': Game.ENEMY := AValue;
+    'MAP': Game.Player.map := StrToInt(AValue);
+    'MONEY': Game.Player.gold := StrToInt(AValue);
+    'NARM': Game.Player.arm := StrToInt(AValue);
+    'NWEP': Game.Player.wep := StrToInt(AValue);
+    'SEXMALE': Game.Player.sex_male := StrToInt(AValue);
+    'X': Game.Player.x := StrToInt(AValue);
+    'Y': Game.Player.y := StrToInt(AValue);
+    else
+    begin
+      // Handle global and player variables
+      VariableSkipTwo := Copy(VariableUpper, 3, Length(VariableUpper) - 2);
+      if (Pos('`I', VariableUpper) = 1) then
+      begin
+          // Player int
+          Game.Player.item[StrToInt(VariableSkipTwo)] := StrToInt(ExtractDelimited(1, AValue, [' ']));
+      end;
+      if (Pos('`P', VariableUpper) = 1) then
+      begin
+          // Player longint
+          Game.Player.P[StrToInt(VariableSkipTwo)] := StrToInt(ExtractDelimited(1, AValue, [' ']));
+      end;
+      if (Pos('`+', VariableUpper) = 1) then
+      begin
+          // Global item name
+          Game.ItemsDat.i[StrToInt(VariableSkipTwo)].name := AValue;
+      end;
+      if (Pos('`S', VariableUpper) = 1) then
+      begin
+          // Global string
+          Game.WorldDat.S[StrToInt(VariableSkipTwo)] := AValue;
+      end;
+      if (Pos('`T', VariableUpper) = 1) then
+      begin
+          // Player byte
+          Game.Player.b[StrToInt(VariableSkipTwo)] := StrToInt(ExtractDelimited(1, AValue, [' ']));
+      end;
+      if (Pos('`V', VariableUpper) = 1) then
+      begin
+          // Global longint
+          Game.WorldDat.V[StrToInt(VariableSkipTwo)] := StrToInt(ExtractDelimited(1, AValue, [' ']));
+      end;
+    end;
+  end;
 end;
 
 procedure Execute(AFileName: string; ASectionName: string);
@@ -2391,61 +2445,146 @@ var
   TextUpper: String;
 begin
   // TODO commas get added to numbers (ie 123456 is 123,456)
-  TextUpper := UpperCase(AText);
+  TextUpper := UpperCase(Trim(AText));
 
-  if (Pos('`', TextUpper) > 0) then
-  begin
-    if (Pos('`I', TextUpper) > 0) then
+  // Handle variables that must match exactly
+  case TextUpper of
+    'BANK': AText := IntToStr(Game.Player.bank);
+    'DEAD': AText := IntToStr(Game.Player.dead);
+    'ENEMY': AText := Game.ENEMY;
+    'LOCAL':
+    begin
+      if (mLocal()) then
       begin
-        for I := Low(Game.Player.item) to High(Game.Player.item) do
-        begin
-          AText := StringReplace(AText, '`I' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.item[I]), [rfReplaceAll, rfIgnoreCase]);
-        end;
-      end;
-      if (Pos('`P', TextUpper) > 0) then
+        AText := '5';
+      end else
       begin
-        for I := Low(Game.Player.p) to High(Game.Player.p) do
-        begin
-          AText := StringReplace(AText, '`P' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.p[I]), [rfReplaceAll, rfIgnoreCase]);
-        end;
+        AText := '0';
       end;
-      if (Pos('`+', TextUpper) > 0) then
+    end;
+    'MAP': AText := IntToStr(Game.Player.map);
+    'MONEY': AText := IntToStr(Game.Player.gold);
+    'NARM': AText := IntToStr(Game.Player.arm);
+    'NIL': AText := '';
+    'NWEP': AText := IntToStr(Game.Player.wep);
+    'RESPONCE', 'RESPONSE': AText := Game.RESPONSE;
+    'SEXMALE': AText := IntToStr(Game.Player.sex_male);
+    'X': AText := IntToStr(Game.Player.x);
+    'Y': AText := IntToStr(Game.Player.y);
+    else
+    begin
+      // Handle player and global variables
+      if (Pos('`', TextUpper) > 0) then
       begin
-        for I := Low(Game.ItemsDat.i) to High(Game.ItemsDat.i) do
+        if (Pos('`I', TextUpper) > 0) then
         begin
-          AText := StringReplace(AText, '`+' + mStrings.PadLeft(IntToStr(I), '0', 2), Game.ItemsDat.i[I].name, [rfReplaceAll, rfIgnoreCase]);
+          for I := Low(Game.Player.item) to High(Game.Player.item) do
+          begin
+            AText := StringReplace(AText, '`I' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.item[I]), [rfReplaceAll, rfIgnoreCase]);
+          end;
         end;
-      end;
-      if (Pos('`S', TextUpper) > 0) then
-      begin
-        for I := Low(Game.WorldDat.s) to High(Game.WorldDat.s) do
+        if (Pos('`P', TextUpper) > 0) then
         begin
-          AText := StringReplace(AText, '`S' + mStrings.PadLeft(IntToStr(I), '0', 2), Game.WorldDat.s[I], [rfReplaceAll, rfIgnoreCase]);
+          for I := Low(Game.Player.p) to High(Game.Player.p) do
+          begin
+            AText := StringReplace(AText, '`P' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.p[I]), [rfReplaceAll, rfIgnoreCase]);
+          end;
         end;
-      end;
-      if (Pos('`T', TextUpper) > 0) then
-      begin
-        for I := Low(Game.Player.b) to High(Game.Player.b) do
+        if (Pos('`+', TextUpper) > 0) then
         begin
-          AText := StringReplace(AText, '`T' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.b[I]), [rfReplaceAll, rfIgnoreCase]);
+          for I := Low(Game.ItemsDat.i) to High(Game.ItemsDat.i) do
+          begin
+            AText := StringReplace(AText, '`+' + mStrings.PadLeft(IntToStr(I), '0', 2), Game.ItemsDat.i[I].name, [rfReplaceAll, rfIgnoreCase]);
+          end;
         end;
-      end;
-      if (Pos('`V', TextUpper) > 0) then
-      begin
-        for I := Low(Game.WorldDat.v) to High(Game.WorldDat.v) do
+        if (Pos('`S', TextUpper) > 0) then
         begin
-          AText := StringReplace(AText, '`V' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.WorldDat.v[I]), [rfReplaceAll, rfIgnoreCase]);
+          for I := Low(Game.WorldDat.s) to High(Game.WorldDat.s) do
+          begin
+            AText := StringReplace(AText, '`S' + mStrings.PadLeft(IntToStr(I), '0', 2), Game.WorldDat.s[I], [rfReplaceAll, rfIgnoreCase]);
+          end;
         end;
+        if (Pos('`T', TextUpper) > 0) then
+        begin
+          for I := Low(Game.Player.b) to High(Game.Player.b) do
+          begin
+            AText := StringReplace(AText, '`T' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.b[I]), [rfReplaceAll, rfIgnoreCase]);
+          end;
+        end;
+        if (Pos('`V', TextUpper) > 0) then
+        begin
+          for I := Low(Game.WorldDat.v) to High(Game.WorldDat.v) do
+          begin
+            AText := StringReplace(AText, '`V' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.WorldDat.v[I]), [rfReplaceAll, rfIgnoreCase]);
+          end;
+        end;
+
+        // Handle "Seth" codes
+        AText := StringReplace(AText, '`N', Game.Player.name, [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '`E', Game.ENEMY, [rfReplaceAll, rfIgnoreCase]);
+        if (DropInfo.Emulation = etANSI) then
+        begin
+          AText := StringReplace(AText, '`G', '3', [rfReplaceAll, rfIgnoreCase]);
+        end else
+        begin
+          AText := StringReplace(AText, '`G', '0', [rfReplaceAll, rfIgnoreCase]);
+        end;
+        AText := StringReplace(AText, '`X', ' ', [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '`D', #8, [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '`\', #13#10, [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '`c', mAnsi.aClrScr + #13#10#13#10, [rfReplaceAll, rfIgnoreCase]);
+
+        // Handle "ampersand" codes
+        AText := StringReplace(AText, '&realname', DropInfo.Alias, [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&date', 'TODO &date', [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&nicedate', 'TODO &nicedate', [rfReplaceAll, rfIgnoreCase]);
+        if (Game.Player.arm = 0) then
+        begin
+          AText := StringReplace(AText, 's&armour', '', [rfReplaceAll, rfIgnoreCase]);
+        end else
+        begin
+          AText := StringReplace(AText, 's&armour', Game.ItemsDat.i[Game.Player.arm].name, [rfReplaceAll, rfIgnoreCase]);
+        end;
+        AText := StringReplace(AText, 's&arm_num', IntToStr(Game.Player.arm), [rfReplaceAll, rfIgnoreCase]);
+        if (Game.Player.wep = 0) then
+        begin
+          AText := StringReplace(AText, 's&weapon', '', [rfReplaceAll, rfIgnoreCase]);
+        end else
+        begin
+          AText := StringReplace(AText, 's&weapon', Game.ItemsDat.i[Game.Player.wep].name, [rfReplaceAll, rfIgnoreCase]);
+        end;
+        AText := StringReplace(AText, 's&wep_num', IntToStr(Game.Player.wep), [rfReplaceAll, rfIgnoreCase]);
+        if (Game.Player.sex_male = 1) then
+        begin
+          AText := StringReplace(AText, 's&son', 'son', [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&boy', 'boy', [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&man', 'man', [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&sir', 'sir', [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&him', 'him', [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&his', 'his', [rfReplaceAll, rfIgnoreCase]);
+        end else
+        begin
+          AText := StringReplace(AText, 's&son', 'daughter', [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&boy', 'girl', [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&man', 'lady', [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&sir', 'ma''am', [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&him', 'her', [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&his', 'hers', [rfReplaceAll, rfIgnoreCase]);
+        end;
+        AText := StringReplace(AText, '&money', IntToStr(Game.Player.gold), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&bank', IntToStr(Game.Player.bank), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&lastx', IntToStr(Game.LastX), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&lasty', IntToStr(Game.LastY), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&map', IntToStr(Game.Player.map), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&lmap', IntToStr(Game.Player.lmap), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&time', IntToStr(Game.Time), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&timeleft', IntToStr(mTimeLeft div 60), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&sex', IntToStr(Game.Player.sex_male), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&playernum', IntToStr(Game.PlayerNum), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&totalaccounts', IntToStr(Game.TotalAccounts), [rfReplaceAll, rfIgnoreCase]);
       end;
+    end;
   end;
-(*TODO  foreach (KeyValuePair<string, RTVariable> KVP in RTGlobal.Variables)
-  {
-      // Returns the original string if no translation is needed/required, or the translated string if keyword was found
-      if (inputUpper.Contains(KVP.Key.ToUpper()))
-      {
-          input = KVP.Value.Get(input);
-      }
-  }*)
 
   Result := AText;
 end;

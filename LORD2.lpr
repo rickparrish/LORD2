@@ -7,7 +7,7 @@ uses
   Classes, SysUtils, CustApp,
   { you can add units after this }
   MannDoor, Game, Struct, RTReader, RTGlobal, mCrt, mStrings, RTRefFile,
-RTRefSection, RTRefLabel;
+RTRefSection, RTRefLabel, RTChoiceOption;
 
 type
 

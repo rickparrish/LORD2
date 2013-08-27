@@ -3,7 +3,10 @@ unit mStrings;
 interface
 
 uses
-  Compat, Crt, SysUtils;
+  Compat, Crt, SysUtils, StrUtils;
+
+type
+  TTokens = Array of String;
 
 {
   Default "allowed characters" used by Input() and mInput()
@@ -13,6 +16,7 @@ const
   CHARS_ALPHA = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM';
   CHARS_NUMERIC = '1234567890';
   CHARS_FILENAME = '1234567890-=\qwertyuiop[]asdfghjkl;''zxcvbnm,.~!@#$%^&()_+QWERTYUIOP{}ASDFGHJKL:ZXCVBNM ';
+
 
 function AddSlash(ALine: String): String;
 function BoolToStr(AValue: Boolean; ATrue, AFalse: String): String;
@@ -34,6 +38,7 @@ function SecToHMS(ASec: LongInt): String;
 function SecToMS(ASec: LongInt): String;
 function SethToPipe(ALine: String): String;
 function StripChar(ALine: String; ACh: Char): String;
+function Tokenize(ALine: String; ADelim: Char): TTokens;
 
 implementation
 
@@ -414,6 +419,20 @@ begin
      while (Pos(ACh, ALine) > 0) do
            Delete(ALine, Pos(ACh, ALine), 1);
      StripChar := ALine;
+end;
+
+function Tokenize(ALine: String; ADelim: Char): TTokens;
+var
+  I: Integer;
+  TokenCount: Integer;
+begin
+  TokenCount := Length(ALine) - Length(Replace(ALine, ADelim, '')) + 1;
+  SetLength(Result, TokenCount + 1);
+
+  for I := 1 to TokenCount do
+  begin
+    Result[I] := ExtractDelimited(I, ALine, [ADelim]);
+  end;
 end;
 
 end.

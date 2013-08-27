@@ -37,10 +37,15 @@ type
     procedure CommandADDCHAR(ATokens: TTokens);
     procedure CommandBEGIN(ATokens: TTokens);
     procedure CommandBITSET(ATokens: TTokens);
+    procedure CommandBUSY(ATokens: TTokens);
+    procedure CommandBUYMANAGER(ATokens: TTokens);
+    procedure CommandCHECKMAIL(ATokens: TTokens);
     procedure CommandCHOICE(ATokens: TTokens);
     procedure CommandCLEAR(ATokens: TTokens);
     procedure CommandCLEARBLOCK(ATokens: TTokens);
     procedure CommandCLOSESCRIPT(ATokens: TTokens);
+    procedure CommandCONVERT_FILE_TO_ANSI(ATokens: TTokens);
+    procedure CommandCONVERT_FILE_TO_ASCII(ATokens: TTokens);
     procedure CommandCOPYFILE(ATokens: TTokens);
     procedure CommandDATALOAD(ATokens: TTokens);
     procedure CommandDATANEWDAY(ATokens: TTokens);
@@ -51,6 +56,7 @@ type
 
     procedure CommandDO_ADD(ATokens: TTokens);
     procedure CommandDO_ADDLOG(ATokens: TTokens);
+    procedure CommandDO_BEEP(ATokens: TTokens);
     procedure CommandDO_COPYTONAME(ATokens: TTokens);
     procedure CommandDO_DELETE(ATokens: TTokens);
     procedure CommandDO_DIVIDE(ATokens: TTokens);
@@ -239,31 +245,31 @@ begin
   AssignVariable(VariableName, IntToStr(EndValue));
 end;
 
-private void CommandBUSY(string[] tokens)
-{
-    (* @BUSY
-        This makes the player appear 'red' to other players currently playing.  It
-        also tells the Lord II engine to run @#busy in gametxt.ref if a player logs on
-        and someone is attacking him or giving him an item. *)
-    // TODO Implement
-}
+procedure TRTReader.CommandBUSY(ATokens: TTokens);
+begin
+  (* @BUSY
+      This makes the player appear 'red' to other players currently playing.  It
+      also tells the Lord II engine to run @#busy in gametxt.ref if a player logs on
+      and someone is attacking him or giving him an item. *)
+  // TODO Implement
+end;
 
-private void CommandBUYMANAGER(string[] tokens)
-{
+procedure TRTReader.CommandBUYMANAGER(ATokens: TTokens);
+begin
     (* @BUYMANAGER
         <item number>
         <item number>
         <ect until next @ at beginning of string is hit>
         This command offers items for sale at the price set in items.dat *)
     // TODO Implement
-}
+end;
 
-private void CommandCHECKMAIL(string[] tokens)
-{
+procedure TRTReader.CommandCHECKMAIL(ATokens: TTokens);
+begin
     (* @CHECKMAIL
         Undocumented.  Will need to determine what this does *)
     // TODO Implement
-}
+end;
 
 procedure TRTReader.CommandCHOICE(ATokens: TTokens);
 begin
@@ -312,12 +318,13 @@ begin
       example, if `p20 was 600 and the user hit the selection:
       "Hey, I have more than 500", RESPONSE would be set to 5. *)
 
-  _InCHOICEOptions.Clear();
-  _InCHOICE = true;
+  FInCHOICEOptions.Clear();
+  FInCHOICE := true;
 end;
 
 procedure TRTReader.CommandCLEAR(ATokens: TTokens);
 begin
+  {TODO
   switch (tokens[1].ToUpper())
   {
       case "ALL":
@@ -372,83 +379,151 @@ begin
           // TODO Implement
           break;
   }
+  }
 end;
 
 procedure TRTReader.CommandCLEARBLOCK(ATokens: TTokens);
+var
+  Bottom: Integer;
+  I: Integer;
+  SavedTextAttr: Integer;
+  Top: Integer;
 begin
   (* @CLEARBLOCK <x> <y>
       This clears lines quick.  <x> is the first line you want to clear. <y> is the
       last line you want to clear.  Example:  @clear block 20 24   This would clear
       4 lines starting at line 20. *)
-  int SavedAttr = Crt.TextAttr;
-  Door.TextAttr(7);
+  SavedTextAttr := Crt.TextAttr;
+  mTextAttr(7);
 
-  int top = Convert.ToInt32(tokens[1]);
-  int bottom = Convert.ToInt32(tokens[2]);
-  for (int i = top; i <= bottom; i++)
-  {
-      Door.GotoXY(1, i);
-      Door.Write(new string(' ', 80));
-  }
+  Top := StrToInt(ATokens[2]);
+  Bottom := StrToInt(ATokens[3]);
+  for I := Top to Bottom do
+  begin
+      mGotoXY(1, i);
+      mWrite(mStrings.PadRight('', ' ', 80));
+  end;
 
-  Door.GotoXY(1, bottom);
-  Door.TextColor(SavedAttr & 0x0F);
+  mGotoXY(1, bottom);
+  mTextColor(SavedTextAttr AND $0F);
 end;
 
 procedure TRTReader.CommandCLOSESCRIPT(ATokens: TTokens);
 begin
   (* @CLOSESCRIPT
       This closes the script and returns command to the L2 movement system. *)
-  _InCLOSESCRIPT = true;
+  FInCLOSESCRIPT := true;
 end;
 
-private void CommandCONVERT_FILE_TO_ANSI(string[] tokens)
-{
+procedure TRTReader.CommandCONVERT_FILE_TO_ANSI(ATokens: TTokens);
+begin
     (* @CONVERT_FILE_TO_ANSI <input file> <output file>
         Converts a text file of Sethansi (whatever) to regular ansi.  This is good for
         a final score output. *)
     // TODO Implement
-}
+end;
 
-private void CommandCONVERT_FILE_TO_ASCII(string[] tokens)
-{
+procedure TRTReader.CommandCONVERT_FILE_TO_ASCII(ATokens: TTokens);
+begin
     (* @CONVERT_FILE_TO_ASCII <input file> <output file>
         Converts a text file of Sethansi (whatever) to regular ascii, ie, no colors at
         all. *)
     // TODO Implement
-}
+end;
 
 procedure TRTReader.CommandCOPYFILE(ATokens: TTokens);
+var
+  DestFile: String;
+  SourceFile: String;
 begin
   (* @COPYFILE <input filename> <output filename>
       This command copies a <input filename to <output filename>.           *)
-  string SourceFile = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
-  string DestFile = Global.GetSafeAbsolutePath(TranslateVariables(tokens[2]));
-  if ((SourceFile != "") && (DestFile != "") && (File.Exists(SourceFile)))
-  {
-      FileUtils.FileCopy(SourceFile, DestFile);
-  }
+  SourceFile := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
+  DestFile := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
+  if ((SourceFile <> '') AND (DestFile <> '') AND (FileExists(SourceFile))) then
+  begin
+    //TODO FileUtils.FileCopy(SourceFile, DestFile);
+  end;
 end;
 
 procedure TRTReader.CommandDATALOAD(ATokens: TTokens);
+var
+  FileName: String;
 begin
   (* @DATALOAD <filename> <record (1 to 200)> <`p variable to put it in> : This loads
       a long integer by # from a datafile.  If the file doesn't exist, it is created
       and all 200 long integers are set to 0.
       NOTE: You should specify an extension (usually .IDF) *)
-  string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
-  if (FileName != "")
-  {
-      if (File.Exists(FileName))
-      {
+  FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
+  if (FileName <> '') then
+  begin
+    if (FileExists(FileName)) then
+    begin
+        { TODO
+        using (FileStream FS = new FileStream(FileName, FileMode.Open))
+        {
+            IGM_DATA IGMD = DataStructures.ReadStruct<IGM_DATA>(FS);
+            AssignVariable(tokens[3], IGMD.Data[Convert.ToInt32(TranslateVariables(ATokens[3])) - 1].ToString());
+        }
+        }
+    end else
+    begin
+        { TODO
+        using (FileStream FS = new FileStream(FileName, FileMode.Create, FileAccess.Write))
+        {
+            IGM_DATA IGMD = new IGM_DATA(true);
+            IGMD.LastUsed = DateTime.Now.Month + DateTime.Now.Day;
+            for (int i = 0; i < IGMD.Data.Length; i++)
+            {
+                IGMD.Data[i] = 0;
+            }
+            for (int i = 0; i < IGMD.Extra.Length; i++)
+            {
+                IGMD.Extra[i] = '\0';
+            }
+            DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
+        }
+        }
+        AssignVariable(ATokens[4], '0');
+    end;
+  end;
+end;
+
+procedure TRTReader.CommandDATANEWDAY(ATokens: TTokens);
+var
+  FileName: String;
+begin
+  (* @DATANEWDAY <filename> :  If it is the NEXT day since this function was
+      called, all records in <filename> will be set to 0.  Check EXAMPLE.REF in the
+      LORD II archive for an example of how this works.
+      NOTE: You should specify an extension (usually .IDF) *)
+  FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
+  if (FileName <> '') then
+  begin
+      if (FileExists(FileName)) then
+      begin
+        { TODO
           using (FileStream FS = new FileStream(FileName, FileMode.Open))
           {
               IGM_DATA IGMD = DataStructures.ReadStruct<IGM_DATA>(FS);
-              AssignVariable(tokens[3], IGMD.Data[Convert.ToInt32(TranslateVariables(tokens[2])) - 1].ToString());
+              if (IGMD.LastUsed != (DateTime.Now.Month + DateTime.Now.Day))
+              {
+                  IGMD.LastUsed = (DateTime.Now.Month + DateTime.Now.Day);
+                  for (int i = 0; i < IGMD.Data.Length; i++)
+                  {
+                      IGMD.Data[i] = 0;
+                  }
+                  for (int i = 0; i < IGMD.Extra.Length; i++)
+                  {
+                      IGMD.Extra[i] = '\0';
+                  }
+                  DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
+              }
           }
-      }
-      else
-      {
+          }
+      end else
+      begin
+          {TODO
           using (FileStream FS = new FileStream(FileName, FileMode.Create, FileAccess.Write))
           {
               IGM_DATA IGMD = new IGM_DATA(true);
@@ -463,102 +538,58 @@ begin
               }
               DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
           }
-          AssignVariable(tokens[3], "0");
-      }
-  }
-end;
-
-procedure TRTReader.CommandDATANEWDAY(ATokens: TTokens);
-begin
-(* @DATANEWDAY <filename> :  If it is the NEXT day since this function was
-    called, all records in <filename> will be set to 0.  Check EXAMPLE.REF in the
-    LORD II archive for an example of how this works.
-    NOTE: You should specify an extension (usually .IDF) *)
-string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
-if (FileName != "")
-{
-    if (File.Exists(FileName))
-    {
-        using (FileStream FS = new FileStream(FileName, FileMode.Open))
-        {
-            IGM_DATA IGMD = DataStructures.ReadStruct<IGM_DATA>(FS);
-            if (IGMD.LastUsed != (DateTime.Now.Month + DateTime.Now.Day))
-            {
-                IGMD.LastUsed = (DateTime.Now.Month + DateTime.Now.Day);
-                for (int i = 0; i < IGMD.Data.Length; i++)
-                {
-                    IGMD.Data[i] = 0;
-                }
-                for (int i = 0; i < IGMD.Extra.Length; i++)
-                {
-                    IGMD.Extra[i] = '\0';
-                }
-                DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
-            }
-        }
-    }
-    else
-    {
-        using (FileStream FS = new FileStream(FileName, FileMode.Create, FileAccess.Write))
-        {
-            IGM_DATA IGMD = new IGM_DATA(true);
-            IGMD.LastUsed = DateTime.Now.Month + DateTime.Now.Day;
-            for (int i = 0; i < IGMD.Data.Length; i++)
-            {
-                IGMD.Data[i] = 0;
-            }
-            for (int i = 0; i < IGMD.Extra.Length; i++)
-            {
-                IGMD.Extra[i] = '\0';
-            }
-            DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
-        }
-    }
-}
+          }
+      end;
+  end;
 end;
 
 procedure TRTReader.CommandDATASAVE(ATokens: TTokens);
+var
+  FileName: String;
 begin
-(* @DATASAVE <filename> <record (1 to 200)> <value to make it> : This SAVES
-    a long integer by # to a datafile.  If the file doesn't exist, it is created
-    and all 200 long integers (except the one referenced) are set to 0.  The
-    record that is referenced will be set to the value of the 3rd parameter.
-    NOTE: You should specify an extension (usually .IDF) *)
-string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
-if (FileName != "")
-{
-    if (File.Exists(FileName))
-    {
-        using (FileStream FS = new FileStream(FileName, FileMode.Open, FileAccess.ReadWrite))
-        {
-            // Read file
-            IGM_DATA IGMD = DataStructures.ReadStruct<IGM_DATA>(FS);
-            IGMD.Data[Convert.ToInt32(TranslateVariables(tokens[2])) - 1] = Convert.ToInt32(TranslateVariables(tokens[3]));
+  (* @DATASAVE <filename> <record (1 to 200)> <value to make it> : This SAVES
+      a long integer by # to a datafile.  If the file doesn't exist, it is created
+      and all 200 long integers (except the one referenced) are set to 0.  The
+      record that is referenced will be set to the value of the 3rd parameter.
+      NOTE: You should specify an extension (usually .IDF) *)
+  FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
+  if (FileName <> '') then
+  begin
+      if (FileExists(FileName)) then
+      begin
+          {TODO
+          using (FileStream FS = new FileStream(FileName, FileMode.Open, FileAccess.ReadWrite))
+          {
+              // Read file
+              IGM_DATA IGMD = DataStructures.ReadStruct<IGM_DATA>(FS);
+              IGMD.Data[Convert.ToInt32(TranslateVariables(ATokens[3])) - 1] = Convert.ToInt32(TranslateVariables(ATokens[4]));
 
-            // Write file
-            FS.Position = 0;
-            DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
-        }
-    }
-    else
-    {
-        using (FileStream FS = new FileStream(FileName, FileMode.Create, FileAccess.Write))
-        {
-            IGM_DATA IGMD = new IGM_DATA(true);
-            IGMD.LastUsed = DateTime.Now.Month + DateTime.Now.Day;
-            for (int i = 0; i < IGMD.Data.Length; i++)
-            {
-                IGMD.Data[i] = 0;
-            }
-            IGMD.Data[Convert.ToInt32(TranslateVariables(tokens[2])) - 1] = Convert.ToInt32(TranslateVariables(tokens[3]));
-            for (int i = 0; i < IGMD.Extra.Length; i++)
-            {
-                IGMD.Extra[i] = '\0';
-            }
-            DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
-        }
-    }
-}
+              // Write file
+              FS.Position = 0;
+              DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
+          }
+          }
+      end else
+      begin
+          {TODO
+          using (FileStream FS = new FileStream(FileName, FileMode.Create, FileAccess.Write))
+          {
+              IGM_DATA IGMD = new IGM_DATA(true);
+              IGMD.LastUsed = DateTime.Now.Month + DateTime.Now.Day;
+              for (int i = 0; i < IGMD.Data.Length; i++)
+              {
+                  IGMD.Data[i] = 0;
+              }
+              IGMD.Data[Convert.ToInt32(TranslateVariables(ATokens[3])) - 1] = Convert.ToInt32(TranslateVariables(ATokens[4]));
+              for (int i = 0; i < IGMD.Extra.Length; i++)
+              {
+                  IGMD.Extra[i] = '\0';
+              }
+              DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
+          }
+          }
+      end;
+  end;
 end;
 
 procedure TRTReader.CommandDECLARE(ATokens: TTokens);
@@ -568,51 +599,86 @@ begin
 end;
 
 procedure TRTReader.CommandDISPLAY(ATokens: TTokens);
+var
+  FileName: String;
+  RefFile: TRTRefFile;
+  RefSection: TRTRefSection;
+  SectionName: String;
 begin
   (* @DISPLAY <this> IN <this file> <options>
       This is used to display a certain part of a file.  This is compatible with the
       LORDTXT.DAT format. *)
-  Door.WriteLn(TranslateVariables(string.Join("\r\n", RTGlobal.RefFiles[Path.GetFileNameWithoutExtension(tokens[3])].Sections[tokens[1]].Script.ToArray())));
+  FileName := ChangeFileExt(UpperCase(TranslateVariables(ATokens[4])), '');
+  SectionName := UpperCase(TranslateVariables(ATokens[2]));
+
+  if (RTGlobal.RefFiles.FindIndexOf(FileName) = -1) then
+  begin
+    mWriteLn('`4`b**`b `%ERROR : `2File `0' + FileName + ' `2not found. `4`b**`b`2');
+    mReadKey;
+  end else
+  begin
+    RefFile := TRTRefFile(RTGlobal.RefFiles.Find(FileName));
+
+    if (RefFile.Sections.FindIndexOf(SectionName) = -1) then
+    begin
+      mWriteLn('`4`b**`b `%ERROR : Section `0' + SectionName + ' `2not found in `0' + FileName + ' `4`b**`b`2');
+      mReadKey;
+    end else
+    begin
+      RefSection := TRTRefSection(RefFile.Sections.Find(SectionName));
+      mWriteLn(TranslateVariables(RefSection.Script.Text));
+    end;
+  end;
 end;
 
 procedure TRTReader.CommandDISPLAYFILE(ATokens: TTokens);
+var
+  FileName: String;
 begin
   (* @DISPLAYFILE <filename> <options>
       This display an entire file.  Possible options are:  NOPAUSE and NOSKIP.  Put a
       space between options if you use both. *)
-  string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
-  if (File.Exists(FileName))
-  {
-      Door.Write(TranslateVariables(FileUtils.FileReadAllText(FileName, RMEncoding.Ansi)));
-  }
+  FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
+  if (FileExists(FileName)) then
+  begin
+    // TODOmWrite(TranslateVariables(FileUtils.FileReadAllText(FileName, RMEncoding.Ansi)));
+  end;
 end;
 
 procedure TRTReader.CommandDO_ADD(ATokens: TTokens);
+var
+  I: Integer;
+  S: String;
 begin
   (* @DO <Number To Change> <How To Change It> <Change With What> *)
-  if (tokens[2] == "+")
-  {
-      AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) + Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
-  }
-  else if (tokens[2].ToUpper() == "ADD")
-  {
-      AssignVariable(tokens[1], TranslateVariables(tokens[1] + string.Join(" ", tokens, 3, tokens.Length - 3)));
-  }
+  if (ATokens[3] = '+') then
+  begin
+      AssignVariable(ATokens[2], IntToStr(StrToInt(TranslateVariables(ATokens[2])) + StrToInt(TranslateVariables(ATokens[4]))));
+  end else
+  if (UpperCase(ATokens[3]) = 'ADD') then
+  begin
+      S := ATokens[4];
+      for I := 5 to Length(ATokens) - 1 do
+      begin
+        S := S + ' ' + ATokens[I];
+      end;
+      AssignVariable(ATokens[2], TranslateVariables(ATokens[2] + S));
+  end;
 end;
 
 procedure TRTReader.CommandDO_ADDLOG(ATokens: TTokens);
 begin
   (* @DO addlog
       The line UNDER this command is added to the 'lognow.txt' file. *)
-  _InDO_ADDLOG = true;
+  FInDO_ADDLOG := true;
 end;
 
-private void CommandDO_BEEP(string[] tokens)
-{
+procedure TRTReader.CommandDO_BEEP(ATokens: TTokens);
+begin
     (* @DO BEEP
         Makes a weird beep noise, locally only *)
     // TODO Unused
-}
+end;
 
 procedure TRTReader.CommandDO_COPYTONAME(ATokens: TTokens);
 begin
@@ -621,7 +687,7 @@ begin
       allow a player to change his name or to get the name a new player wants to go
       by.  It is also useful in the @#newplayer routine to get the alias the player
       wants to go by in the game. *)
-  Global.Player.Name = TranslateVariables("`S10");
+  Game.Player.Name := TranslateVariables('`S10');
 end;
 
 procedure TRTReader.CommandDO_DELETE(ATokens: TTokens);
@@ -629,7 +695,7 @@ begin
   (* @DO DELETE <file name>
       This command deletes the file specified by <file name>.  The file name must be
       a valid DOS file name.  There can be no spaces. *)
-  string FileName = Global.GetSafeAbsolutePath(tokens[2]);
+  string FileName = Game.GetSafeAbsolutePath(ATokens[3]);
   if (File.Exists(FileName))
   {
       FileUtils.FileDelete(FileName);
@@ -639,7 +705,7 @@ end;
 procedure TRTReader.CommandDO_DIVIDE(ATokens: TTokens);
 begin
   (* @DO <Number To Change> <How To Change It> <Change With What> *)
-  AssignVariable(tokens[1], Math.Truncate(Convert.ToDouble(TranslateVariables(tokens[1])) / Convert.ToDouble(TranslateVariables(tokens[3]))).ToString());
+  AssignVariable(tokens[1], Math.Truncate(Convert.ToDouble(TranslateVariables(ATokens[2])) / Convert.ToDouble(TranslateVariables(ATokens[4]))).ToString());
 end;
 
 procedure TRTReader.CommandDO_FRONTPAD(ATokens: TTokens);
@@ -647,11 +713,11 @@ begin
   (* @DO FRONTPAD <string variable> <length>
       This adds spaces to the front of the string until the string is as long as
       <length>. *)
-  int StringLength = Door.StripSeth(TranslateVariables(tokens[2])).Length;
-  int RequestedLength = Convert.ToInt32(tokens[3]);
+  int StringLength = Door.StripSeth(TranslateVariables(ATokens[3])).Length;
+  int RequestedLength = Convert.ToInt32(ATokens[4]);
   if (StringLength < RequestedLength)
   {
-      AssignVariable(tokens[2], StringUtils.PadLeft(TranslateVariables(tokens[2]), ' ', Convert.ToInt32(tokens[3])));
+      AssignVariable(tokens[2], StringUtils.PadLeft(TranslateVariables(ATokens[3]), ' ', Convert.ToInt32(ATokens[4])));
   }
 end;
 
@@ -683,14 +749,14 @@ procedure TRTReader.CommandDO_GOTO(ATokens: TTokens);
 begin
   (* @DO GOTO <header or label>
       Passes control of the script to the header or label specified. *)
-  if (_CurrentFile.Sections.ContainsKey(tokens[2]))
+  if (_CurrentFile.Sections.ContainsKey(ATokens[3]))
   {
       // HEADER goto
       RTReader RTR = new RTReader();
-      _InHALT = RTR.RunSection(_CurrentFile.Name, TranslateVariables(tokens[2]));
+      _InHALT = RTR.RunSection(_CurrentFile.Name, TranslateVariables(ATokens[3]));
       _InCLOSESCRIPT = true; // Don't want to resume this ref
   }
-  else if (_CurrentSection.Labels.ContainsKey(tokens[2]))
+  else if (_CurrentSection.Labels.ContainsKey(ATokens[3]))
   {
       // LABEL goto within current section
       _CurrentLineNumber = _CurrentSection.Labels[tokens[2]];
@@ -699,11 +765,11 @@ begin
   {
       foreach (KeyValuePair<string, RTRefSection> KVP in _CurrentFile.Sections)
       {
-          if (KVP.Value.Labels.ContainsKey(tokens[2]))
+          if (KVP.Value.Labels.ContainsKey(ATokens[3]))
           {
               // LABEL goto within a different section
               RTReader RTR = new RTReader();
-              _InHALT = RTR.RunSection(_CurrentFile.Name, KVP.Key, TranslateVariables(tokens[2]));
+              _InHALT = RTR.RunSection(_CurrentFile.Name, KVP.Key, TranslateVariables(ATokens[3]));
               _InCLOSESCRIPT = true; // Don't want to resume this ref
               break;
           }
@@ -719,7 +785,7 @@ begin
       (* @DO `p20 is deleted 8
           Puts 1 (player is deleted) or 0 (player is not deleted) in `p20.  This only
           works with `p variables.  The account number can be a `p variable. *)
-      int PlayerNumber = Convert.ToInt32(TranslateVariables(tokens[4]));
+      int PlayerNumber = Convert.ToInt32(TranslateVariables(ATokens[5]));
 
       TraderDatRecord TDR;
       if (PlayerNumber == Global.LoadPlayerByPlayerNumber(PlayerNumber, out TDR))
@@ -736,7 +802,7 @@ begin
       (* @DO `s01 is getname 8
           This would get the name of player 8 and put it in `s01.  This only works with
           `s variables.  The account number can be a `p variable. *)
-      int PlayerNumber = Convert.ToInt32(TranslateVariables(tokens[4]));
+      int PlayerNumber = Convert.ToInt32(TranslateVariables(ATokens[5]));
 
       TraderDatRecord TDR;
       if (PlayerNumber == Global.LoadPlayerByPlayerNumber(PlayerNumber, out TDR))
@@ -748,13 +814,13 @@ begin
   {
       (* @DO <number variable> IS LENGTH <String variable>
           Gets length, smart way. *)
-      AssignVariable(tokens[1], Door.StripSeth(TranslateVariables(tokens[4])).Length.ToString());
+      AssignVariable(tokens[1], Door.StripSeth(TranslateVariables(ATokens[5])).Length.ToString());
   }
   else if (tokens[3].ToUpper() == "REALLENGTH")
   {
       (* @DO <number variable> IS REALLENGTH <String variable>
           Gets length dumb way. (includes '`' codes without deciphering them.) *)
-      AssignVariable(tokens[1], TranslateVariables(tokens[4]).Length.ToString());
+      AssignVariable(tokens[1], TranslateVariables(ATokens[5]).Length.ToString());
   }
   else
   {
@@ -766,8 +832,8 @@ procedure TRTReader.CommandDO_MOVE(ATokens: TTokens);
 begin
   (* @DO MOVE <X> <Y> : This moves the curser.  (like GOTOXY in TP) Enter 0 for
       a number will default to 'current location'. *)
-  int X = Convert.ToInt32(TranslateVariables(tokens[2]));
-  int Y = Convert.ToInt32(TranslateVariables(tokens[3]));
+  int X = Convert.ToInt32(TranslateVariables(ATokens[3]));
+  int Y = Convert.ToInt32(TranslateVariables(ATokens[4]));
   if ((X > 0) && (Y > 0))
   {
       Door.GotoXY(X, Y);
@@ -795,7 +861,7 @@ end;
 procedure TRTReader.CommandDO_MULTIPLY(ATokens: TTokens);
 begin
 (* @DO <Number To Change> <How To Change It> <Change With What> *)
-AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) * Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(ATokens[2])) * Convert.ToInt32(TranslateVariables(ATokens[4]))).ToString());
 end;
 
 procedure TRTReader.CommandDO_NUMRETURN(ATokens: TTokens);
@@ -803,7 +869,7 @@ begin
 (* @DO NUMRETURN <int var> <string var>
     Undocumented.  Seems to return the number of integers in the given string
     Example "123test456" returns 6 because there are 6 numbers *)
-string Translated = TranslateVariables(tokens[3]);
+string Translated = TranslateVariables(ATokens[4]);
 string TranslatedWithoutNumbers = Regex.Replace(Translated, "[0-9]", "", RegexOptions.IgnoreCase);
 AssignVariable(tokens[2], (Translated.Length - TranslatedWithoutNumbers.Length).ToString());
 end;
@@ -812,15 +878,15 @@ procedure TRTReader.CommandDO_PAD(ATokens: TTokens);
 begin
 (* @DO PAD <string variable> <length>
     This adds spaces to the end of the string until string is as long as <length>. *)
-int StringLength = Door.StripSeth(TranslateVariables(tokens[2])).Length;
-int RequestedLength = Convert.ToInt32(tokens[3]);
+int StringLength = Door.StripSeth(TranslateVariables(ATokens[3])).Length;
+int RequestedLength = Convert.ToInt32(ATokens[4]);
 if (StringLength < RequestedLength)
 {
-    AssignVariable(tokens[2], StringUtils.PadRight(TranslateVariables(tokens[2]), ' ', Convert.ToInt32(tokens[3])));
+    AssignVariable(tokens[2], StringUtils.PadRight(TranslateVariables(ATokens[3]), ' ', Convert.ToInt32(ATokens[4])));
 }
 end;
 
-private void CommandDO_QUEBAR(string[] tokens)
+procedure TRTReader.CommandDO_QUEBAR(ATokens: TTokens);
 {
     (* @DO quebar
         <message>
@@ -834,8 +900,8 @@ begin
   (* @DO <Varible to put # in> RANDOM <Highest number> <number to add to it>
       RANDOM 5 1 will pick a number between 0 (inclusive) and 5 (exclusive) and add 1 to it, resulting in 1-5
       RANDOM 100 200 will pick a number between 0 (inclusive) and 100 (exclusive) and add 200 to it, resulting in 200-299 *)
-  int Min = Convert.ToInt32(tokens[4]);
-  int Max = Min + Convert.ToInt32(tokens[3]);
+  int Min = Convert.ToInt32(ATokens[5]);
+  int Max = Min + Convert.ToInt32(ATokens[4]);
   AssignVariable(tokens[1], _R.Next(Min, Max).ToString());
 end;
 
@@ -863,9 +929,9 @@ begin
     The READNUM procedure is a very nice string editer to get a number in. It
     supports arrow keys and such. *)
 string Default = "";
-if (tokens.Length >= 4) Default = TranslateVariables(tokens[3]);
+if (tokens.Length >= 4) Default = TranslateVariables(ATokens[4]);
 
-string ReadNum = Door.Input(Default, CharacterMask.Numeric, '\0', Convert.ToInt32(TranslateVariables(tokens[2])), Convert.ToInt32(TranslateVariables(tokens[2])), 31);
+string ReadNum = Door.Input(Default, CharacterMask.Numeric, '\0', Convert.ToInt32(TranslateVariables(ATokens[3])), Convert.ToInt32(TranslateVariables(ATokens[3])), 31);
 int AnswerInt = 0;
 if (!int.TryParse(ReadNum, out AnswerInt)) AnswerInt = 0;
 
@@ -917,7 +983,7 @@ begin
     also use these vars for the default.  (or `N)  Use NIL if you want the default
     to be nothing.  (if no variable to put it in is specified, it will be put into `S10
     for compatibilty with old .REF's) *)
-string ReadString = Door.Input(Regex.Replace(TranslateVariables(tokens[3]), "NIL", "", RegexOptions.IgnoreCase), CharacterMask.All, '\0', Convert.ToInt32(TranslateVariables(tokens[2])), Convert.ToInt32(TranslateVariables(tokens[2])), 31);
+string ReadString = Door.Input(Regex.Replace(TranslateVariables(ATokens[4]), "NIL", "", RegexOptions.IgnoreCase), CharacterMask.All, '\0', Convert.ToInt32(TranslateVariables(ATokens[3])), Convert.ToInt32(TranslateVariables(ATokens[3])), 31);
 if (tokens.Length >= 5)
 {
     AssignVariable(tokens[4], ReadString);
@@ -934,7 +1000,7 @@ begin
       Replaces X with Y in an `s variable. *)
   // Identified as @REPLACE not @DO REPLACE in the docs
   // The following regex matches only the first instance of the word foo: (?<!foo.*)foo (from http://stackoverflow.com/a/148561/342378)
-  AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), "(?<!" + Regex.Escape(TranslateVariables(tokens[2])) + ".*)" + Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
+  AssignVariable(tokens[4], Regex.Replace(TranslateVariables(ATokens[5]), "(?<!" + Regex.Escape(TranslateVariables(ATokens[3])) + ".*)" + Regex.Escape(TranslateVariables(ATokens[3])), TranslateVariables(ATokens[4]), RegexOptions.IgnoreCase));
 end;
 
 procedure TRTReader.CommandDO_REPLACEALL(ATokens: TTokens);
@@ -942,16 +1008,16 @@ begin
   (* @DO REPLACEALL <X> <Y> <in `S10>:
       Same as above but replaces all instances. *)
   // Identified as @REPLACEALL not @DO REPLACEALL in the docs
-  AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
+  AssignVariable(tokens[4], Regex.Replace(TranslateVariables(ATokens[5]), Regex.Escape(TranslateVariables(ATokens[3])), TranslateVariables(ATokens[4]), RegexOptions.IgnoreCase));
 end;
 
 procedure TRTReader.CommandDO_RENAME(ATokens: TTokens);
 begin
   (* @DO RENAME <old name> <new name>
       Undocumented.  Renames a file *)
-  string OldFile = Global.GetSafeAbsolutePath(TranslateVariables(tokens[2]));
-  string NewFile = Global.GetSafeAbsolutePath(TranslateVariables(tokens[3]));
-  if ((OldFile != "") && (NewFile != "") && (File.Exists(OldFile)))
+  string OldFile = Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
+  string NewFile = Game.GetSafeAbsolutePath(TranslateVariables(ATokens[4]));
+  if ((OldFile <> '') && (NewFile <> '') && (File.Exists(OldFile)))
   {
       FileUtils.FileMove(OldFile, NewFile);
   }
@@ -967,7 +1033,7 @@ begin
   _InSAYBAR = true;
 end;
 
-private void CommandDO_STATBAR(string[] tokens)
+procedure TRTReader.CommandDO_STATBAR(ATokens: TTokens);
 {
     (* @DO STATBAR
         This draws the statbar. *)
@@ -979,17 +1045,17 @@ procedure TRTReader.CommandDO_STRIP(ATokens: TTokens);
 begin
   (* @DO STRIP <string variable>
       This strips beginning and end spaces of a string. *)
-  AssignVariable(tokens[2], TranslateVariables(tokens[2]).Trim());
+  AssignVariable(tokens[2], TranslateVariables(ATokens[3]).Trim());
 end;
 
-private void CommandDO_STRIPALL(string[] tokens)
+procedure TRTReader.CommandDO_STRIPALL(ATokens: TTokens);
 {
     (* @DO STRIPALL
         This command strips out all ` codes.  This is good for passwords, etc. *)
     // TODO Unused
 }
 
-private void CommandDO_STRIPBAD(string[] tokens)
+procedure TRTReader.CommandDO_STRIPBAD(ATokens: TTokens);
 {
     (* @DO STRIPBAD
         This strips out illegal ` codes, and replaces badwords with the standard
@@ -997,7 +1063,7 @@ private void CommandDO_STRIPBAD(string[] tokens)
     // TODO Implement
 }
 
-private void CommandDO_STRIPCODE(string[] tokens)
+procedure TRTReader.CommandDO_STRIPCODE(ATokens: TTokens);
 {
     (* @STRIPCODE <any `s variable>
         This will remove ALL ` codes from a string. *)
@@ -1007,10 +1073,10 @@ private void CommandDO_STRIPCODE(string[] tokens)
 procedure TRTReader.CommandDO_SUBTRACT(ATokens: TTokens);
 begin
   (* @DO <Number To Change> <How To Change It> <Change With What> *)
-  AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) - Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+  AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(ATokens[2])) - Convert.ToInt32(TranslateVariables(ATokens[4]))).ToString());
 end;
 
-private void CommandDO_TALK(string[] tokens)
+procedure TRTReader.CommandDO_TALK(ATokens: TTokens);
 {
     (* @DO TALK <message> [recipients]
         Undocumented. Looks like recipients is usually ALL, which sends a global message
@@ -1024,10 +1090,10 @@ begin
                   This nifty command makes text file larger than <number to trim to> get
                   smaller.  (It deletes lines from the top until the file is correct # of lines,
                   if smaller than <number to trim to>, it doesn't change the file) *)
-              string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[2]));
+              string FileName = Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
               if (File.Exists(FileName))
               {
-                  int MaxLines = Convert.ToInt32(TranslateVariables(tokens[3]));
+                  int MaxLines = Convert.ToInt32(TranslateVariables(ATokens[4]));
                   List<string> Lines = new List<string>();
                   Lines.AddRange(FileUtils.FileReadAllLines(FileName, RMEncoding.Ansi));
                   if (Lines.Count > MaxLines)
@@ -1042,7 +1108,7 @@ procedure TRTReader.CommandDO_UPCASE(ATokens: TTokens);
 begin
 (* @DO UPCASE <string variable>
     This makes a string all capitals. *)
-AssignVariable(tokens[2], TranslateVariables(tokens[2]).ToUpper());
+AssignVariable(tokens[2], TranslateVariables(ATokens[3]).ToUpper());
 end;
 
 procedure TRTReader.CommandDO_WRITE(ATokens: TTokens);
@@ -1066,7 +1132,7 @@ begin
   if (Handler != null) Handler(null, EventArgs.Empty);
 end;
 
-private void CommandDRAWPART(string[] tokens)
+procedure TRTReader.CommandDRAWPART(ATokens: TTokens);
 {
     (* @DRAWPART <x> <y>
         This command will draw one block of the current map as defined by <x> and <y>
@@ -1079,7 +1145,7 @@ begin
   _InBEGINCount -= 1;
 end;
 
-private void CommandFIGHT(string[] tokens)
+procedure TRTReader.CommandFIGHT(ATokens: TTokens);
 {
     (* @FIGHT  : Causes the L2 engine to go into fight mode.
         <Monster name>
@@ -1155,7 +1221,7 @@ private void CommandFIGHT(string[] tokens)
     // TODO Implement
 }
 
-private void CommandGRAPHICS(string[] tokens)
+procedure TRTReader.CommandGRAPHICS(ATokens: TTokens);
 {
     (* @GRAPHICS IS <Num>
         3 or more enable remote ANSI.  If you never wanted to send ANSI, you could set
@@ -1173,7 +1239,7 @@ begin
   }
   else
   {
-      _InHALT = Convert.ToInt32(tokens[1]);
+      _InHALT = Convert.ToInt32(ATokens[2]);
   }
 end;
 
@@ -1182,7 +1248,7 @@ begin
   (* @IF bitcheck <`t variable> <bit number> <0 or 1>
       Check if the given bit is set or not in the given `t variable *)
   // TODO Untested
-  return ((Convert.ToInt32(TranslateVariables(tokens[2])) & (1 << Convert.ToInt32(TranslateVariables(tokens[3])))) == Convert.ToInt32(TranslateVariables(tokens[4])));
+  return ((Convert.ToInt32(TranslateVariables(ATokens[3])) & (1 << Convert.ToInt32(TranslateVariables(ATokens[4])))) == Convert.ToInt32(TranslateVariables(ATokens[5])));
 end;
 
 procedure TRTReader.CommandIF_BLOCKPASSABLE(ATokens: TTokens);
@@ -1195,8 +1261,8 @@ procedure TRTReader.CommandIF_CHECKDUPE(ATokens: TTokens);
 begin
   (* @if checkdupe <`s variable> <true or false>
       Check if the given player name already exists *)
-  string GameName = TranslateVariables(tokens[2]);
-  bool TrueFalse = Convert.ToBoolean(TranslateVariables(tokens[3]));
+  string GameName = TranslateVariables(ATokens[3]);
+  bool TrueFalse = Convert.ToBoolean(TranslateVariables(ATokens[4]));
 
   TraderDatRecord TDR;
   bool Exists = (Global.LoadPlayerByGameName(GameName, out TDR) != -1);
@@ -1206,10 +1272,10 @@ end;
 procedure TRTReader.CommandIF_EXIST(ATokens: TTokens);
 begin
   /* Undocumented.  Checks if given file exists *)
-  string Left = TranslateVariables(tokens[1]);
-  string Right = TranslateVariables(tokens[3]);
+  string Left = TranslateVariables(ATokens[2]);
+  string Right = TranslateVariables(ATokens[4]);
 
-  string FileName = Global.GetSafeAbsolutePath(Left);
+  string FileName = Game.GetSafeAbsolutePath(Left);
   bool TrueFalse = Convert.ToBoolean(Right.ToUpper());
   return (File.Exists(FileName) == TrueFalse);
 end;
@@ -1219,16 +1285,16 @@ begin
   (* @IF <Word or variable> INSIDE <Word or variable>
       This allows you to search a string for something inside of it.  Not case
       sensitive. *)
-  string Left = TranslateVariables(tokens[1]);
-  string Right = TranslateVariables(tokens[3]);
+  string Left = TranslateVariables(ATokens[2]);
+  string Right = TranslateVariables(ATokens[4]);
 
   return Right.ToUpper().Contains(Left.ToUpper());
 end;
 
 procedure TRTReader.CommandIF_IS(ATokens: TTokens);
 begin
-  string Left = TranslateVariables(tokens[1]);
-  string Right = TranslateVariables(tokens[3]);
+  string Left = TranslateVariables(ATokens[2]);
+  string Right = TranslateVariables(ATokens[4]);
   int LeftInt;
   int RightInt;
 
@@ -1244,8 +1310,8 @@ end;
 
 procedure TRTReader.CommandIF_LESS(ATokens: TTokens);
 begin
-  string Left = TranslateVariables(tokens[1]);
-  string Right = TranslateVariables(tokens[3]);
+  string Left = TranslateVariables(ATokens[2]);
+  string Right = TranslateVariables(ATokens[4]);
   int LeftInt;
   int RightInt;
 
@@ -1261,8 +1327,8 @@ end;
 
 procedure TRTReader.CommandIF_MORE(ATokens: TTokens);
 begin
-  string Left = TranslateVariables(tokens[1]);
-  string Right = TranslateVariables(tokens[3]);
+  string Left = TranslateVariables(ATokens[2]);
+  string Right = TranslateVariables(ATokens[4]);
   int LeftInt;
   int RightInt;
 
@@ -1278,8 +1344,8 @@ end;
 
 procedure TRTReader.CommandIF_NOT(ATokens: TTokens);
 begin
-  string Left = TranslateVariables(tokens[1]);
-          string Right = TranslateVariables(tokens[3]);
+  string Left = TranslateVariables(ATokens[2]);
+          string Right = TranslateVariables(ATokens[4]);
           int LeftInt;
           int RightInt;
 
@@ -1293,7 +1359,7 @@ begin
           }
 end;
 
-private void CommandITEMEXIT(string[] tokens)
+procedure TRTReader.CommandITEMEXIT(ATokens: TTokens);
 {
     (* @ITEMEXIT
         This tells the item editor to automatically return the player to the map
@@ -1356,22 +1422,22 @@ begin
   // Ignore, nothing to do here
 end;
 
-            private void CommandLOADCURSOR(string[] tokens)
-            {
-                (* @LOADCURSOR
-                    This command restores the cursor to the position before the last @SAVECURSOR
-                    was issued.  This is good for creative graphics and text positioning with a
-                    minimum of calculations.  See @SAVECURSOR below. *)
-                // TODO Implement
-            }
+procedure TRTReader.CommandLOADCURSOR(ATokens: TTokens);
+{
+    (* @LOADCURSOR
+        This command restores the cursor to the position before the last @SAVECURSOR
+        was issued.  This is good for creative graphics and text positioning with a
+        minimum of calculations.  See @SAVECURSOR below. *)
+    // TODO Implement
+}
 
-            private void CommandLOADGLOBALS(string[] tokens)
-            {
-                (* @LOADGLOBALS
-                    This command loads the last value of all global variables as existed when the
-                    last @SAVEGLOBALS command was issued.  See @SAVEGLOBALS below. *)
-                // TODO Unused
-            }
+procedure TRTReader.CommandLOADGLOBALS(ATokens: TTokens);
+{
+    (* @LOADGLOBALS
+        This command loads the last value of all global variables as existed when the
+        last @SAVEGLOBALS command was issued.  See @SAVEGLOBALS below. *)
+    // TODO Unused
+}
 
 procedure TRTReader.CommandLOADMAP(ATokens: TTokens);
 begin
@@ -1382,10 +1448,10 @@ begin
       The L2 engine will display a runtime error and close the door.   Be SURE to
       change the map variable too!!  Using this and changing the X and Y coordinates
       effectivly lets you do a 'warp' from a .ref file. *)
-  Global.LoadMap(Convert.ToInt32(TranslateVariables(tokens[1])));
+  Global.LoadMap(Convert.ToInt32(TranslateVariables(ATokens[2])));
 end;
 
-private void CommandLOADWORLD(string[] tokens)
+            procedure TRTReader.CommandLOADWORLD(ATokens: TTokens);
 {
     (* @LOADWORLD
         This command loads globals and world data.  It has never been used but is
@@ -1393,7 +1459,7 @@ private void CommandLOADWORLD(string[] tokens)
     // TODO Unused
 }
 
-private void CommandLORDRANK(string[] tokens)
+procedure TRTReader.CommandLORDRANK(ATokens: TTokens);
 {
     (* @LORDRANK <filename> <`p variable to rank by>
         This command produces a file as specified by <filename>.  It uses the `p
@@ -1413,7 +1479,7 @@ private void CommandLORDRANK(string[] tokens)
     // TODO Implement
 }
 
-private void CommandMOREMAP(string[] tokens)
+procedure TRTReader.CommandMOREMAP(ATokens: TTokens);
 {
     (* @MOREMAP
         The line UNDER this will be the new <more> prompt.  30 characters maximum. *)
@@ -1444,7 +1510,7 @@ begin
   // Ignore
 end;
 
-private void CommandOFFMAP(string[] tokens)
+procedure TRTReader.CommandOFFMAP(ATokens: TTokens);
 {
     (* @OFFMAP
         This takes the player's symbol off the map.  This makes the player appear to
@@ -1453,7 +1519,7 @@ private void CommandOFFMAP(string[] tokens)
     // TODO Implement
 }
 
-private void CommandOVERHEADMAP(string[] tokens)
+procedure TRTReader.CommandOVERHEADMAP(ATokens: TTokens);
 {
     (* @OVERHEADMAP
         This command displays the visible portion of the map as defined in the world
@@ -1465,7 +1531,7 @@ private void CommandOVERHEADMAP(string[] tokens)
     // TODO Implement
 }
 
-private void CommandPAUSEOFF(string[] tokens)
+procedure TRTReader.CommandPAUSEOFF(ATokens: TTokens);
 {
     (* @PAUSEOFF
         This turns the 24 line pause off so you can show long ansis etc and it won't
@@ -1473,21 +1539,21 @@ private void CommandPAUSEOFF(string[] tokens)
     // TODO Implement
 }
 
-private void CommandPAUSEON(string[] tokens)
+procedure TRTReader.CommandPAUSEON(ATokens: TTokens);
 {
     (* @PAUSEON
         Just the opposite of the above command.  This turns the pause back on. *)
     // TODO Implement
 }
 
-private void CommandPROGNAME(string[] tokens)
+procedure TRTReader.CommandPROGNAME(ATokens: TTokens);
 {
     (* @PROGNAME
         The line UNDER this will be the status bar name of the game. *)
     // TODO Unused
 }
 
-private void CommandRANK(string[] tokens)
+procedure TRTReader.CommandRANK(ATokens: TTokens);
 {
     (* @RANK <filename> <`p variable to rank by> <procedure to format the ranking>
         This command is the same as above with the exception it uses a procedure to
@@ -1511,7 +1577,7 @@ begin
       NOTE:  @READFILE is a smart procedure - It will not run-time error or
       anything, even if you try to read past the end of the file. It simply won't
       change the variables if the file isn't long enough. *)
-  _InREADFILE = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
+  _InREADFILE = Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
   _InREADFILELines.Clear();
 end;
 
@@ -1527,11 +1593,11 @@ begin
   RTReader RTR = new RTReader();
   if (tokens.Length < 4)
   {
-      _InHALT = RTR.RunSection(_CurrentFile.Name, TranslateVariables(tokens[1]));
+      _InHALT = RTR.RunSection(_CurrentFile.Name, TranslateVariables(ATokens[2]));
   }
   else
   {
-      _InHALT = RTR.RunSection(TranslateVariables(tokens[3]), TranslateVariables(tokens[1]));
+      _InHALT = RTR.RunSection(TranslateVariables(ATokens[4]), TranslateVariables(ATokens[2]));
   }
 end;
 
@@ -1540,25 +1606,25 @@ begin
 (* @RUN <Header or label name> IN <Filename of .REF file>
     Same thing as ROUTINE, but doesn't come back to the original .REF. *)
 RTReader RTR = new RTReader();
-_InHALT = RTR.RunSection(TranslateVariables(tokens[3]), TranslateVariables(tokens[1]));
+_InHALT = RTR.RunSection(TranslateVariables(ATokens[4]), TranslateVariables(ATokens[2]));
 _InCLOSESCRIPT = true; // Don't want to resume this ref
 end;
 
-private void CommandSAVECURSOR(string[] tokens)
+procedure TRTReader.CommandSAVECURSOR(ATokens: TTokens);
 {
     (* @SAVECURSOR
         This command saves the current cursor positioning for later retrieval. *)
     // TODO Implement
 }
 
-private void CommandSAVEGLOBALS(string[] tokens)
+procedure TRTReader.CommandSAVEGLOBALS(ATokens: TTokens);
 {
     (* @SAVEGLOBALS
         This command saves the current global variables for later retrieval *)
     // TODO Implement
 }
 
-private void CommandSAVEWORLD(string[] tokens)
+procedure TRTReader.CommandSAVEWORLD(ATokens: TTokens);
 {
     (* @SAVEWORLD
         This command saves stats and world data.  The only use yet is right after
@@ -1573,7 +1639,7 @@ begin
   _InSAY = true;
 end;
 
-private void CommandSELLMANAGER(string[] tokens)
+procedure TRTReader.CommandSELLMANAGER(ATokens: TTokens);
         {
             (* @SELLMANAGER
                 This command presents a menu of the player's current inventory.  The player
@@ -1629,7 +1695,7 @@ begin
   if (Handler != null) Handler(null, EventArgs.Empty);
 end;
 
-private void CommandUPDATE_UPDATE(string[] tokens)
+procedure TRTReader.CommandUPDATE_UPDATE(ATokens: TTokens);
 {
     (* @UPDATE_UPDATE
         This command writes current player data to UPDATE.TMP file.  This is useful
@@ -1643,11 +1709,11 @@ begin
       For instance, you would put @VERSION 2 for this version of RTREADER.  (002) If
       it is run on Version 1, (could happen) a window will pop up warning the person
       he had better get the latest version. *)
-  int RequiredVersion = Convert.ToInt32(tokens[1]);
+  int RequiredVersion = Convert.ToInt32(ATokens[2]);
   if (RequiredVersion > _Version) throw new ArgumentOutOfRangeException("VERSION", "@VERSION requested version " + RequiredVersion + ", we only support version " + _Version);
 end;
 
-private void CommandWHOISON(string[] tokens)
+procedure TRTReader.CommandWHOISON(ATokens: TTokens);
 {
     (* @WHOISON
         Undocumented.  Will need to find out what this does *)
@@ -1664,7 +1730,7 @@ begin
       write - or a combination of the two.
       Note:  @WRITEFILE appends the lines if the file exists, otherwise it creates
       it.  File locking techniques are used. *)
-  _InWRITEFILE = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
+  _InWRITEFILE = Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
 end;
 
 procedure TRTReader.EndCHOICE;
@@ -2199,16 +2265,14 @@ begin
     begin
       if (Pos('@', LineTrimmed) = 1) then
       begin
-        {TODO
-        string[] Tokens = LineTrimmed.Split(' ');
-        case (Tokens[0].ToUpper()) of
-            '@BEGIN':
-                _InBEGINCount += 1;
-            '@END':
-                _InBEGINCount -= 1;
-                if (_InBEGINCount == _InIFFalse) _InIFFalse = 999;
+        Tokens := Tokenize(LineTrimmed, ' ');
+        case UpperCase(ATokens[2]) of
+          '@BEGIN':
+            _InBEGINCount += 1;
+          '@END':
+            _InBEGINCount -= 1;
+            if (_InBEGINCount == _InIFFalse) _InIFFalse = 999;
         end;
-        }
       end;
     end else
     begin
@@ -2237,7 +2301,7 @@ begin
         if (FInDO_ADDLOG) then
         begin
           { TODO
-          FileUtils.FileAppendAllText(Global.GetSafeAbsolutePath("LOGNOW.TXT"), TranslateVariables(Line));
+          FileUtils.FileAppendAllText(Game.GetSafeAbsolutePath("LOGNOW.TXT"), TranslateVariables(Line));
             }
           FInDO_ADDLOG := false;
         end else

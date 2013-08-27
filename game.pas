@@ -18,6 +18,7 @@ var
   WorldDat: world_info;
 
 procedure DrawMap;
+function GetSafeAbsolutePath(AFileName: String): String;
 function LoadDataFiles: Boolean;
 procedure LoadMap(AMapNumber: Integer);
 function LoadPlayerByRealName(ARealName: String; var ARecord: user_rec): Integer;
@@ -75,6 +76,11 @@ begin
 
     mWrite(ToSend);
   end;
+end;
+
+function GetSafeAbsolutePath(AFileName: String): String;
+begin
+  Result := AFileName; // TODO
 end;
 
 function LoadDataFiles: Boolean;

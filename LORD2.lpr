@@ -40,7 +40,6 @@ begin
     if (Game.PlayerNum = -1) then
     begin
       RTReader.Execute('GAMETXT.REF', 'NEWPLAYER');
-      Game.PlayerNum := Game.LoadPlayerByRealName(DropInfo.RealName, Game.Player);
     end;
 
     if (Game.PlayerNum <> -1) then

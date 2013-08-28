@@ -6,24 +6,32 @@ uses
   Struct, SysUtils, RTGlobal, MannDoor, mAnsi, Crt, RTReader;
 
 var
-  CurrentMap: plan_rec;
+  CurrentMap: MapDatRecord;
   ENEMY: String = '';
   IsNewDay: Boolean = false;
-  ItemsDat: item_rec;
+  ItemsDat: ItemsDatCollection;
   LastX: Integer;
   LastY: Integer;
-  MapDat: Array of plan_rec;
-  Player: user_rec;
+  MapDat: Array of MapDatRecord;
+  Player: TraderDatRecord;
   PlayerNum: Integer = -1;
   RESPONSE: String = '';
   Time: Integer = 1;
-  WorldDat: world_info;
+  WorldDat: WorldDatRecord;
+
+  MapDatFileName: String;
+  ItemsDatFileName: String;
+  STimeDatFileName: String;
+  TimeDatFileName: String;
+  TraderDatFileName: String;
+  UpdateTmpFIleName: String;
+  WorldDatFileName: String;
 
 procedure DrawMap;
 function GetSafeAbsolutePath(AFileName: String): String;
 function LoadDataFiles: Boolean;
 procedure LoadMap(AMapNumber: Integer);
-function LoadPlayerByRealName(ARealName: String; var ARecord: user_rec): Integer;
+function LoadPlayerByRealName(ARealName: String; var ARecord: TraderDatRecord): Integer;
 procedure Start;
 function TotalAccounts: Integer;
 procedure Update;
@@ -61,24 +69,24 @@ begin
 
     for X := 1 to 80 do
     begin
-      MI := CurrentMap.W[X][Y];
+      MI := CurrentMap.MapInfo[X][Y];
 
-      if (BG <> MI.bc) then
+      if (BG <> MI.BackColour) then
       begin
-        ToSend := ToSend + mAnsi.aTextBackground(MI.bc);
-        Crt.TextBackground(MI.bc); // Gotta do this to ensure calls to Ansi.* work right
-        BG := MI.bc;
+        ToSend := ToSend + mAnsi.aTextBackground(MI.BackColour);
+        Crt.TextBackground(MI.BackColour); // Gotta do this to ensure calls to Ansi.* work right
+        BG := MI.BackColour;
       end;
 
-      if (FG <> MI.fc) then
+      if (FG <> MI.ForeColour) then
       begin
-        ToSend := ToSend + mAnsi.aTextColor(MI.fc);
-        Crt.TextColor(MI.fc); // Gotta do this to ensure calls to Ansi.* work right
-        FG := MI.fc;
+        ToSend := ToSend + mAnsi.aTextColor(MI.ForeColour);
+        Crt.TextColor(MI.ForeColour); // Gotta do this to ensure calls to Ansi.* work right
+        FG := MI.ForeColour;
       end;
 
       GotoXY(1, Y);
-      ToSend := ToSend + MI.c;
+      ToSend := ToSend + MI.Ch;
     end;
 
     mWrite(ToSend);
@@ -86,8 +94,12 @@ begin
 end;
 
 function GetSafeAbsolutePath(AFileName: String): String;
+var
+  S: AnsiString;
 begin
-  Result := AFileName; // TODO
+  S := AFileName;
+  DoDirSeparators(S); // Ensure \ and / are used appropriately
+  Result := IncludeTrailingPathDelimiter(ParamStr(0)) + S;
 end;
 
 function LoadDataFiles: Boolean;
@@ -102,10 +114,10 @@ end;
 
 function LoadItemsDat: Boolean;
 var
-  F: File of item_rec;
+  F: File of ItemsDatCollection;
 begin
   // TODO Retry if IOError
-  Assign(F, 'ITEMS.DAT');
+  Assign(F, ItemsDatFileName);
   {$I-}Reset(F);{$I+}
   if (IOResult = 0) then
   begin
@@ -113,7 +125,7 @@ begin
     Result := true;
   end else
   begin
-    mWriteLn('Unable to open ITEMS.DAT');
+    mWriteLn('Unable to open ' + ItemsDatFileName);
     Result := false;
   end;
   Close(F);
@@ -121,16 +133,16 @@ end;
 
 procedure LoadMap(AMapNumber: Integer);
 begin
-  CurrentMap := MapDat[WorldDat.loc[AMapNumber]];
+  CurrentMap := MapDat[WorldDat.MapDatIndex[AMapNumber]];
 end;
 
 function LoadMapDat: Boolean;
 var
-  F: File of plan_rec;
+  F: File of MapDatRecord;
   I: Integer;
 begin
   // TODO Retry if IOError
-  Assign(F, 'MAP.DAT');
+  Assign(F, MapDatFileName);
   {$I-}Reset(F);{$I+}
   if (IOResult = 0) then
   begin
@@ -143,22 +155,22 @@ begin
     Result := true;
   end else
   begin
-    mWriteLn('Unable to open MAP.DAT');
+    mWriteLn('Unable to open ' + MapDatFileName);
     Result := false;
   end;
   Close(F);
 end;
 
-function LoadPlayerByRealName(ARealName: String; var ARecord: user_rec): Integer;
+function LoadPlayerByRealName(ARealName: String; var ARecord: TraderDatRecord): Integer;
 var
-  F: File of user_rec;
+  F: File of TraderDatRecord;
   I: Integer;
-  Rec: user_rec;
+  Rec: TraderDatRecord;
 begin
   Result := -1;
 
   // TODO Retry if IOError
-  Assign(F, 'TRADER.DAT');
+  Assign(F, TraderDatFileName);
   {$I-}Reset(F);{$I+}
   if (IOResult = 0) then
   begin
@@ -166,7 +178,7 @@ begin
     repeat
       I := I + 1;
       Read(F, Rec);
-      if (UpperCase(Rec.real_names) = UpperCase(ARealName)) then
+      if (UpperCase(Rec.RealName) = UpperCase(ARealName)) then
       begin
         ARecord := Rec;
         Result := I;
@@ -187,10 +199,10 @@ begin
   DecodeDate(Date, Y, M, D);
   STime := IntToStr(Y + M + D);
 
-  if (FileExists('STIME.DAT')) then
+  if (FileExists(STimeDatFileName)) then
   begin
     // TODO Retry if IOError
-    Assign(F, 'STIME.DAT');
+    Assign(F, STimeDatFileName);
     {$I-}Reset(F);{$I+}
     if (IOResult = 0) then
     begin
@@ -209,7 +221,7 @@ begin
   if (IsNewDay) then
   begin
     // TODO Retry if IOError
-    Assign(F, 'STIME.DAT');
+    Assign(F, STimeDatFileName);
     {$I-}ReWrite(F);{$I+}
     if (IOResult = 0) then
     begin
@@ -226,10 +238,10 @@ var
   F: Text;
   S: String;
 begin
-  if (FileExists('TIME.DAT')) then
+  if (FileExists(TimeDatFileName)) then
   begin
     // TODO Retry if IOError
-    Assign(F, 'TIME.DAT');
+    Assign(F, TimeDatFileName);
     {$I-}Reset(F);{$I+}
     if (IOResult = 0) then
     begin
@@ -247,7 +259,7 @@ begin
     Time := Time + 1;
 
     // TODO Retry if IOError
-    Assign(F, 'TIME.DAT');
+    Assign(F, TimeDatFileName);
     {$I-}ReWrite(F);{$I+}
     if (IOResult = 0) then
     begin
@@ -261,10 +273,15 @@ end;
 
 function LoadWorldDat: Boolean;
 var
-  F: File of world_info;
+  F: File of WorldDatRecord;
 begin
+  if Not(FileExists(WorldDatFileName)) then
+  begin
+    // TODO Generate the file
+  end;
+
   // TODO Retry if IOError
-  Assign(F, 'WORLD.DAT');
+  Assign(F, WorldDatFileName);
   {$I-}Reset(F);{$I+}
   if (IOResult = 0) then
   begin
@@ -272,7 +289,7 @@ begin
     Result := true;
   end else
   begin
-    mWriteLn('Unable to open WORLD.DAT');
+    mWriteLn('Unable to open ' + WorldDatFileName);
     Result := false;
   end;
   Close(F);
@@ -288,81 +305,81 @@ begin
   // Check for movement to new screen
   if (x = 0) then
   begin
-    Player.lmap := Player.map; // TODO Only if map was visible, according to 3rdparty.doc
-    Player.map -= 1;
+    Player.LastMap := Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
+    Player.Map -= 1;
     Player.X := 80;
 
-    LoadMap(Player.map);
+    LoadMap(Player.Map);
     DrawMap;
     Update;
   end else
   if (x = 81) then
   begin
-    Player.lmap := Player.map; // TODO Only if map was visible, according to 3rdparty.doc
-    Player.map += 1;
+    Player.LastMap := Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
+    Player.Map += 1;
     Player.X := 1;
 
-    LoadMap(Player.map);
+    LoadMap(Player.Map);
     DrawMap;
     Update;
   end else
   if (y = 0) then
   begin
-    Player.lmap := Player.map; // TODO Only if map was visible, according to 3rdparty.doc
-    Player.map -= 80;
+    Player.LastMap := Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
+    Player.Map -= 80;
     Player.Y := 20;
 
-    LoadMap(Player.map);
+    LoadMap(Player.Map);
     DrawMap;
     Update;
   end else
   if (y = 21) then
   begin
-    Player.lmap := Player.map; // TODO Only if map was visible, according to 3rdparty.doc
-    Player.map += 80;
+    Player.LastMap := Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
+    Player.Map += 80;
     Player.Y := 1;
 
-    LoadMap(Player.map);
+    LoadMap(Player.Map);
     DrawMap;
     Update;
   end else
   begin
-    if (CurrentMap.w[x][y].s = 1) then
+    if (CurrentMap.MapInfo[x][y].Terrain = 1) then
     begin
       // Erase player
-      mTextBackground(CurrentMap.w[Player.x][Player.y].bc);
-      mTextColor(CurrentMap.w[Player.x][Player.y].fc);
+      mTextBackground(CurrentMap.MapInfo[Player.x][Player.y].BackColour);
+      mTextColor(CurrentMap.MapInfo[Player.x][Player.y].ForeColour);
       mGotoXY(Player.x, Player.y);
-      mWrite(CurrentMap.w[Player.x][Player.y].c);
+      mWrite(CurrentMap.MapInfo[Player.x][Player.y].Ch);
 
       // Update position and draw player
-      LastX := Player.x;
-      LastY := Player.y;
-      Player.x := x;
-      Player.y := y;
+      LastX := Player.X;
+      LastY := Player.Y;
+      Player.X := x;
+      Player.Y := y;
       Update;
     end;
   end;
 
   // Check for special
-  for I := Low(CurrentMap.special) to High(CurrentMap.special) do
+  for I := Low(CurrentMap.HotSpots) to High(CurrentMap.HotSpots) do
   begin
-    if (CurrentMap.special[I].dx = x) AND (CurrentMap.special[I].dy = y) then
+    if (CurrentMap.HotSpots[I].HotSpotX = x) AND (CurrentMap.HotSpots[I].HotSpotY = y) then
     begin
-      if (CurrentMap.special[I].move_place > 0) AND (CurrentMap.special[I].x > 0) AND (CurrentMap.special[I].y > 0) then
+      if (CurrentMap.HotSpots[I].WarpToMap > 0) AND (CurrentMap.HotSpots[I].WarpToX > 0) AND (CurrentMap.HotSpots[I].WarpToY > 0) then
       begin
-        Player.lmap := Player.map; // TODO Only if map was visible, according to 3rdparty.doc
-        Player.map := CurrentMap.special[I].move_place;
-        Player.x := CurrentMap.special[I].x;
-        Player.y := CurrentMap.special[I].y;
+        Player.LastMap := Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
+        Player.Map := CurrentMap.HotSpots[I].WarpToMap;
+        Player.X := CurrentMap.HotSpots[I].WarpToX;
+        Player.Y := CurrentMap.HotSpots[I].WarpToY;
 
-        LoadMap(Player.map);
+        LoadMap(Player.Map);
         DrawMap;
         Update;
       end else
-      if (CurrentMap.special[I].reffile <> '') AND (CurrentMap.special[I].refname <> '') then
+      if (CurrentMap.HotSpots[I].RefFile <> '') AND (CurrentMap.HotSpots[I].RefSection <> '') then
       begin
-        RTReader.Execute(CurrentMap.special[I].reffile, CurrentMap.special[I].refname);
+        RTReader.Execute(CurrentMap.HotSpots[I].RefFile, CurrentMap.HotSpots[I].RefSection);
       end;
     end;
   end;
@@ -399,7 +416,7 @@ end;
 procedure Update;
 begin
   // Draw the Player
-  mTextBackground(CurrentMap.w[Player.x][Player.y].bc);
+  mTextBackground(CurrentMap.MapInfo[Player.x][Player.y].BackColour);
   mTextColor(Crt.White);
   mGotoXY(Player.x, Player.y);
   mWrite(#02);
@@ -407,5 +424,13 @@ begin
   // TODO Draw the other players
 end;
 
+begin
+  ItemsDatFileName := GetSafeAbsolutePath('ITEMS.DAT');
+  MapDatFileName := GetSafeAbsolutePath('MAP.DAT');
+  STimeDatFileName := GetSafeAbsolutePath('STIME.DAT');
+  TimeDatFileName := GetSafeAbsolutePath('TIME.DAT');
+  TraderDatFileName := GetSafeAbsolutePath('TRADER.DAT');
+  UpdateTmpFileName := GetSafeAbsolutePath('UPDATE.TMP');
+  WorldDatFileName := GetSafeAbsolutePath('WORLD.DAT');
 end.
 

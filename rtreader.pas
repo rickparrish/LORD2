@@ -32,7 +32,7 @@ type
     FInSHOWSCROLLLines: TStringList;
     FInWRITEFILE: String;
 
-    function AssignVariable(AVariable: String; AValue: String): String;
+    procedure AssignVariable(AVariable: String; AValue: String);
 
     procedure CommandADDCHAR(ATokens: TTokens);
     procedure CommandBEGIN(ATokens: TTokens);
@@ -168,7 +168,7 @@ implementation
 uses
   Game;
 
-function TRTReader.AssignVariable(AVariable: String; AValue: String): String;
+procedure TRTReader.AssignVariable(AVariable: String; AValue: String);
 var
   VariableUpper: String;
   VariableSkipTwo: String;
@@ -183,10 +183,10 @@ begin
     'DEAD': Game.Player.dead := StrToInt(AValue);
     'ENEMY': Game.ENEMY := AValue;
     'MAP': Game.Player.map := StrToInt(AValue);
-    'MONEY': Game.Player.gold := StrToInt(AValue);
-    'NARM': Game.Player.arm := StrToInt(AValue);
-    'NWEP': Game.Player.wep := StrToInt(AValue);
-    'SEXMALE': Game.Player.sex_male := StrToInt(AValue);
+    'MONEY': Game.Player.Money := StrToInt(AValue);
+    'NARM': Game.Player.ArmourNumber := StrToInt(AValue);
+    'NWEP': Game.Player.WeaponNumber := StrToInt(AValue);
+    'SEXMALE': Game.Player.SexMale := StrToInt(AValue);
     'X': Game.Player.x := StrToInt(AValue);
     'Y': Game.Player.y := StrToInt(AValue);
     else
@@ -196,7 +196,7 @@ begin
       if (Pos('`I', VariableUpper) = 1) then
       begin
           // Player int
-          Game.Player.item[StrToInt(VariableSkipTwo)] := StrToInt(ExtractDelimited(1, AValue, [' ']));
+          Game.Player.I[StrToInt(VariableSkipTwo)] := StrToInt(ExtractDelimited(1, AValue, [' ']));
       end;
       if (Pos('`P', VariableUpper) = 1) then
       begin
@@ -206,7 +206,7 @@ begin
       if (Pos('`+', VariableUpper) = 1) then
       begin
           // Global item name
-          Game.ItemsDat.i[StrToInt(VariableSkipTwo)].name := AValue;
+          Game.ItemsDat.Item[StrToInt(VariableSkipTwo)].name := AValue;
       end;
       if (Pos('`S', VariableUpper) = 1) then
       begin
@@ -216,7 +216,7 @@ begin
       if (Pos('`T', VariableUpper) = 1) then
       begin
           // Player byte
-          Game.Player.b[StrToInt(VariableSkipTwo)] := StrToInt(ExtractDelimited(1, AValue, [' ']));
+          Game.Player.T[StrToInt(VariableSkipTwo)] := StrToInt(ExtractDelimited(1, AValue, [' ']));
       end;
       if (Pos('`V', VariableUpper) = 1) then
       begin
@@ -279,7 +279,9 @@ end;
 
 procedure TRTReader.CommandADDCHAR(ATokens: TTokens);
 var
-  UTR: q_update;
+  FTraderDat: File of TraderDatRecord;
+  FUpdateTmp: File of UpdateTmpRecord;
+  UTR: UpdateTmpRecord;
 begin
   (* @ADDCHAR
       This command adds a new character to the TRADER.DAT file.  This command is
@@ -289,17 +291,33 @@ begin
       to do this can result in a corrupted TRADER.DAT file. *)
   // TODO a race condition could cause these two inserts to be out of sync
 
-  Game.Player.real_names := DropInfo.Alias;
-  // TODO Add Game.Player to end of TRADER.DAT
-  // TODO Assign Game.PlayerNum
+  Game.Player.RealName := DropInfo.Alias;
+  // TODO Retry if IOError
+  Assign(FTraderDat, TraderDatFileName);
+  {$I-}Reset(FTraderDat);{$I+}
+  if (IOResult = 0) then
+  begin
+    Seek(FTraderDat, FileSize(FTraderDat));
+    Write(FTraderDat, Game.Player);
+    Game.PlayerNum := FileSize(FTraderDat);
+  end;
+  Close(FTraderDat);
 
   UTR.x := Game.Player.x;
   UTR.y := Game.Player.y;
   UTR.map := Game.Player.map;
-  UTR.on_now := 0;
+  UTR.OnNow := 0;
   UTR.busy := 0;
   UTR.battle := 0;
-  // TODO Add UTR to end of UPDATE.TMP
+  // TODO Retry if IOError
+  Assign(FUpdateTmp, UpdateTmpFIleName);
+  {$I-}Reset(FUpdateTmp);{$I+}
+  if (IOResult = 0) then
+  begin
+    Seek(FUpdateTmp, FileSize(FUpdateTmp));
+    Write(FUpdateTmp, UTR);
+  end;
+  Close(FUpdateTmp);
 end;
 
 procedure TRTReader.CommandBEGIN(ATokens: TTokens);
@@ -2463,12 +2481,12 @@ begin
       end;
     end;
     'MAP': AText := IntToStr(Game.Player.map);
-    'MONEY': AText := IntToStr(Game.Player.gold);
-    'NARM': AText := IntToStr(Game.Player.arm);
+    'MONEY': AText := IntToStr(Game.Player.Money);
+    'NARM': AText := IntToStr(Game.Player.ArmourNumber);
     'NIL': AText := '';
-    'NWEP': AText := IntToStr(Game.Player.wep);
+    'NWEP': AText := IntToStr(Game.Player.WeaponNumber);
     'RESPONCE', 'RESPONSE': AText := Game.RESPONSE;
-    'SEXMALE': AText := IntToStr(Game.Player.sex_male);
+    'SEXMALE': AText := IntToStr(Game.Player.SexMale);
     'X': AText := IntToStr(Game.Player.x);
     'Y': AText := IntToStr(Game.Player.y);
     else
@@ -2478,9 +2496,9 @@ begin
       begin
         if (Pos('`I', TextUpper) > 0) then
         begin
-          for I := Low(Game.Player.item) to High(Game.Player.item) do
+          for I := Low(Game.Player.I) to High(Game.Player.I) do
           begin
-            AText := StringReplace(AText, '`I' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.item[I]), [rfReplaceAll, rfIgnoreCase]);
+            AText := StringReplace(AText, '`I' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.I[I]), [rfReplaceAll, rfIgnoreCase]);
           end;
         end;
         if (Pos('`P', TextUpper) > 0) then
@@ -2492,9 +2510,9 @@ begin
         end;
         if (Pos('`+', TextUpper) > 0) then
         begin
-          for I := Low(Game.ItemsDat.i) to High(Game.ItemsDat.i) do
+          for I := Low(Game.ItemsDat.Item) to High(Game.ItemsDat.Item) do
           begin
-            AText := StringReplace(AText, '`+' + mStrings.PadLeft(IntToStr(I), '0', 2), Game.ItemsDat.i[I].name, [rfReplaceAll, rfIgnoreCase]);
+            AText := StringReplace(AText, '`+' + mStrings.PadLeft(IntToStr(I), '0', 2), Game.ItemsDat.Item[I].name, [rfReplaceAll, rfIgnoreCase]);
           end;
         end;
         if (Pos('`S', TextUpper) > 0) then
@@ -2506,9 +2524,9 @@ begin
         end;
         if (Pos('`T', TextUpper) > 0) then
         begin
-          for I := Low(Game.Player.b) to High(Game.Player.b) do
+          for I := Low(Game.Player.T) to High(Game.Player.T) do
           begin
-            AText := StringReplace(AText, '`T' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.b[I]), [rfReplaceAll, rfIgnoreCase]);
+            AText := StringReplace(AText, '`T' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.T[I]), [rfReplaceAll, rfIgnoreCase]);
           end;
         end;
         if (Pos('`V', TextUpper) > 0) then
@@ -2538,23 +2556,23 @@ begin
         AText := StringReplace(AText, '&realname', DropInfo.Alias, [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&date', 'TODO &date', [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&nicedate', 'TODO &nicedate', [rfReplaceAll, rfIgnoreCase]);
-        if (Game.Player.arm = 0) then
+        if (Game.Player.ArmourNumber = 0) then
         begin
           AText := StringReplace(AText, 's&armour', '', [rfReplaceAll, rfIgnoreCase]);
         end else
         begin
-          AText := StringReplace(AText, 's&armour', Game.ItemsDat.i[Game.Player.arm].name, [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&armour', Game.ItemsDat.Item[Game.Player.ArmourNumber].name, [rfReplaceAll, rfIgnoreCase]);
         end;
-        AText := StringReplace(AText, 's&arm_num', IntToStr(Game.Player.arm), [rfReplaceAll, rfIgnoreCase]);
-        if (Game.Player.wep = 0) then
+        AText := StringReplace(AText, 's&arm_num', IntToStr(Game.Player.ArmourNumber), [rfReplaceAll, rfIgnoreCase]);
+        if (Game.Player.WeaponNumber = 0) then
         begin
           AText := StringReplace(AText, 's&weapon', '', [rfReplaceAll, rfIgnoreCase]);
         end else
         begin
-          AText := StringReplace(AText, 's&weapon', Game.ItemsDat.i[Game.Player.wep].name, [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&weapon', Game.ItemsDat.Item[Game.Player.WeaponNumber].name, [rfReplaceAll, rfIgnoreCase]);
         end;
-        AText := StringReplace(AText, 's&wep_num', IntToStr(Game.Player.wep), [rfReplaceAll, rfIgnoreCase]);
-        if (Game.Player.sex_male = 1) then
+        AText := StringReplace(AText, 's&wep_num', IntToStr(Game.Player.WeaponNumber), [rfReplaceAll, rfIgnoreCase]);
+        if (Game.Player.SexMale = 1) then
         begin
           AText := StringReplace(AText, 's&son', 'son', [rfReplaceAll, rfIgnoreCase]);
           AText := StringReplace(AText, 's&boy', 'boy', [rfReplaceAll, rfIgnoreCase]);
@@ -2571,15 +2589,15 @@ begin
           AText := StringReplace(AText, 's&him', 'her', [rfReplaceAll, rfIgnoreCase]);
           AText := StringReplace(AText, 's&his', 'hers', [rfReplaceAll, rfIgnoreCase]);
         end;
-        AText := StringReplace(AText, '&money', IntToStr(Game.Player.gold), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&money', IntToStr(Game.Player.WeaponNumber), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&bank', IntToStr(Game.Player.bank), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&lastx', IntToStr(Game.LastX), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&lasty', IntToStr(Game.LastY), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&map', IntToStr(Game.Player.map), [rfReplaceAll, rfIgnoreCase]);
-        AText := StringReplace(AText, '&lmap', IntToStr(Game.Player.lmap), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&lmap', IntToStr(Game.Player.LastMap), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&time', IntToStr(Game.Time), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&timeleft', IntToStr(mTimeLeft div 60), [rfReplaceAll, rfIgnoreCase]);
-        AText := StringReplace(AText, '&sex', IntToStr(Game.Player.sex_male), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&sex', IntToStr(Game.Player.SexMale), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&playernum', IntToStr(Game.PlayerNum), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&totalaccounts', IntToStr(Game.TotalAccounts), [rfReplaceAll, rfIgnoreCase]);
       end;

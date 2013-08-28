@@ -12,7 +12,7 @@ type
     Sections: TFPHashObjectList;
 
     constructor Create(AFileName: String);
-    destructor Destroy;
+    destructor Destroy; override;
   end;
 
 implementation
@@ -27,6 +27,9 @@ end;
 destructor TRTRefFile.Destroy;
 begin
   inherited Destroy;
+
+  Sections.Clear;
+  Sections.Free;
 end;
 
 end.

@@ -16,6 +16,7 @@ var
   Player: TraderDatRecord;
   PlayerNum: Integer = -1;
   RESPONSE: String = '';
+  STime: Integer;
   Time: Integer = 1;
   WorldDat: WorldDatRecord;
 
@@ -24,7 +25,7 @@ var
   STimeDatFileName: String;
   TimeDatFileName: String;
   TraderDatFileName: String;
-  UpdateTmpFIleName: String;
+  UpdateTmpFileName: String;
   WorldDatFileName: String;
 
 procedure DrawMap;
@@ -32,6 +33,7 @@ function GetSafeAbsolutePath(AFileName: String): String;
 function LoadDataFiles: Boolean;
 procedure LoadMap(AMapNumber: Integer);
 function LoadPlayerByRealName(ARealName: String; var ARecord: TraderDatRecord): Integer;
+procedure MoveBack;
 procedure Start;
 function TotalAccounts: Integer;
 procedure Update;
@@ -99,7 +101,7 @@ var
 begin
   S := AFileName;
   DoDirSeparators(S); // Ensure \ and / are used appropriately
-  Result := IncludeTrailingPathDelimiter(ParamStr(0)) + S;
+  Result := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + S;
 end;
 
 function LoadDataFiles: Boolean;
@@ -193,11 +195,10 @@ function LoadSTimeDat: Boolean;
 var
   F: Text;
   S: String;
-  STime: String;
   Y, M, D: Word;
 begin
   DecodeDate(Date, Y, M, D);
-  STime := IntToStr(Y + M + D);
+  STime := Y + M + D;
 
   if (FileExists(STimeDatFileName)) then
   begin
@@ -207,7 +208,7 @@ begin
     if (IOResult = 0) then
     begin
       ReadLn(F, S);
-      if (S <> STime) then
+      if (StrToInt(S) <> STime) then
       begin
         IsNewDay := true;
       end;
@@ -293,6 +294,20 @@ begin
     Result := false;
   end;
   Close(F);
+end;
+
+procedure MoveBack;
+begin
+  // Erase player
+  mTextBackground(CurrentMap.MapInfo[Player.x][Player.y].BackColour);
+  mTextColor(CurrentMap.MapInfo[Player.x][Player.y].ForeColour);
+  mGotoXY(Player.x, Player.y);
+  mWrite(CurrentMap.MapInfo[Player.x][Player.y].Ch);
+
+  // Update position and draw player
+  Player.X := LastX;
+  Player.Y := LastY;
+  Update;
 end;
 
 procedure MovePlayer(AXOffset, AYOffset: Integer);

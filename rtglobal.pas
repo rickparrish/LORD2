@@ -73,6 +73,7 @@ begin
         NewSection.Script.Add(SL[I]);
     end;
   end;
+  SL.Free;
 
   // Store last section we were working on in dictionary
   if (NewFile.Sections.FindIndexOf(NewSectionName) <> -1) then

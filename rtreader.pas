@@ -158,7 +158,7 @@ type
     function TranslateVariables(AText: String): String;
   public
     constructor Create;
-    destructor Destroy;
+    destructor Destroy; override;
   end;
 
 procedure Execute(AFileName: string; ASectionName: string);
@@ -179,16 +179,16 @@ begin
 
   // Handle variables that must match exactly
   case VariableUpper of
-    'BANK': Game.Player.bank := StrToInt(AValue);
-    'DEAD': Game.Player.dead := StrToInt(AValue);
+    'BANK': Game.Player.bank := StrToInt(ExtractDelimited(1, AValue, [' ']));
+    'DEAD': Game.Player.dead := StrToInt(ExtractDelimited(1, AValue, [' ']));
     'ENEMY': Game.ENEMY := AValue;
-    'MAP': Game.Player.map := StrToInt(AValue);
-    'MONEY': Game.Player.Money := StrToInt(AValue);
-    'NARM': Game.Player.ArmourNumber := StrToInt(AValue);
-    'NWEP': Game.Player.WeaponNumber := StrToInt(AValue);
-    'SEXMALE': Game.Player.SexMale := StrToInt(AValue);
-    'X': Game.Player.x := StrToInt(AValue);
-    'Y': Game.Player.y := StrToInt(AValue);
+    'MAP': Game.Player.map := StrToInt(ExtractDelimited(1, AValue, [' ']));
+    'MONEY': Game.Player.Money := StrToInt(ExtractDelimited(1, AValue, [' ']));
+    'NARM': Game.Player.ArmourNumber := StrToInt(ExtractDelimited(1, AValue, [' ']));
+    'NWEP': Game.Player.WeaponNumber := StrToInt(ExtractDelimited(1, AValue, [' ']));
+    'SEXMALE': Game.Player.SexMale := StrToInt(ExtractDelimited(1, AValue, [' ']));
+    'X': Game.Player.x := StrToInt(ExtractDelimited(1, AValue, [' ']));
+    'Y': Game.Player.y := StrToInt(ExtractDelimited(1, AValue, [' ']));
     else
     begin
       // Handle global and player variables
@@ -291,7 +291,6 @@ begin
       to do this can result in a corrupted TRADER.DAT file. *)
   // TODO a race condition could cause these two inserts to be out of sync
 
-  Game.Player.RealName := DropInfo.Alias;
   // TODO Retry if IOError
   Assign(FTraderDat, TraderDatFileName);
   {$I-}Reset(FTraderDat);{$I+}
@@ -303,14 +302,14 @@ begin
   end;
   Close(FTraderDat);
 
-  UTR.x := Game.Player.x;
-  UTR.y := Game.Player.y;
-  UTR.map := Game.Player.map;
+  UTR.X := Game.Player.X;
+  UTR.Y := Game.Player.Y;
+  UTR.Map := Game.Player.Map;
   UTR.OnNow := 0;
-  UTR.busy := 0;
-  UTR.battle := 0;
+  UTR.Busy := 0;
+  UTR.Battle := 0;
   // TODO Retry if IOError
-  Assign(FUpdateTmp, UpdateTmpFIleName);
+  Assign(FUpdateTmp, UpdateTmpFileName);
   {$I-}Reset(FUpdateTmp);{$I+}
   if (IOResult = 0) then
   begin
@@ -422,63 +421,67 @@ begin
 end;
 
 procedure TRTReader.CommandCLEAR(ATokens: TTokens);
+var
+  Y: Integer;
 begin
-  {TODO
-  switch (tokens[1].ToUpper())
-  {
-      case "ALL":
-          (* @CLEAR ALL
-              This clears user text, picture, game text, name and redraws screen. *)
-          CommandCLEAR("@CLEAR USERSCREEN".Split(' '));
-          CommandCLEAR("@CLEAR PICTURE".Split(' '));
-          CommandCLEAR("@CLEAR TEXT".Split(' '));
-          CommandCLEAR("@CLEAR NAME".Split(' '));
-          // TODO And redraws the screen
-          break;
-      case "NAME":
-          (* @CLEAR NAME
-              This deletes the name line of the game window. *)
-          Door.GotoXY(55, 15);
-          Door.Write(new string(' ', 22));
-          break;
-      case "PICTURE":
-          (* @CLEAR PICTURE
-              This clears the picture. *)
-          for (int y = 3; y <= 13; y++)
-          {
-              Door.GotoXY(55, y);
-              Door.Write(new string(' ', 22));
-          }
-          break;
-      case "SCREEN":
-          (* @CLEAR SCREEN
-              This command clears the entire screen. *)
-          Door.ClrScr();
-          break;
-      case "TEXT":
-          (* @CLEAR TEXT
-              This clears game text. *)
-          for (int y = 3; y <= 13; y++)
-          {
-              Door.GotoXY(32, y);
-              Door.Write(new string(' ', 22));
-          }
-          break;
-      case "USERSCREEN":
-          (* @CLEAR USERSCREEN
-              This clears user text. *)
-          for (int y = 16; y <= 23; y++)
-          {
-              Door.GotoXY(1, y);
-              Door.Write(new string(' ', 80));
-          }
-          Door.GotoXY(78, 23);
-          break;
-      default:
-          // TODO Implement
-          break;
-  }
-  }
+  case UpperCase(ATokens[2]) of
+    'ALL':
+    begin
+      (* @CLEAR ALL
+          This clears user text, picture, game text, name and redraws screen. *)
+      CommandCLEAR(Tokenize('@CLEAR USERSCREEN', ' '));
+      CommandCLEAR(Tokenize('@CLEAR PICTURE', ' '));
+      CommandCLEAR(Tokenize('@CLEAR TEXT', ' '));
+      CommandCLEAR(Tokenize('@CLEAR NAME', ' '));
+      // TODO And redraws the screen
+    end;
+    'NAME':
+    begin
+      (* @CLEAR NAME
+          This deletes the name line of the game window. *)
+      mGotoXY(55, 15);
+      mWrite(mStrings.PadRight('', ' ', 22));
+    end;
+    'PICTURE':
+    begin
+      (* @CLEAR PICTURE
+          This clears the picture. *)
+      for Y := 3 to 13 do
+      begin
+          mGotoXY(55, y);
+          mWrite(mStrings.PadRight('', ' ', 22));
+      end;
+    end;
+    'SCREEN':
+    begin
+      (* @CLEAR SCREEN
+          This command clears the entire screen. *)
+      mClrScr();
+    end;
+    'TEXT':
+    begin
+      (* @CLEAR TEXT
+          This clears game text. *)
+      for Y := 3 to 13 do
+      begin
+          mGotoXY(32, y);
+          mWrite(mStrings.PadRight('', ' ', 22));
+      end;
+    end;
+    'USERSCREEN':
+    begin
+      (* @CLEAR USERSCREEN
+          This clears user text. *)
+      for Y := 16 to 23 do
+      begin
+          mGotoXY(1, y);
+          mWrite(mStrings.PadRight('', ' ', 80));
+      end;
+      mGotoXY(78, 23);
+    end;
+    else
+      LogMissing(ATokens);
+  end;
 end;
 
 procedure TRTReader.CommandCLEARBLOCK(ATokens: TTokens);
@@ -532,22 +535,32 @@ end;
 
 procedure TRTReader.CommandCOPYFILE(ATokens: TTokens);
 var
-  DestFile: String;
-  SourceFile: String;
+  DestFile: TFileStream;
+  DestFileName: String;
+  SourceFile: TFileStream;
+  SourceFileName: String;
 begin
   (* @COPYFILE <input filename> <output filename>
       This command copies a <input filename to <output filename>.           *)
-  SourceFile := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
-  DestFile := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
-  if ((SourceFile <> '') AND (DestFile <> '') AND (FileExists(SourceFile))) then
+  SourceFileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
+  DestFileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
+  if ((SourceFileName <> '') AND (DestFileName <> '') AND (FileExists(SourceFileName))) then
   begin
-    //TODO FileUtils.FileCopy(SourceFile, DestFile);
+    // TODO Error handling
+    SourceFile := TFileStream.Create(SourceFileName, fmOpenRead);
+    DestFile := TFileStream.Create(DestFileName, fmCreate);
+    DestFile.CopyFrom(SourceFile, SourceFile.Size);
+    SourceFile.Free;
+    DestFile.Free;
   end;
 end;
 
 procedure TRTReader.CommandDATALOAD(ATokens: TTokens);
 var
+  F: File of IdfRecord;
   FileName: String;
+  I: Integer;
+  Idf: IdfRecord;
 begin
   (* @DATALOAD <filename> <record (1 to 200)> <`p variable to put it in> : This loads
       a long integer by # from a datafile.  If the file doesn't exist, it is created
@@ -558,39 +571,44 @@ begin
   begin
     if (FileExists(FileName)) then
     begin
-        { TODO
-        using (FileStream FS = new FileStream(FileName, FileMode.Open))
-        {
-            IGM_DATA IGMD = DataStructures.ReadStruct<IGM_DATA>(FS);
-            AssignVariable(tokens[3], IGMD.Data[Convert.ToInt32(TranslateVariables(ATokens[3])) - 1].ToString());
-        }
-        }
+      // TODO Error handling
+      Assign(F, FileName);
+      {$I-}Reset(F);{$I+}
+      if (IOResult = 0) then
+      begin
+        Read(F, Idf);
+      end;
+      Close(F);
+
+      AssignVariable(ATokens[4], IntToStr(Idf.Data[StrToInt(ATokens[3])]));
     end else
     begin
-        { TODO
-        using (FileStream FS = new FileStream(FileName, FileMode.Create, FileAccess.Write))
-        {
-            IGM_DATA IGMD = new IGM_DATA(true);
-            IGMD.LastUsed = DateTime.Now.Month + DateTime.Now.Day;
-            for (int i = 0; i < IGMD.Data.Length; i++)
-            {
-                IGMD.Data[i] = 0;
-            }
-            for (int i = 0; i < IGMD.Extra.Length; i++)
-            {
-                IGMD.Extra[i] = '\0';
-            }
-            DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
-        }
-        }
-        AssignVariable(ATokens[4], '0');
+      Idf.LastUsed := Game.STime;
+      for I := Low(Idf.Data) to High(Idf.Data) do
+      begin
+        Idf.Data[I] := 0;
+      end;
+
+      // TODO Error handling
+      Assign(F, FileName);
+      {$I-}ReWrite(F);{$I+}
+      if (IOResult = 0) then
+      begin
+        Write(F, Idf);
+      end;
+      Close(F);
+
+      AssignVariable(ATokens[4], '0');
     end;
   end;
 end;
 
 procedure TRTReader.CommandDATANEWDAY(ATokens: TTokens);
 var
+  F: File of IdfRecord;
   FileName: String;
+  I: Integer;
+  Idf: IdfRecord;
 begin
   (* @DATANEWDAY <filename> :  If it is the NEXT day since this function was
       called, all records in <filename> will be set to 0.  Check EXAMPLE.REF in the
@@ -599,52 +617,60 @@ begin
   FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
   if (FileName <> '') then
   begin
-      if (FileExists(FileName)) then
+    if (FileExists(FileName)) then
+    begin
+      // TODO Error handling
+      Assign(F, FileName);
+      {$I-}Reset(F);{$I+}
+      if (IOResult = 0) then
       begin
-        { TODO
-          using (FileStream FS = new FileStream(FileName, FileMode.Open))
-          {
-              IGM_DATA IGMD = DataStructures.ReadStruct<IGM_DATA>(FS);
-              if (IGMD.LastUsed != (DateTime.Now.Month + DateTime.Now.Day))
-              {
-                  IGMD.LastUsed = (DateTime.Now.Month + DateTime.Now.Day);
-                  for (int i = 0; i < IGMD.Data.Length; i++)
-                  {
-                      IGMD.Data[i] = 0;
-                  }
-                  for (int i = 0; i < IGMD.Extra.Length; i++)
-                  {
-                      IGMD.Extra[i] = '\0';
-                  }
-                  DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
-              }
-          }
-          }
-      end else
-      begin
-          {TODO
-          using (FileStream FS = new FileStream(FileName, FileMode.Create, FileAccess.Write))
-          {
-              IGM_DATA IGMD = new IGM_DATA(true);
-              IGMD.LastUsed = DateTime.Now.Month + DateTime.Now.Day;
-              for (int i = 0; i < IGMD.Data.Length; i++)
-              {
-                  IGMD.Data[i] = 0;
-              }
-              for (int i = 0; i < IGMD.Extra.Length; i++)
-              {
-                  IGMD.Extra[i] = '\0';
-              }
-              DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
-          }
-          }
+        Read(F, Idf);
       end;
+      Close(F);
+
+      if (Idf.LastUsed <> Game.STime) then
+      begin
+        Idf.LastUsed := Game.STime;
+        for I := Low(Idf.Data) to High(Idf.Data) do
+        begin
+          Idf.Data[I] := 0;
+        end;
+
+        // TODO Error handling
+        Assign(F, FileName);
+        {$I-}ReWrite(F);{$I+}
+        if (IOResult = 0) then
+        begin
+          Write(F, Idf);
+        end;
+        Close(F);
+      end;
+    end else
+    begin
+      Idf.LastUsed := Game.STime;
+      for I := Low(Idf.Data) to High(Idf.Data) do
+      begin
+        Idf.Data[I] := 0;
+      end;
+
+      // TODO Error handling
+      Assign(F, FileName);
+      {$I-}ReWrite(F);{$I+}
+      if (IOResult = 0) then
+      begin
+        Write(F, Idf);
+      end;
+      Close(F);
+    end;
   end;
 end;
 
 procedure TRTReader.CommandDATASAVE(ATokens: TTokens);
 var
+  F: File of IdfRecord;
   FileName: String;
+  I: Integer;
+  Idf: IdfRecord;
 begin
   (* @DATASAVE <filename> <record (1 to 200)> <value to make it> : This SAVES
       a long integer by # to a datafile.  If the file doesn't exist, it is created
@@ -656,45 +682,51 @@ begin
   begin
       if (FileExists(FileName)) then
       begin
-          {TODO
-          using (FileStream FS = new FileStream(FileName, FileMode.Open, FileAccess.ReadWrite))
-          {
-              // Read file
-              IGM_DATA IGMD = DataStructures.ReadStruct<IGM_DATA>(FS);
-              IGMD.Data[Convert.ToInt32(TranslateVariables(ATokens[3])) - 1] = Convert.ToInt32(TranslateVariables(ATokens[4]));
+        // TODO Error handling
+        Assign(F, FileName);
+        {$I-}Reset(F);{$I+}
+        if (IOResult = 0) then
+        begin
+          Read(F, Idf);
+        end;
+        Close(F);
 
-              // Write file
-              FS.Position = 0;
-              DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
-          }
-          }
+        Idf.Data[StrToInt(ATokens[3])] := StrToInt(TranslateVariables(ATokens[4]));
+
+        // TODO Error handling
+        Assign(F, FileName);
+        {$I-}ReWrite(F);{$I+}
+        if (IOResult = 0) then
+        begin
+          Write(F, Idf);
+        end;
+        Close(F);
       end else
       begin
-          {TODO
-          using (FileStream FS = new FileStream(FileName, FileMode.Create, FileAccess.Write))
-          {
-              IGM_DATA IGMD = new IGM_DATA(true);
-              IGMD.LastUsed = DateTime.Now.Month + DateTime.Now.Day;
-              for (int i = 0; i < IGMD.Data.Length; i++)
-              {
-                  IGMD.Data[i] = 0;
-              }
-              IGMD.Data[Convert.ToInt32(TranslateVariables(ATokens[3])) - 1] = Convert.ToInt32(TranslateVariables(ATokens[4]));
-              for (int i = 0; i < IGMD.Extra.Length; i++)
-              {
-                  IGMD.Extra[i] = '\0';
-              }
-              DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
-          }
-          }
+        Idf.LastUsed := Game.STime;
+        for I := Low(Idf.Data) to High(Idf.Data) do
+        begin
+          Idf.Data[I] := 0;
+        end;
+
+        Idf.Data[StrToInt(ATokens[3])] := StrToInt(TranslateVariables(ATokens[4]));
+
+        // TODO Error handling
+        Assign(F, FileName);
+        {$I-}ReWrite(F);{$I+}
+        if (IOResult = 0) then
+        begin
+          Write(F, Idf);
+        end;
+        Close(F);
       end;
   end;
 end;
 
 procedure TRTReader.CommandDECLARE(ATokens: TTokens);
 begin
-(* @DECLARE <Label/header name> <offset in decimal format> *)
-// Ignore, these commands were inserted by REFINDEX, but not used here
+  (* @DECLARE <Label/header name> <offset in decimal format> *)
+  // Ignore, these commands were inserted by REFINDEX, but not used here
 end;
 
 procedure TRTReader.CommandDISPLAY(ATokens: TTokens);
@@ -733,6 +765,7 @@ end;
 procedure TRTReader.CommandDISPLAYFILE(ATokens: TTokens);
 var
   FileName: String;
+  SL: TStringList;
 begin
   (* @DISPLAYFILE <filename> <options>
       This display an entire file.  Possible options are:  NOPAUSE and NOSKIP.  Put a
@@ -740,7 +773,10 @@ begin
   FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
   if (FileExists(FileName)) then
   begin
-    // TODOmWrite(TranslateVariables(FileUtils.FileReadAllText(FileName, RMEncoding.Ansi)));
+    SL := TStringList.Create;
+    SL.LoadFromFile(FileName);
+    mWrite(TranslateVariables(SL.Text));
+    SL.Free;
   end;
 end;
 
@@ -756,12 +792,12 @@ begin
   end else
   if (UpperCase(ATokens[3]) = 'ADD') then
   begin
-      S := ATokens[4];
-      for I := 5 to Length(ATokens) - 1 do
-      begin
-        S := S + ' ' + ATokens[I];
-      end;
-      AssignVariable(ATokens[2], TranslateVariables(ATokens[2] + S));
+    S := ATokens[4];
+    for I := 5 to Length(ATokens) - 1 do
+    begin
+      S := S + ' ' + ATokens[I];
+    end;
+    AssignVariable(ATokens[2], TranslateVariables(ATokens[2] + S));
   end;
 end;
 
@@ -774,9 +810,9 @@ end;
 
 procedure TRTReader.CommandDO_BEEP(ATokens: TTokens);
 begin
-    (* @DO BEEP
-        Makes a weird beep noise, locally only *)
-    // TODO Unused
+  (* @DO BEEP
+      Makes a weird beep noise, locally only *)
+  Beep;
 end;
 
 procedure TRTReader.CommandDO_COPYTONAME(ATokens: TTokens);
@@ -799,7 +835,7 @@ begin
   FileName := Game.GetSafeAbsolutePath(ATokens[3]);
   if (FileExists(FileName)) then
   begin
-    // TODO FileUtils.FileDelete(FileName);
+    DeleteFile(FileName);
   end;
 end;
 
@@ -831,22 +867,13 @@ begin
       This command is useful, *IF* a key IS CURRENTLY being pressed, it puts that
       key into the string variable.  Otherwise, it puts a '_' in to signal no key was
       pressed.  This is a good way to stop a loop. *)
-(*TODO  if (Door.KeyPressed())
-  {
-      char? Ch = Door.ReadKey();
-      if (Ch == null)
-      {
-          AssignVariable(tokens[2], "_");
-      }
-      else
-      {
-          AssignVariable(tokens[2], Ch.ToString());
-      }
-  }
-  else
-  {
-      AssignVariable(tokens[2], "_");
-  }  *)
+  if (mKeyPressed) then
+  begin
+    AssignVariable(ATokens[3], mReadKey);
+  end else
+  begin
+    AssignVariable(ATokens[3], '_');
+  end;
 end;
 
 procedure TRTReader.CommandDO_GOTO(ATokens: TTokens);
@@ -882,74 +909,94 @@ begin
 end;
 
 procedure TRTReader.CommandDO_IS(ATokens: TTokens);
+var
+  F: File of TraderDatCollection;
+  I: Integer;
+  PlayerNumber: Integer;
+  S: String;
+  TDC: TraderDatCollection;
 begin
   (* @DO <Number To Change> <How To Change It> <Change With What> *)
-  (*TODO  if (tokens[3].ToUpper() == "DELETED")
-  {
-      (* @DO `p20 is deleted 8
-          Puts 1 (player is deleted) or 0 (player is not deleted) in `p20.  This only
-          works with `p variables.  The account number can be a `p variable. *)
-      int PlayerNumber = Convert.ToInt32(TranslateVariables(ATokens[5]));
+  if (UpperCase(ATokens[4]) = 'DELETED') then
+  begin
+    (* @DO `p20 is deleted 8
+        Puts 1 (player is deleted) or 0 (player is not deleted) in `p20.  This only
+        works with `p variables.  The account number can be a `p variable. *)
+    PlayerNumber := StrToInt(TranslateVariables(ATokens[5]));
 
-      TraderDatRecord TDR;
-      if (PlayerNumber == Global.LoadPlayerByPlayerNumber(PlayerNumber, out TDR))
-      {
-          AssignVariable(tokens[1], TDR.Deleted == 0 ? "0" : "1");
-      }
-      else
-      {
-          AssignVariable(tokens[1], "0");
-      }
-  }
-  else if (tokens[3].ToUpper() == "GETNAME")
-  {
-      (* @DO `s01 is getname 8
-          This would get the name of player 8 and put it in `s01.  This only works with
-          `s variables.  The account number can be a `p variable. *)
-      int PlayerNumber = Convert.ToInt32(TranslateVariables(ATokens[5]));
+    // TODO Error handling
+    Assign(F, TraderDatFileName);
+    {$I-}Reset(F);{$I+}
+    if (IOResult = 0) then
+    begin
+      Read(F, TDC);
+    end;
+    Close(F);
 
-      TraderDatRecord TDR;
-      if (PlayerNumber == Global.LoadPlayerByPlayerNumber(PlayerNumber, out TDR))
-      {
-          AssignVariable(tokens[1], TDR.Name);
-      }
-  }
-  else if (tokens[3].ToUpper() == "LENGTH")
-  {
-      (* @DO <number variable> IS LENGTH <String variable>
-          Gets length, smart way. *)
-      AssignVariable(tokens[1], Door.StripSeth(TranslateVariables(ATokens[5])).Length.ToString());
-  }
-  else if (tokens[3].ToUpper() == "REALLENGTH")
-  {
-      (* @DO <number variable> IS REALLENGTH <String variable>
-          Gets length dumb way. (includes '`' codes without deciphering them.) *)
-      AssignVariable(tokens[1], TranslateVariables(ATokens[5]).Length.ToString());
-  }
-  else
-  {
-      AssignVariable(tokens[1], string.Join(" ", tokens, 3, tokens.Length - 3));
-  }     *)
+    AssignVariable(ATokens[2], IntToStr(TDC.Player[PlayerNumber].Deleted));
+  end else
+  if (UpperCase(ATokens[4]) = 'GETNAME') then
+  begin
+    (* @DO `s01 is getname 8
+        This would get the name of player 8 and put it in `s01.  This only works with
+        `s variables.  The account number can be a `p variable. *)
+    PlayerNumber := StrToInt(TranslateVariables(ATokens[5]));
+
+    // TODO Error handling
+    Assign(F, TraderDatFileName);
+    {$I-}Reset(F);{$I+}
+    if (IOResult = 0) then
+    begin
+      Read(F, TDC);
+    end;
+    Close(F);
+
+    AssignVariable(ATokens[2], TDC.Player[PlayerNumber].Name);
+  end else
+  if (UpperCase(ATokens[4]) = 'LENGTH') then
+  begin
+    (* @DO <number variable> IS LENGTH <String variable>
+        Gets length, smart way. *)
+    //TODO AssignVariable(ATokens[2], mStripSeth(TranslateVariables(ATokens[5])).Length.ToString());
+    AssignVariable(ATokens[2], IntToStr(Length(TranslateVariables(ATokens[5]))));
+  end else
+  if (UpperCase(ATokens[4]) = 'REALLENGTH') then
+  begin
+    (* @DO <number variable> IS REALLENGTH <String variable>
+        Gets length dumb way. (includes '`' codes without deciphering them.) *)
+    AssignVariable(ATokens[2], IntToStr(Length(TranslateVariables(ATokens[5]))));
+  end else
+  begin
+    S := ATokens[4];
+    for I := 5 to Length(ATokens) - 1 do
+    begin
+      S := S + ' ' + ATokens[I];
+    end;
+    AssignVariable(ATokens[2], TranslateVariables(S));
+  end;
 end;
 
 procedure TRTReader.CommandDO_MOVE(ATokens: TTokens);
+var
+  X: Integer;
+  Y: Integer;
 begin
   (* @DO MOVE <X> <Y> : This moves the curser.  (like GOTOXY in TP) Enter 0 for
       a number will default to 'current location'. *)
-  (*TODO  int X = Convert.ToInt32(TranslateVariables(ATokens[3]));
-  int Y = Convert.ToInt32(TranslateVariables(ATokens[4]));
-  if ((X > 0) && (Y > 0))
-  {
-      Door.GotoXY(X, Y);
-  }
-  else if (X > 0)
-  {
-      Door.GotoX(X);
-  }
-  else if (Y > 0)
-  {
-      Door.GotoY(Y);
-  }       *)
+  X := StrToInt(TranslateVariables(ATokens[3]));
+  Y := StrToInt(TranslateVariables(ATokens[4]));
+  if ((X > 0) AND (Y > 0)) then
+  begin
+    mGotoXY(X, Y);
+  end else
+  if (X > 0) then
+  begin
+    mGotoX(X);
+  end else
+  if (Y > 0) then
+  begin
+    mGotoY(Y);
+  end;
 end;
 
 procedure TRTReader.CommandDO_MOVEBACK(ATokens: TTokens);
@@ -958,14 +1005,13 @@ begin
       This moves the player back to where he moved from.  This is good for when a
       player pushes against a treasure chest or such, and you don't want them to
       appear inside of it when they are done. *)
-  (*TODO  EventHandler Handler = RTGlobal.OnMOVEBACK;
-  if (Handler != null) Handler(null, EventArgs.Empty);*)
+  Game.MoveBack;
 end;
 
 procedure TRTReader.CommandDO_MULTIPLY(ATokens: TTokens);
 begin
 (* @DO <Number To Change> <How To Change It> <Change With What> *)
-//TODO AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(ATokens[2])) * Convert.ToInt32(TranslateVariables(ATokens[4]))).ToString());
+//TODO AssignVariable(ATokens[2], (StrToInt(TranslateVariables(ATokens[2])) * StrToInt(TranslateVariables(ATokens[4]))).ToString());
 end;
 
 procedure TRTReader.CommandDO_NUMRETURN(ATokens: TTokens);
@@ -975,18 +1021,18 @@ begin
     Example "123test456" returns 6 because there are 6 numbers *)
   (*TODOstring Translated = TranslateVariables(ATokens[4]);
 string TranslatedWithoutNumbers = Regex.Replace(Translated, "[0-9]", "", RegexOptions.IgnoreCase);
-AssignVariable(tokens[2], (Translated.Length - TranslatedWithoutNumbers.Length).ToString());*)
+AssignVariable(ATokens[3], (Translated.Length - TranslatedWithoutNumbers.Length).ToString());*)
 end;
 
 procedure TRTReader.CommandDO_PAD(ATokens: TTokens);
 begin
 (* @DO PAD <string variable> <length>
     This adds spaces to the end of the string until string is as long as <length>. *)
-  (*TODOint StringLength = Door.StripSeth(TranslateVariables(ATokens[3])).Length;
-int RequestedLength = Convert.ToInt32(ATokens[4]);
+  (*TODOint StringLength = mStripSeth(TranslateVariables(ATokens[3])).Length;
+int RequestedLength = StrToInt(ATokens[4]);
 if (StringLength < RequestedLength)
 {
-    AssignVariable(tokens[2], StringUtils.PadRight(TranslateVariables(ATokens[3]), ' ', Convert.ToInt32(ATokens[4])));
+    AssignVariable(ATokens[3], StringUtils.PadRight(TranslateVariables(ATokens[3]), ' ', StrToInt(ATokens[4])));
 }       *)
 end;
 
@@ -1004,9 +1050,9 @@ begin
   (* @DO <Varible to put # in> RANDOM <Highest number> <number to add to it>
       RANDOM 5 1 will pick a number between 0 (inclusive) and 5 (exclusive) and add 1 to it, resulting in 1-5
       RANDOM 100 200 will pick a number between 0 (inclusive) and 100 (exclusive) and add 200 to it, resulting in 200-299 *)
-  (*TODO  int Min = Convert.ToInt32(ATokens[5]);
-  int Max = Min + Convert.ToInt32(ATokens[4]);
-  AssignVariable(tokens[1], _R.Next(Min, Max).ToString());*)
+  (*TODO  int Min = StrToInt(ATokens[5]);
+  int Max = Min + StrToInt(ATokens[4]);
+  AssignVariable(ATokens[2], _R.Next(Min, Max).ToString());*)
 end;
 
 procedure TRTReader.CommandDO_READCHAR(ATokens: TTokens);
@@ -1015,14 +1061,14 @@ begin
                  Waits for a key to be pressed.  This uses DV and Windows time slicing while
                  waiting.  `S10 doesn't seem to work with this command.  All the other `S
                  variables do though. *)
-  (*TODO             char? Ch = Door.ReadKey();
+  (*TODO             char? Ch = mReadKey();
              if (Ch == null)
              {
-                 AssignVariable(tokens[2], "\0");
+                 AssignVariable(ATokens[3], "\0");
              }
              else
              {
-                 AssignVariable(tokens[2], Ch.ToString());
+                 AssignVariable(ATokens[3], Ch.ToString());
              }*)
 end;
 
@@ -1035,7 +1081,7 @@ begin
   (*TODOstring Default = "";
 if (tokens.Length >= 4) Default = TranslateVariables(ATokens[4]);
 
-string ReadNum = Door.Input(Default, CharacterMask.Numeric, '\0', Convert.ToInt32(TranslateVariables(ATokens[3])), Convert.ToInt32(TranslateVariables(ATokens[3])), 31);
+string ReadNum = mInput(Default, CharacterMask.Numeric, '\0', StrToInt(TranslateVariables(ATokens[3])), StrToInt(TranslateVariables(ATokens[3])), 31);
 int AnswerInt = 0;
 if (!int.TryParse(ReadNum, out AnswerInt)) AnswerInt = 0;
 
@@ -1059,20 +1105,20 @@ begin
   (*TODOchar? Ch = null;
 while (true)
 {
-    Ch = Door.ReadKey();
+    Ch = mReadKey();
     if (Ch != null)
     {
         Ch = char.ToUpper((char)Ch);
         if (Ch == '\r')
         {
             // Assign first option when enter is hit
-            AssignVariable(tokens[2], tokens[3][0].ToString());
+            AssignVariable(ATokens[3], tokens[3][0].ToString());
             break;
         }
-        else if (tokens[3].ToUpper().Contains(Ch.ToString()))
+        else if (UpperCase(ATokens[4]).Contains(Ch.ToString()))
         {
             // Assign selected character
-            AssignVariable(tokens[2], Ch.ToString());
+            AssignVariable(ATokens[3], Ch.ToString());
             break;
         }
     }
@@ -1087,10 +1133,10 @@ begin
     also use these vars for the default.  (or `N)  Use NIL if you want the default
     to be nothing.  (if no variable to put it in is specified, it will be put into `S10
     for compatibilty with old .REF's) *)
-  (*TODOstring ReadString = Door.Input(Regex.Replace(TranslateVariables(ATokens[4]), "NIL", "", RegexOptions.IgnoreCase), CharacterMask.All, '\0', Convert.ToInt32(TranslateVariables(ATokens[3])), Convert.ToInt32(TranslateVariables(ATokens[3])), 31);
+  (*TODOstring ReadString = mInput(Regex.Replace(TranslateVariables(ATokens[4]), "NIL", "", RegexOptions.IgnoreCase), CharacterMask.All, '\0', StrToInt(TranslateVariables(ATokens[3])), StrToInt(TranslateVariables(ATokens[3])), 31);
 if (tokens.Length >= 5)
 {
-    AssignVariable(tokens[4], ReadString);
+    AssignVariable(ATokens[5], ReadString);
 }
 else
 {
@@ -1104,7 +1150,7 @@ begin
       Replaces X with Y in an `s variable. *)
   // Identified as @REPLACE not @DO REPLACE in the docs
   // The following regex matches only the first instance of the word foo: (?<!foo.*)foo (from http://stackoverflow.com/a/148561/342378)
-//TODO  AssignVariable(tokens[4], Regex.Replace(TranslateVariables(ATokens[5]), "(?<!" + Regex.Escape(TranslateVariables(ATokens[3])) + ".*)" + Regex.Escape(TranslateVariables(ATokens[3])), TranslateVariables(ATokens[4]), RegexOptions.IgnoreCase));
+//TODO  AssignVariable(ATokens[5], Regex.Replace(TranslateVariables(ATokens[5]), "(?<!" + Regex.Escape(TranslateVariables(ATokens[3])) + ".*)" + Regex.Escape(TranslateVariables(ATokens[3])), TranslateVariables(ATokens[4]), RegexOptions.IgnoreCase));
 end;
 
 procedure TRTReader.CommandDO_REPLACEALL(ATokens: TTokens);
@@ -1112,7 +1158,7 @@ begin
   (* @DO REPLACEALL <X> <Y> <in `S10>:
       Same as above but replaces all instances. *)
   // Identified as @REPLACEALL not @DO REPLACEALL in the docs
-//TODO  AssignVariable(tokens[4], Regex.Replace(TranslateVariables(ATokens[5]), Regex.Escape(TranslateVariables(ATokens[3])), TranslateVariables(ATokens[4]), RegexOptions.IgnoreCase));
+//TODO  AssignVariable(ATokens[5], Regex.Replace(TranslateVariables(ATokens[5]), Regex.Escape(TranslateVariables(ATokens[3])), TranslateVariables(ATokens[4]), RegexOptions.IgnoreCase));
 end;
 
 procedure TRTReader.CommandDO_RENAME(ATokens: TTokens);
@@ -1149,7 +1195,7 @@ procedure TRTReader.CommandDO_STRIP(ATokens: TTokens);
 begin
   (* @DO STRIP <string variable>
       This strips beginning and end spaces of a string. *)
-//TODO  AssignVariable(tokens[2], TranslateVariables(ATokens[3]).Trim());
+//TODO  AssignVariable(ATokens[3], TranslateVariables(ATokens[3]).Trim());
 end;
 
 procedure TRTReader.CommandDO_STRIPALL(ATokens: TTokens);
@@ -1177,7 +1223,7 @@ end;
 procedure TRTReader.CommandDO_SUBTRACT(ATokens: TTokens);
 begin
   (* @DO <Number To Change> <How To Change It> <Change With What> *)
-//TODO  AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(ATokens[2])) - Convert.ToInt32(TranslateVariables(ATokens[4]))).ToString());
+//TODO  AssignVariable(ATokens[2], (StrToInt(TranslateVariables(ATokens[2])) - StrToInt(TranslateVariables(ATokens[4]))).ToString());
 end;
 
 procedure TRTReader.CommandDO_TALK(ATokens: TTokens);
@@ -1197,7 +1243,7 @@ begin
   (*TODO              string FileName = Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
               if (File.Exists(FileName))
               {
-                  int MaxLines = Convert.ToInt32(TranslateVariables(ATokens[4]));
+                  int MaxLines = StrToInt(TranslateVariables(ATokens[4]));
                   List<string> Lines = new List<string>();
                   Lines.AddRange(FileUtils.FileReadAllLines(FileName, RMEncoding.Ansi));
                   if (Lines.Count > MaxLines)
@@ -1212,7 +1258,7 @@ procedure TRTReader.CommandDO_UPCASE(ATokens: TTokens);
 begin
 (* @DO UPCASE <string variable>
     This makes a string all capitals. *)
-//TODO AssignVariable(tokens[2], TranslateVariables(ATokens[3]).ToUpper());
+//TODO AssignVariable(ATokens[3], TranslateVariables(ATokens[3]).ToUpper());
 end;
 
 procedure TRTReader.CommandDO_WRITE(ATokens: TTokens);
@@ -1343,7 +1389,7 @@ begin
   }
   else
   {
-      _InHALT = Convert.ToInt32(ATokens[2]);
+      _InHALT = StrToInt(ATokens[2]);
   }       *)
 end;
 
@@ -1352,7 +1398,7 @@ begin
   (* @IF bitcheck <`t variable> <bit number> <0 or 1>
       Check if the given bit is set or not in the given `t variable *)
   // TODO Untested
-//TODO  return ((Convert.ToInt32(TranslateVariables(ATokens[3])) & (1 << Convert.ToInt32(TranslateVariables(ATokens[4])))) == Convert.ToInt32(TranslateVariables(ATokens[5])));
+//TODO  return ((StrToInt(TranslateVariables(ATokens[3])) & (1 << StrToInt(TranslateVariables(ATokens[4])))) == StrToInt(TranslateVariables(ATokens[5])));
 end;
 
 procedure TRTReader.CommandIF_BLOCKPASSABLE(ATokens: TTokens);
@@ -1483,33 +1529,33 @@ if (tokens.Length == 1)
     (* @KEY
         Does a [MORE] prompt, centered on current line.
         NOTE: Actually indents two lines, not centered *)
-    Door.Write(TranslateVariables("  `2<`0MORE`2>"));
-    Door.ReadKey();
-    Door.Write("\b\b\b\b\b\b\b\b        \b\b\b\b\b\b\b\b");
+    mWrite(TranslateVariables("  `2<`0MORE`2>"));
+    mReadKey();
+    mWrite("\b\b\b\b\b\b\b\b        \b\b\b\b\b\b\b\b");
 }
-else if (tokens[1].ToUpper() == "BOTTOM")
+else if (ATokens[2].ToUpper() == "BOTTOM")
 {
     (* @KEY BOTTOM
         This does <MORE> prompt at user text window. *)
-    Door.GotoXY(35, 24);
-    Door.Write(TranslateVariables("`2<`0MORE`2>"));
-    Door.ReadKey();
-    Door.Write("\b\b\b\b\b\b      \b\b\b\b\b\b");
+    mGotoXY(35, 24);
+    mWrite(TranslateVariables("`2<`0MORE`2>"));
+    mReadKey();
+    mWrite("\b\b\b\b\b\b      \b\b\b\b\b\b");
 }
-else if (tokens[1].ToUpper() == "NODISPLAY")
+else if (ATokens[2].ToUpper() == "NODISPLAY")
 {
     (* @KEY NODISPLAY
         Waits for keypress without saying anything. *)
-    Door.ReadKey();
+    mReadKey();
 }
-else if (tokens[1].ToUpper() == "TOP")
+else if (ATokens[2].ToUpper() == "TOP")
 {
     (* @KEY TOP
         This does <MORE> prompt at game text window. *)
-    Door.GotoXY(40, 15);
-    Door.Write(TranslateVariables("`2<`0MORE`2>"));
-    Door.ReadKey();
-    Door.Write("\b\b\b\b\b\b      \b\b\b\b\b\b");
+    mGotoXY(40, 15);
+    mWrite(TranslateVariables("`2<`0MORE`2>"));
+    mReadKey();
+    mWrite("\b\b\b\b\b\b      \b\b\b\b\b\b");
 }
 else
 {
@@ -1550,10 +1596,10 @@ begin
       This is a very handy command.  It lets you change someones map location in a
       ref file.  This is the 'block #' not the physical map location, so it could be
       1 to 1600.  Be sure it exists in l2cfg.exe.  If the map block does not exist,
-      The L2 engine will display a runtime error and close the door.   Be SURE to
+      The L2 engine will display a runtime error and close the m   Be SURE to
       change the map variable too!!  Using this and changing the X and Y coordinates
       effectivly lets you do a 'warp' from a .ref file. *)
-//TODO  Global.LoadMap(Convert.ToInt32(TranslateVariables(ATokens[2])));
+//TODO  Global.LoadMap(StrToInt(TranslateVariables(ATokens[2])));
 end;
 
 procedure TRTReader.CommandLOADWORLD(ATokens: TTokens);
@@ -1596,8 +1642,8 @@ begin
   (* @NAME <name to put under picture>
       Undocumented. Puts a name under the picture window *)
 (*TODO  string Name = TranslateVariables(string.Join(" ", tokens, 1, tokens.Length - 1));
-  Door.GotoXY(55 + Convert.ToInt32(Math.Truncate((22 - Door.StripSeth(Name).Length) / 2.0)), 15);
-  Door.Write(Name);*)
+  mGotoXY(55 + StrToInt(Math.Truncate((22 - mStripSeth(Name).Length) / 2.0)), 15);
+  mWrite(Name);*)
 end;
 
 procedure TRTReader.CommandNOCHECK(ATokens: TTokens);
@@ -1769,7 +1815,7 @@ end;
 
 procedure TRTReader.CommandSHOW(ATokens: TTokens);
 begin
-(*TODO if ((tokens.Length > 1) && (tokens[1].ToUpper() == "SCROLL"))
+(*TODO if ((tokens.Length > 1) && (ATokens[2].ToUpper() == "SCROLL"))
 {
     (* @SHOW SCROLL
         Same thing, but puts all the text in a nifty scroll window. (scroll window has
@@ -1814,7 +1860,7 @@ begin
       For instance, you would put @VERSION 2 for this version of RTREADER.  (002) If
       it is run on Version 1, (could happen) a window will pop up warning the person
       he had better get the latest version. *)
-(*TODO  int RequiredVersion = Convert.ToInt32(ATokens[2]);
+(*TODO  int RequiredVersion = StrToInt(ATokens[2]);
   if (RequiredVersion > _Version) throw new ArgumentOutOfRangeException("VERSION", "@VERSION requested version " + RequiredVersion + ", we only support version " + _Version);*)
 end;
 
@@ -1915,22 +1961,22 @@ begin
           switch (Operator)
           {
               case '=':
-                  MakeVisible = MakeVisible && (Convert.ToInt32(Variable) == Convert.ToInt32(Value));
+                  MakeVisible = MakeVisible && (StrToInt(Variable) == StrToInt(Value));
                   break;
               case '!':
-                  MakeVisible = MakeVisible && (Convert.ToInt32(Variable) != Convert.ToInt32(Value));
+                  MakeVisible = MakeVisible && (StrToInt(Variable) != StrToInt(Value));
                   break;
               case '>':
-                  MakeVisible = MakeVisible && (Convert.ToInt32(Variable) > Convert.ToInt32(Value));
+                  MakeVisible = MakeVisible && (StrToInt(Variable) > StrToInt(Value));
                   break;
               case '<':
-                  MakeVisible = MakeVisible && (Convert.ToInt32(Variable) < Convert.ToInt32(Value));
+                  MakeVisible = MakeVisible && (StrToInt(Variable) < StrToInt(Value));
                   break;
               case '+':
-                  MakeVisible = MakeVisible && ((Convert.ToInt32(Variable) & (1 << Convert.ToInt32(Value))) != 0);
+                  MakeVisible = MakeVisible && ((StrToInt(Variable) & (1 << StrToInt(Value))) != 0);
                   break;
               case '-':
-                  MakeVisible = MakeVisible && ((Convert.ToInt32(Variable) & (1 << Convert.ToInt32(Value))) == 0);
+                  MakeVisible = MakeVisible && ((StrToInt(Variable) & (1 << StrToInt(Value))) == 0);
                   break;
           }
       }
@@ -1939,7 +1985,7 @@ begin
       if (MakeVisible)
       {
           VisibleCount += 1;
-          LastVisibleLength = Door.StripSeth(_InCHOICEOptions[i].Text).Length;
+          LastVisibleLength = mStripSeth(_InCHOICEOptions[i].Text).Length;
           _InCHOICEOptions[i].Visible = true;
           _InCHOICEOptions[i].VisibleIndex = VisibleCount;
       }
@@ -1950,7 +1996,7 @@ begin
   }
 
   // Ensure `V01 specified a valid/visible selection
-  int SelectedIndex = Convert.ToInt32(TranslateVariables("`V01"));
+  int SelectedIndex = StrToInt(TranslateVariables("`V01"));
   if ((SelectedIndex < 1) || (SelectedIndex > _InCHOICEOptions.Count)) SelectedIndex = 1;
   while (!_InCHOICEOptions[SelectedIndex - 1].Visible) SelectedIndex += 1;
 
@@ -1958,16 +2004,16 @@ begin
   string Spaces = "\r\n" + new string(' ', Crt.WhereX() - 1);
 
   // Output options
-  Door.CursorSave();
-  Door.TextAttr(15);
+  mCursorSave();
+  mTextAttr(15);
   for (int i = 0; i < _InCHOICEOptions.Count; i++)
   {
       if (_InCHOICEOptions[i].Visible)
       {
-          if (_InCHOICEOptions[i].VisibleIndex > 1) Door.Write(Spaces);
-          if (i == (SelectedIndex - 1)) Door.TextBackground(Crt.Blue);
-          Door.Write(TranslateVariables(_InCHOICEOptions[i].Text));
-          if (i == (SelectedIndex - 1)) Door.TextBackground(Crt.Black);
+          if (_InCHOICEOptions[i].VisibleIndex > 1) mWrite(Spaces);
+          if (i == (SelectedIndex - 1)) mTextBackground(Crt.Blue);
+          mWrite(TranslateVariables(_InCHOICEOptions[i].Text));
+          if (i == (SelectedIndex - 1)) mTextBackground(Crt.Black);
       }
   }
 
@@ -1977,7 +2023,7 @@ begin
   {
       int OldSelectedIndex = SelectedIndex;
 
-      Ch = Door.ReadKey();
+      Ch = mReadKey();
       switch (Ch)
       {
           case '8':
@@ -2016,23 +2062,23 @@ begin
           AssignVariable("`V01", SelectedIndex.ToString());
 
           // Redraw old selection without blue highlight
-          Door.CursorRestore();
-          if (_InCHOICEOptions[OldSelectedIndex - 1].VisibleIndex > 1) Door.CursorDown(_InCHOICEOptions[OldSelectedIndex - 1].VisibleIndex - 1);
-          Door.Write(TranslateVariables(_InCHOICEOptions[OldSelectedIndex - 1].Text));
+          mCursorRestore();
+          if (_InCHOICEOptions[OldSelectedIndex - 1].VisibleIndex > 1) mCursorDown(_InCHOICEOptions[OldSelectedIndex - 1].VisibleIndex - 1);
+          mWrite(TranslateVariables(_InCHOICEOptions[OldSelectedIndex - 1].Text));
 
           // Draw new selection with blue highlight
-          Door.CursorRestore();
-          if (_InCHOICEOptions[SelectedIndex - 1].VisibleIndex > 1) Door.CursorDown(_InCHOICEOptions[SelectedIndex - 1].VisibleIndex - 1);
-          Door.TextBackground(Crt.Blue);
-          Door.Write(TranslateVariables(_InCHOICEOptions[SelectedIndex - 1].Text));
-          Door.TextBackground(Crt.Black);
+          mCursorRestore();
+          if (_InCHOICEOptions[SelectedIndex - 1].VisibleIndex > 1) mCursorDown(_InCHOICEOptions[SelectedIndex - 1].VisibleIndex - 1);
+          mTextBackground(Crt.Blue);
+          mWrite(TranslateVariables(_InCHOICEOptions[SelectedIndex - 1].Text));
+          mTextBackground(Crt.Black);
       }
   }
 
   // Move cursor below choice statement
-  Door.CursorRestore();
-  Door.CursorDown(VisibleCount - 1);
-  Door.CursorRight(LastVisibleLength);
+  mCursorRestore();
+  mCursorDown(VisibleCount - 1);
+  mCursorRight(LastVisibleLength);
 
   // Update global variable responses
   RTGlobal.RESPONSE = SelectedIndex.ToString();*)
@@ -2082,33 +2128,33 @@ procedure TRTReader.EndSHOWSCROLL;
 begin
   (*TODO  char? Ch = null;
   int Page = 1;
-  int MaxPage = Convert.ToInt32(Math.Truncate(_InSHOWSCROLLLines.Count / 22.0));
+  int MaxPage = StrToInt(Math.Truncate(_InSHOWSCROLLLines.Count / 22.0));
   if (_InSHOWSCROLLLines.Count % 22 != 0) MaxPage += 1;
   int SavedAttr = 7;
 
   while (Ch != 'Q')
   {
-      Door.TextAttr(SavedAttr);
-      Door.ClrScr();
+      mTextAttr(SavedAttr);
+      mClrScr();
 
       int LineStart = (Page - 1) * 22;
       int LineEnd = LineStart + 21;
       for (int i = LineStart; i <= LineEnd; i++)
       {
           if (i >= _InSHOWSCROLLLines.Count) break;
-          Door.WriteLn(_InSHOWSCROLLLines[i]);
+          mWriteLn(_InSHOWSCROLLLines[i]);
       }
       SavedAttr = Crt.TextAttr;
 
-      Door.GotoXY(1, 23);
-      Door.TextAttr(31);
-      Door.Write(new string(' ', 79));
-      Door.GotoXY(3, 23);
-      Door.Write("(" + Page + ")");
-      Door.GotoXY(9, 23);
-      Door.Write("[N]ext Page, [P]revious Page, [Q]uit, [S]tart, [E]nd");
+      mGotoXY(1, 23);
+      mTextAttr(31);
+      mWrite(new string(' ', 79));
+      mGotoXY(3, 23);
+      mWrite("(" + Page + ")");
+      mGotoXY(9, 23);
+      mWrite("[N]ext Page, [P]revious Page, [Q]uit, [S]tart, [E]nd");
 
-      Ch = Door.ReadKey();
+      Ch = mReadKey();
       if (Ch != null)
       {
           Ch = char.ToUpper((char)Ch);
@@ -2303,7 +2349,7 @@ begin
                 // Inline DO, so execute it
                 if (Result)
                 {
-                    int DOOffset = (tokens[5].ToUpper() == "THEN") ? 6 : 5;
+                    int DOOffset = (ATokens[6].ToUpper() == "THEN") ? 6 : 5;
                     string[] DOtokens = ("@DO " + string.Join(" ", tokens, DOOffset, tokens.Length - DOOffset)).Split(' ');
                     CommandDO(DOtokens);
                 }
@@ -2551,7 +2597,10 @@ begin
         AText := StringReplace(AText, '`D', #8, [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '`\', #13#10, [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '`c', mAnsi.aClrScr + #13#10#13#10, [rfReplaceAll, rfIgnoreCase]);
+      end;
 
+      if (Pos('&', TextUpper) > 0) then
+      begin
         // Handle "ampersand" codes
         AText := StringReplace(AText, '&realname', DropInfo.Alias, [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&date', 'TODO &date', [rfReplaceAll, rfIgnoreCase]);

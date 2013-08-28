@@ -29,6 +29,10 @@ end;
 destructor TRTRefSection.Destroy;
 begin
   inherited Destroy;
+
+  Labels.Clear;
+  Labels.Free;
+  Script.Free;
 end;
 
 end.

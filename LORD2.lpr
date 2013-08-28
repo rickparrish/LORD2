@@ -7,7 +7,7 @@ uses
   Classes, SysUtils, CustApp,
   { you can add units after this }
   MannDoor, Game, Struct, RTReader, RTGlobal, mCrt, mStrings, RTRefFile,
-RTRefSection, RTRefLabel, RTChoiceOption;
+  RTRefSection, RTRefLabel, RTChoiceOption;
 
 type
 
@@ -31,6 +31,8 @@ begin
 
   if (Game.LoadDataFiles) then
   begin
+    Game.Player.RealName := DropInfo.Alias;
+
     if (Game.IsNewDay) then
     begin
       RTReader.Execute('MAINT.REF', 'MAINT');
@@ -61,6 +63,10 @@ begin
     FastWrite(PadRight('Hit a key to quit', ' ', 80), 1, 25, 31);
     mReadKey;
   end;
+
+  RTGlobal.RefFiles.Clear;
+  RTGlobal.RefFiles.Free;
+
   Terminate;
 end;
 

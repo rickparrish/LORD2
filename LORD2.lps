@@ -13,7 +13,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="24"/>
         <CursorPos X="9" Y="41"/>
-        <UsageCount Value="168"/>
+        <UsageCount Value="169"/>
         <Loaded Value="True"/>
       </Unit0>
       <Unit1>
@@ -24,7 +24,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="380"/>
         <CursorPos X="21" Y="397"/>
-        <UsageCount Value="166"/>
+        <UsageCount Value="167"/>
         <Loaded Value="True"/>
       </Unit1>
       <Unit2>
@@ -34,7 +34,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="95"/>
         <CursorPos X="10" Y="107"/>
-        <UsageCount Value="166"/>
+        <UsageCount Value="167"/>
       </Unit2>
       <Unit3>
         <Filename Value="rtreader.pas"/>
@@ -43,9 +43,9 @@
         <IsVisibleTab Value="True"/>
         <EditorIndex Value="2"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="1135"/>
-        <CursorPos X="167" Y="1161"/>
-        <UsageCount Value="165"/>
+        <TopLine Value="1"/>
+        <CursorPos X="3" Y="11"/>
+        <UsageCount Value="166"/>
         <Loaded Value="True"/>
       </Unit3>
       <Unit4>
@@ -56,7 +56,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="57"/>
         <CursorPos X="1" Y="1"/>
-        <UsageCount Value="165"/>
+        <UsageCount Value="166"/>
         <Loaded Value="True"/>
       </Unit4>
       <Unit5>
@@ -65,7 +65,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="821"/>
         <CursorPos X="45" Y="850"/>
-        <UsageCount Value="32"/>
+        <UsageCount Value="31"/>
       </Unit5>
       <Unit6>
         <Filename Value="manndoor\units\elecom\elenorm.pas"/>
@@ -122,7 +122,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="33" Y="9"/>
-        <UsageCount Value="116"/>
+        <UsageCount Value="117"/>
       </Unit12>
       <Unit13>
         <Filename Value="rtreffile.pas"/>
@@ -139,7 +139,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="34" Y="16"/>
-        <UsageCount Value="115"/>
+        <UsageCount Value="117"/>
       </Unit14>
       <Unit15>
         <Filename Value="rtreflabel.pas"/>
@@ -148,7 +148,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="34" Y="15"/>
-        <UsageCount Value="114"/>
+        <UsageCount Value="116"/>
       </Unit15>
       <Unit16>
         <Filename Value="rtchoiceoption.pas"/>
@@ -157,7 +157,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="34" Y="16"/>
-        <UsageCount Value="91"/>
+        <UsageCount Value="92"/>
       </Unit16>
       <Unit17>
         <Filename Value="manndoor\units\mstrings.pas"/>
@@ -166,7 +166,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="16" Y="17"/>
-        <UsageCount Value="17"/>
+        <UsageCount Value="18"/>
         <Loaded Value="True"/>
       </Unit17>
     </Units>
@@ -176,123 +176,123 @@
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Caret Line="1390" Column="10" TopLine="1362"/>
       </Position1>
       <Position2>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="149" Column="21" TopLine="123"/>
+        <Caret Line="1563" Column="10" TopLine="1535"/>
       </Position2>
       <Position3>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="162" Column="17" TopLine="134"/>
+        <Caret Line="1607" Column="12" TopLine="1580"/>
       </Position3>
       <Position4>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="228" Column="17" TopLine="203"/>
+        <Caret Line="1627" Column="10" TopLine="1599"/>
       </Position4>
       <Position5>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Caret Line="1635" Column="10" TopLine="1607"/>
       </Position5>
       <Position6>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="149" Column="21" TopLine="123"/>
+        <Caret Line="1641" Column="16" TopLine="1625"/>
       </Position6>
       <Position7>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="162" Column="57" TopLine="137"/>
+        <Caret Line="1655" Column="10" TopLine="1633"/>
       </Position7>
       <Position8>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="163" Column="17" TopLine="137"/>
+        <Caret Line="1675" Column="10" TopLine="1653"/>
       </Position8>
       <Position9>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="231" Column="50" TopLine="216"/>
+        <Caret Line="1682" Column="10" TopLine="1654"/>
       </Position9>
       <Position10>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="2236" Column="25" TopLine="2218"/>
+        <Caret Line="1692" Column="18" TopLine="1675"/>
       </Position10>
       <Position11>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="12" Column="32" TopLine="1"/>
+        <Caret Line="1693" Column="16" TopLine="1675"/>
       </Position11>
       <Position12>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Caret Line="1717" Column="10" TopLine="1698"/>
       </Position12>
       <Position13>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="152" Column="22" TopLine="126"/>
+        <Caret Line="1729" Column="10" TopLine="1710"/>
       </Position13>
       <Position14>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="348" Column="10" TopLine="320"/>
+        <Caret Line="1737" Column="10" TopLine="1722"/>
       </Position14>
       <Position15>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="358" Column="10" TopLine="330"/>
+        <Caret Line="1744" Column="10" TopLine="1728"/>
       </Position15>
       <Position16>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="365" Column="10" TopLine="337"/>
+        <Caret Line="1751" Column="10" TopLine="1737"/>
       </Position16>
       <Position17>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="426" Column="10" TopLine="398"/>
+        <Caret Line="1763" Column="10" TopLine="1749"/>
       </Position17>
       <Position18>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="489" Column="14" TopLine="462"/>
+        <Caret Line="1793" Column="33" TopLine="1775"/>
       </Position18>
       <Position19>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="531" Column="10" TopLine="503"/>
+        <Caret Line="1807" Column="1" TopLine="1788"/>
       </Position19>
       <Position20>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="539" Column="10" TopLine="511"/>
+        <Caret Line="1812" Column="10" TopLine="1794"/>
       </Position20>
       <Position21>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="1053" Column="10" TopLine="1039"/>
+        <Caret Line="1819" Column="10" TopLine="1806"/>
       </Position21>
       <Position22>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="1057" Column="1" TopLine="1039"/>
+        <Caret Line="1827" Column="10" TopLine="1815"/>
       </Position22>
       <Position23>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="2696" Column="13" TopLine="2665"/>
+        <Caret Line="1857" Column="10" TopLine="1851"/>
       </Position23>
       <Position24>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="1063" Column="1" TopLine="1049"/>
+        <Caret Line="1862" Column="27" TopLine="1850"/>
       </Position24>
       <Position25>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="1086" Column="7" TopLine="1066"/>
+        <Caret Line="1888" Column="15" TopLine="1869"/>
       </Position25>
       <Position26>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Caret Line="1896" Column="10" TopLine="1869"/>
       </Position26>
       <Position27>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="2314" Column="40" TopLine="2299"/>
+        <Caret Line="1911" Column="1" TopLine="1883"/>
       </Position27>
       <Position28>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="1120" Column="13" TopLine="1110"/>
+        <Caret Line="1918" Column="10" TopLine="1896"/>
       </Position28>
       <Position29>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="1142" Column="11" TopLine="1131"/>
+        <Caret Line="1931" Column="12" TopLine="1925"/>
       </Position29>
       <Position30>
         <Filename Value="rtreader.pas"/>
-        <Caret Line="1154" Column="1" TopLine="1130"/>
+        <Caret Line="1908" Column="33" TopLine="1891"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>

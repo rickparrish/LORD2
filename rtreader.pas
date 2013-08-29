@@ -6,6 +6,9 @@ uses
   MannDoor, mCrt, mStrings, SysUtils, Classes, contnrs, RTRefFile, RTRefSection,
   RTRefLabel, RTGlobal, RTChoiceOption, Crt, Math, mAnsi, StrUtils, Struct;
 
+const
+  FVersion: Integer = 99;
+
 type
   TRTReader = class
   private
@@ -1198,8 +1201,7 @@ procedure TRTReader.CommandDO_STRIP(ATokens: TTokens);
 begin
   (* @DO STRIP <string variable>
       This strips beginning and end spaces of a string. *)
-  LogTODO(ATokens);
-//TODO  AssignVariable(ATokens[3], TranslateVariables(ATokens[3]).Trim());
+  AssignVariable(ATokens[3], Trim(TranslateVariables(ATokens[3])));
 end;
 
 procedure TRTReader.CommandDO_STRIPALL(ATokens: TTokens);
@@ -1227,8 +1229,7 @@ end;
 procedure TRTReader.CommandDO_SUBTRACT(ATokens: TTokens);
 begin
   (* @DO <Number To Change> <How To Change It> <Change With What> *)
-  LogTODO(ATokens);
-//TODO  AssignVariable(ATokens[2], (StrToInt(TranslateVariables(ATokens[2])) - StrToInt(TranslateVariables(ATokens[4]))).ToString());
+  AssignVariable(ATokens[2], IntToStr(StrToInt(TranslateVariables(ATokens[2])) - StrToInt(TranslateVariables(ATokens[4]))));
 end;
 
 procedure TRTReader.CommandDO_TALK(ATokens: TTokens);
@@ -1240,44 +1241,51 @@ begin
 end;
 
 procedure TRTReader.CommandDO_TRIM(ATokens: TTokens);
+var
+  FileName: String;
+  MaxLines: Integer;
+  SL: TStringList;
 begin
   (* @DO TRIM <file name> <number to trim to>
                   This nifty command makes text file larger than <number to trim to> get
                   smaller.  (It deletes lines from the top until the file is correct # of lines,
                   if smaller than <number to trim to>, it doesn't change the file) *)
-  LogTODO(ATokens);
-  (*TODO              string FileName = Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
-              if (File.Exists(FileName))
-              {
-                  int MaxLines = StrToInt(TranslateVariables(ATokens[4]));
-                  List<string> Lines = new List<string>();
-                  Lines.AddRange(FileUtils.FileReadAllLines(FileName, RMEncoding.Ansi));
-                  if (Lines.Count > MaxLines)
-                  {
-                      while (Lines.Count > MaxLines) Lines.RemoveAt(0);
-                      FileUtils.FileWriteAllLines(FileName, Lines.ToArray(), RMEncoding.Ansi);
-                  }
-              }    *)
+  // TODO Error handling
+  FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
+  if (FileExists(FileName)) then
+  begin
+    MaxLines := StrToInt(TranslateVariables(ATokens[4]));
+    SL := TStringList.Create;
+    SL.LoadFromFile(FileName);
+    if (SL.Count > MaxLines) then
+    begin
+      while (SL.Count > MaxLines) do
+      begin
+        SL.Delete(0);
+      end;
+      SL.SaveToFile(FileName);
+      SL.Free;
+    end;
+  end;
 end;
 
 procedure TRTReader.CommandDO_UPCASE(ATokens: TTokens);
 begin
   (* @DO UPCASE <string variable>
       This makes a string all capitals. *)
-  LogTODO(ATokens);
-//TODO AssignVariable(ATokens[3], TranslateVariables(ATokens[3]).ToUpper());
+ AssignVariable(ATokens[3], UpperCase(TranslateVariables(ATokens[3])));
 end;
 
 procedure TRTReader.CommandDO_WRITE(ATokens: TTokens);
 begin
-(* @DO WRITE
-    <Stuff to write>
-    Same thing as regular @SHOW, but does only one line, without a line feed.
-    Used with @DO MOVE this is good for putting prompts, right in front of READNUM
-    and READSTRING's.
-    NOTE:  You can use variables mixed with text, ansi and color codes in the
-    <stuff to write> part.  Works this way with most stuff. *)
-FInDO_WRITE := true;
+  (* @DO WRITE
+      <Stuff to write>
+      Same thing as regular @SHOW, but does only one line, without a line feed.
+      Used with @DO MOVE this is good for putting prompts, right in front of READNUM
+      and READSTRING's.
+      NOTE:  You can use variables mixed with text, ansi and color codes in the
+      <stuff to write> part.  Works this way with most stuff. *)
+  FInDO_WRITE := true;
 end;
 
 procedure TRTReader.CommandDRAWMAP(ATokens: TTokens);
@@ -1285,9 +1293,7 @@ begin
   (* @DRAWMAP
       This draws the current map the user is on.  This command does NOT update the
       screen.  See the @update command below concerning updating the scren. *)
-  LogTODO(ATokens);
-(*TODO  EventHandler Handler = RTGlobal.OnDRAWMAP;
-  if (Handler != null) Handler(null, EventArgs.Empty);*)
+  Game.DrawMap;
 end;
 
 procedure TRTReader.CommandDRAWPART(ATokens: TTokens);
@@ -1391,57 +1397,72 @@ procedure TRTReader.CommandHALT(ATokens: TTokens);
 begin
   (* @HALT <error level>
       This command closes the door and returns the specified error level. *)
-  LogTODO(ATokens);
-  (*TODO  if (tokens.Length == 1)
-  {
-      _InHALT = 0;
-  }
-  else
-  {
-      _InHALT = StrToInt(ATokens[2]);
-  }       *)
+  if (High(ATokens) = 1) then
+  begin
+    FInHALT := 0;
+  end else
+  begin
+    FInHALT := StrToInt(ATokens[2]);
+  end;
 end;
 
 function TRTReader.CommandIF_BITCHECK(ATokens: TTokens): Boolean;
 begin
   (* @IF bitcheck <`t variable> <bit number> <0 or 1>
       Check if the given bit is set or not in the given `t variable *)
-  LogTODO(ATokens);
   // TODO Untested
-//TODO  return ((StrToInt(TranslateVariables(ATokens[3])) & (1 << StrToInt(TranslateVariables(ATokens[4])))) == StrToInt(TranslateVariables(ATokens[5])));
+  Result := ((StrToInt(TranslateVariables(ATokens[3])) AND (1 SHL StrToInt(TranslateVariables(ATokens[4])))) = StrToInt(TranslateVariables(ATokens[5])));
 end;
 
 function TRTReader.CommandIF_BLOCKPASSABLE(ATokens: TTokens): Boolean;
 begin
   (* @if blockpassable <is or not> <0 or 1> *)
-  LogTODO(ATokens);
-//TODO  return (Global.CurrentMap.W[(Global.Player.Y - 1) + ((Global.Player.X - 1) * 20)].Terrain == 1);
+  Result := (Game.CurrentMap.MapInfo[Game.Player.X][Game.Player.Y].Terrain = 1);
 end;
 
 function TRTReader.CommandIF_CHECKDUPE(ATokens: TTokens): Boolean;
+var
+  Exists: Boolean;
+  F: File of TraderDatCollection;
+  I: Integer;
+  Name: String;
+  TDC: TraderDatCollection;
+  TrueFalse: Boolean;
 begin
   (* @if checkdupe <`s variable> <true or false>
       Check if the given player name already exists *)
-  LogTODO(ATokens);
-  (*TODO  string GameName = TranslateVariables(ATokens[3]);
-  bool TrueFalse = Convert.ToBoolean(TranslateVariables(ATokens[4]));
 
-  TraderDatRecord TDR;
-  bool Exists = (Global.LoadPlayerByGameName(GameName, out TDR) != -1);
-  return (Exists == TrueFalse);*)
+  Name := UpperCase(TranslateVariables(ATokens[3])); // TODO mStripSeth
+  TrueFalse := StrToBool(TranslateVariables(ATokens[4]));
+
+  // TODO Error handling
+  Assign(F, TraderDatFileName);
+  {$I-}Reset(F);{$I+}
+  if (IOResult = 0) then
+  begin
+    Read(F, TDC);
+  end;
+  Close(F);
+
+  Exists := false;
+  for I := Low(TDC.Player) to High(TDC.Player) do
+  begin
+    Exists := Exists OR (UpperCase(TDC.Player[I].Name) = Name); // TODO mStripSeth
+  end;
+
+  Result := (Exists = TrueFalse);
 end;
 
 function TRTReader.CommandIF_EXIST(ATokens: TTokens): Boolean;
+var
+  FileName: String;
+  TrueFalse: Boolean;
 begin
   (* @IF <filename> EXIST <true or false>
       Undocumented.  Checks if given file exists *)
-  LogTODO(ATokens);
-  (*TODO  string Left = TranslateVariables(ATokens[2]);
-  string Right = TranslateVariables(ATokens[4]);
-
-  string FileName = Game.GetSafeAbsolutePath(Left);
-  bool TrueFalse = Convert.ToBoolean(Right.ToUpper());
-  return (File.Exists(FileName) == TrueFalse);*)
+  FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
+  TrueFalse := StrToBool(TranslateVariables(ATokens[4]));
+  Result := (FileExists(FileName) = TrueFalse);
 end;
 
 function TRTReader.CommandIF_INSIDE(ATokens: TTokens): Boolean;
@@ -1449,83 +1470,91 @@ begin
   (* @IF <Word or variable> INSIDE <Word or variable>
       This allows you to search a string for something inside of it.  Not case
       sensitive. *)
-  LogTODO(ATokens);
-  (*TODO  string Left = TranslateVariables(ATokens[2]);
-  string Right = TranslateVariables(ATokens[4]);
-
-  return Right.ToUpper().Contains(Left.ToUpper());*)
+  Result := (Pos(UpperCase(TranslateVariables(ATokens[2])), UpperCase(TranslateVariables(ATokens[4]))) > 0);
 end;
 
 function TRTReader.CommandIF_IS(ATokens: TTokens): Boolean;
+var
+  Left: String;
+  LeftInt: LongInt;
+  Right: String;
+  RightInt: LongInt;
 begin
-  LogTODO(ATokens);
-  (*TODO  string Left = TranslateVariables(ATokens[2]);
-  string Right = TranslateVariables(ATokens[4]);
-  int LeftInt;
-  int RightInt;
+  Left := TranslateVariables(ATokens[2]);
+  Right := TranslateVariables(ATokens[4]);
+  LeftInt := StrToIntDef(Left, -999);
+  RightInt := StrToIntDef(Right, -999);
 
-  if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
-  {
-      return (LeftInt == RightInt);
-  }
-  else
-  {
-      return (Left == Right);
-  }*)
+  if (LeftInt = -999) OR (RightInt = -999) then
+  begin
+    Result := (Left = Right);
+  end else
+  begin
+    Result := (LeftInt = RightInt);
+  end;
 end;
 
 function TRTReader.CommandIF_LESS(ATokens: TTokens): Boolean;
+var
+  Left: String;
+  LeftInt: LongInt;
+  Right: String;
+  RightInt: LongInt;
 begin
-  LogTODO(ATokens);
-  (*TODO  string Left = TranslateVariables(ATokens[2]);
-  string Right = TranslateVariables(ATokens[4]);
-  int LeftInt;
-  int RightInt;
+  Left := TranslateVariables(ATokens[2]);
+  Right := TranslateVariables(ATokens[4]);
+  LeftInt := StrToIntDef(Left, -999);
+  RightInt := StrToIntDef(Right, -999);
 
-  if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
-  {
-      return (LeftInt < RightInt);
-  }
-  else
-  {
-      throw new ArgumentException("@IF LESS arguments were not numeric");
-  }*)
+  if (LeftInt = -999) OR (RightInt = -999) then
+  begin
+    Result := false; // TODO What does LORD2 with strings used in LESS
+  end else
+  begin
+    Result := (LeftInt < RightInt);
+  end;
 end;
 
 function TRTReader.CommandIF_MORE(ATokens: TTokens): Boolean;
+var
+  Left: String;
+  LeftInt: LongInt;
+  Right: String;
+  RightInt: LongInt;
 begin
-  LogTODO(ATokens);
-  (*TODO  string Left = TranslateVariables(ATokens[2]);
-  string Right = TranslateVariables(ATokens[4]);
-  int LeftInt;
-  int RightInt;
+  Left := TranslateVariables(ATokens[2]);
+  Right := TranslateVariables(ATokens[4]);
+  LeftInt := StrToIntDef(Left, -999);
+  RightInt := StrToIntDef(Right, -999);
 
-  if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
-  {
-      return (LeftInt > RightInt);
-  }
-  else
-  {
-      throw new ArgumentException("@IF MORE arguments were not numeric");
-  }*)
+  if (LeftInt = -999) OR (RightInt = -999) then
+  begin
+    Result := false; // TODO What does LORD2 with strings used in MORE
+  end else
+  begin
+    Result := (LeftInt > RightInt);
+  end;
 end;
 
 function TRTReader.CommandIF_NOT(ATokens: TTokens): Boolean;
+var
+  Left: String;
+  LeftInt: LongInt;
+  Right: String;
+  RightInt: LongInt;
 begin
-  LogTODO(ATokens);
-  (*TODO  string Left = TranslateVariables(ATokens[2]);
-          string Right = TranslateVariables(ATokens[4]);
-          int LeftInt;
-          int RightInt;
+  Left := TranslateVariables(ATokens[2]);
+  Right := TranslateVariables(ATokens[4]);
+  LeftInt := StrToIntDef(Left, -999);
+  RightInt := StrToIntDef(Right, -999);
 
-          if (int.TryParse(Left, out LeftInt) && int.TryParse(Right, out RightInt))
-          {
-              return (LeftInt != RightInt);
-          }
-          else
-          {
-              return (Left != Right);
-          }*)
+  if (LeftInt = -999) OR (RightInt = -999) then
+  begin
+    Result := (Left <> Right);
+  end else
+  begin
+    Result := (LeftInt <> RightInt);
+  end;
 end;
 
 procedure TRTReader.CommandITEMEXIT(ATokens: TTokens);
@@ -1538,51 +1567,51 @@ begin
 end;
 
 procedure TRTReader.CommandKEY(ATokens: TTokens);
+var
+  SavedTextAttr: Integer;
 begin
-// Save text attribute
-  LogTODO(ATokens);
-(*TODO int SavedAttr = Crt.TextAttr;
+  // Save text attribute
+  SavedTextAttr := Crt.TextAttr;
 
-if (tokens.Length == 1)
-{
-    (* @KEY
-        Does a [MORE] prompt, centered on current line.
-        NOTE: Actually indents two lines, not centered *)
-    mWrite(TranslateVariables("  `2<`0MORE`2>"));
-    mReadKey();
-    mWrite("\b\b\b\b\b\b\b\b        \b\b\b\b\b\b\b\b");
-}
-else if (ATokens[2].ToUpper() == "BOTTOM")
-{
-    (* @KEY BOTTOM
-        This does <MORE> prompt at user text window. *)
-    mGotoXY(35, 24);
-    mWrite(TranslateVariables("`2<`0MORE`2>"));
-    mReadKey();
-    mWrite("\b\b\b\b\b\b      \b\b\b\b\b\b");
-}
-else if (ATokens[2].ToUpper() == "NODISPLAY")
-{
-    (* @KEY NODISPLAY
-        Waits for keypress without saying anything. *)
-    mReadKey();
-}
-else if (ATokens[2].ToUpper() == "TOP")
-{
-    (* @KEY TOP
-        This does <MORE> prompt at game text window. *)
-    mGotoXY(40, 15);
-    mWrite(TranslateVariables("`2<`0MORE`2>"));
-    mReadKey();
-    mWrite("\b\b\b\b\b\b      \b\b\b\b\b\b");
-}
-else
-{
-  LogTODO(ATokens);
-}
+  if (High(ATokens) = 1) then
+  begin
+      (* @KEY
+          Does a [MORE] prompt, centered on current line.
+          NOTE: Actually indents two lines, not centered *)
+      mWrite(TranslateVariables('  `2<`0MORE`2>'));
+      mReadKey();
+      mWrite('\b\b\b\b\b\b\b\b        \b\b\b\b\b\b\b\b');
+  end else
+  if (UpperCase(ATokens[2]) = 'BOTTOM') then
+  begin
+      (* @KEY BOTTOM
+          This does <MORE> prompt at user text window. *)
+      mGotoXY(35, 24);
+      mWrite(TranslateVariables('`2<`0MORE`2>'));
+      mReadKey();
+      mWrite('\b\b\b\b\b\b      \b\b\b\b\b\b');
+  end else
+  if (UpperCase(ATokens[2]) = 'NODISPLAY') then
+  begin
+      (* @KEY NODISPLAY
+          Waits for keypress without saying anything. *)
+      mReadKey();
+  end else
+  if (UpperCase(ATokens[2]) = 'TOP') then
+  begin
+      (* @KEY TOP
+          This does <MORE> prompt at game text window. *)
+      mGotoXY(40, 15);
+      mWrite(TranslateVariables('`2<`0MORE`2>'));
+      mReadKey();
+      mWrite('\b\b\b\b\b\b      \b\b\b\b\b\b');
+  end else
+  begin
+    LogTODO(ATokens);
+  end;
 
-// Restore text attribute
-Door.Write(Ansi.TextAttr(SavedAttr));*)
+  // Restore text attribute
+  mWrite(mAnsi.aTextAttr(SavedTextAttr));
 end;
 
 procedure TRTReader.CommandLABEL(ATokens: TTokens);
@@ -1618,8 +1647,7 @@ begin
       The L2 engine will display a runtime error and close the m   Be SURE to
       change the map variable too!!  Using this and changing the X and Y coordinates
       effectivly lets you do a 'warp' from a .ref file. *)
-  LogTODO(ATokens);
-//TODO  Global.LoadMap(StrToInt(TranslateVariables(ATokens[2])));
+  Game.LoadMap(StrToInt(TranslateVariables(ATokens[2])));
 end;
 
 procedure TRTReader.CommandLOADWORLD(ATokens: TTokens);
@@ -1658,13 +1686,14 @@ begin
 end;
 
 procedure TRTReader.CommandNAME(ATokens: TTokens);
+var
+  Name: String;
 begin
   (* @NAME <name to put under picture>
       Undocumented. Puts a name under the picture window *)
-  LogTODO(ATokens);
-(*TODO  string Name = TranslateVariables(string.Join(" ", tokens, 1, tokens.Length - 1));
-  mGotoXY(55 + StrToInt(Math.Truncate((22 - mStripSeth(Name).Length) / 2.0)), 15);
-  mWrite(Name);*)
+  Name := TranslateVariables(DeTokenize(ATokens, ' ', 2));
+  mGotoXY(55 + ((22 - Length(Name)) div 2), 15); // TODO mStripSeth
+  mWrite(Name);
 end;
 
 procedure TRTReader.CommandNOCHECK(ATokens: TTokens);
@@ -1762,26 +1791,21 @@ begin
       have found that @ROUTINE cannot be nested.  That is if you use an @ROUTINE
       command inside of a routine called by @ROUTINE, the reader cannot return to
       the first procedure that ran @ROUTINE. *)
-  LogTODO(ATokens);
-(*TODO  RTReader RTR = new RTReader();
-  if (tokens.Length < 4)
-  {
-      _InHALT = RTR.RunSection(_CurrentFile.Name, TranslateVariables(ATokens[2]));
-  }
-  else
-  {
-      _InHALT = RTR.RunSection(TranslateVariables(ATokens[4]), TranslateVariables(ATokens[2]));
-  }*)
+  if (High(ATokens) < 4) then
+  begin
+    FInHALT := RTReader.Execute(FCurrentFile.Name, TranslateVariables(ATokens[2]));
+  end else
+  begin
+    FInHALT := RTReader.Execute(TranslateVariables(ATokens[4]), TranslateVariables(ATokens[2]));
+  end;
 end;
 
 procedure TRTReader.CommandRUN(ATokens: TTokens);
 begin
   (* @RUN <Header or label name> IN <Filename of .REF file>
       Same thing as ROUTINE, but doesn't come back to the original .REF. *)
-  LogTODO(ATokens);
-  (*TODORTReader RTR = new RTReader();
-_InHALT = RTR.RunSection(TranslateVariables(ATokens[4]), TranslateVariables(ATokens[2]));
-_InCLOSESCRIPT = true; // Don't want to resume this ref*)
+  FInHALT := RTReader.Execute(TranslateVariables(ATokens[4]), TranslateVariables(ATokens[2]));
+  FInCLOSESCRIPT := true; // Don't want to resume this ref
 end;
 
 procedure TRTReader.CommandSAVECURSOR(ATokens: TTokens);
@@ -1838,21 +1862,19 @@ end;
 
 procedure TRTReader.CommandSHOW(ATokens: TTokens);
 begin
-  LogTODO(ATokens);
-(*TODO if ((tokens.Length > 1) && (ATokens[2].ToUpper() == "SCROLL"))
-{
+  if ((High(ATokens) > 1) AND (UpperCase(ATokens[2]) = 'SCROLL')) then
+  begin
     (* @SHOW SCROLL
         Same thing, but puts all the text in a nifty scroll window. (scroll window has
         commands line Next Screen, Previous Screen, Start, and End. *)
-    _InSHOWSCROLLLines.Clear();
-    _InSHOWSCROLL = true;
-}
-else
-{
+    FInSHOWSCROLLLines.Clear();
+    FInSHOWSCROLL := true;
+  end else
+  begin
     (* @SHOW
         Shows following text/ansi.  Stops when a @ is hit on beginning of line. *)
-    _InSHOW = true;
-}     *)
+    FInSHOW := true;
+  end;
 end;
 
 procedure TRTReader.CommandSHOWLOCAL(ATokens: TTokens);
@@ -1866,9 +1888,7 @@ procedure TRTReader.CommandUPDATE(ATokens: TTokens);
 begin
   (* @UPDATE
       Draws all the people on the screen. *)
-  LogTODO(ATokens);
-  (*TODO   EventHandler Handler = RTGlobal.OnUPDATE;
-  if (Handler != null) Handler(null, EventArgs.Empty);*)
+  Game.Update;
 end;
 
 procedure TRTReader.CommandUPDATE_UPDATE(ATokens: TTokens);
@@ -1880,14 +1900,18 @@ begin
 end;
 
 procedure TRTReader.CommandVERSION(ATokens: TTokens);
+var
+  RequiredVersion: Integer;
 begin
   (* @VERSION  <Version it needs>
       For instance, you would put @VERSION 2 for this version of RTREADER.  (002) If
       it is run on Version 1, (could happen) a window will pop up warning the person
       he had better get the latest version. *)
-  LogTODO(ATokens);
-(*TODO  int RequiredVersion = StrToInt(ATokens[2]);
-  if (RequiredVersion > _Version) throw new ArgumentOutOfRangeException("VERSION", "@VERSION requested version " + RequiredVersion + ", we only support version " + _Version);*)
+  RequiredVersion := StrToInt(ATokens[2]);
+  if (RequiredVersion > FVersion) then
+  begin
+    // TODO What does LORD2 do here?
+  end;
 end;
 
 procedure TRTReader.CommandWHOISON(ATokens: TTokens);

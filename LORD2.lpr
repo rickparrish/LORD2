@@ -33,6 +33,8 @@ begin
   begin
     Game.Player.RealName := DropInfo.Alias;
 
+    RTReader.Execute('RULES.REF', 'RULES');
+
     if (Game.IsNewDay) then
     begin
       RTReader.Execute('MAINT.REF', 'MAINT');
@@ -41,7 +43,13 @@ begin
     Game.PlayerNum := Game.LoadPlayerByRealName(DropInfo.RealName, Game.Player);
     if (Game.PlayerNum = -1) then
     begin
-      RTReader.Execute('GAMETXT.REF', 'NEWPLAYER');
+      if (Game.TotalAccounts < 200) then
+      begin
+        RTReader.Execute('GAMETXT.REF', 'NEWPLAYER');
+      end else
+      begin
+        RTReader.Execute('GAMETXT.REF', 'FULL');
+      end;
     end;
 
     if (Game.PlayerNum <> -1) then

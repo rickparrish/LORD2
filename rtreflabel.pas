@@ -12,7 +12,7 @@ type
     Name: String;
 
     constructor Create(ALabelName: String; ALineNumber: Integer);
-    destructor Destroy;
+    destructor Destroy; override;
   end;
 
 implementation

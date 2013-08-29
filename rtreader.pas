@@ -10,7 +10,7 @@ type
   TRTReader = class
   private
     FCurrentLabel: TRTRefLabel;
-    FCurrentLineNumber: Integer;
+    FCurrentLineNumber: LongInt;
     FCurrentFile: TRTRefFile;
     FCurrentSection: TRTRefSection;
 
@@ -41,6 +41,7 @@ type
     procedure CommandBUYMANAGER(ATokens: TTokens);
     procedure CommandCHECKMAIL(ATokens: TTokens);
     procedure CommandCHOICE(ATokens: TTokens);
+    procedure CommandCHOOSEPLAYER(ATokens: TTokens);
     procedure CommandCLEAR(ATokens: TTokens);
     procedure CommandCLEARBLOCK(ATokens: TTokens);
     procedure CommandCLOSESCRIPT(ATokens: TTokens);
@@ -97,15 +98,15 @@ type
     procedure CommandGRAPHICS(ATokens: TTokens);
     procedure CommandHALT(ATokens: TTokens);
 
-    procedure CommandIF_BITCHECK(ATokens: TTokens);
-    procedure CommandIF_BLOCKPASSABLE(ATokens: TTokens);
-    procedure CommandIF_CHECKDUPE(ATokens: TTokens);
-    procedure CommandIF_EXIST(ATokens: TTokens);
-    procedure CommandIF_INSIDE(ATokens: TTokens);
-    procedure CommandIF_IS(ATokens: TTokens);
-    procedure CommandIF_LESS(ATokens: TTokens);
-    procedure CommandIF_MORE(ATokens: TTokens);
-    procedure CommandIF_NOT(ATokens: TTokens);
+    function CommandIF_BITCHECK(ATokens: TTokens): Boolean;
+    function CommandIF_BLOCKPASSABLE(ATokens: TTokens): Boolean;
+    function CommandIF_CHECKDUPE(ATokens: TTokens): Boolean;
+    function CommandIF_EXIST(ATokens: TTokens): Boolean;
+    function CommandIF_INSIDE(ATokens: TTokens): Boolean;
+    function CommandIF_IS(ATokens: TTokens): Boolean;
+    function CommandIF_LESS(ATokens: TTokens): Boolean;
+    function CommandIF_MORE(ATokens: TTokens): Boolean;
+    function CommandIF_NOT(ATokens: TTokens): Boolean;
 
     procedure CommandITEMEXIT(ATokens: TTokens);
     procedure CommandKEY(ATokens: TTokens);
@@ -146,11 +147,9 @@ type
     procedure EndSAYBAR(AText: String);
     procedure EndSHOWSCROLL;
 
-    procedure Execute(AFileName: String; ASectionName: String; ALabelName: String);
+    function Execute(AFileName: String; ASectionName: String; ALabelName: String): Integer;
 
-    procedure LogMissing(ATokens: TTokens);
-    procedure LogUnimplemented(ATokens: TTokens);
-    procedure LogUnused(ATokens: TTokens);
+    procedure LogTODO(ATokens: TTokens);
 
     procedure ParseCommand(ATokens: TTokens);
     procedure ParseScript(ALines: TStringList);
@@ -161,7 +160,8 @@ type
     destructor Destroy; override;
   end;
 
-procedure Execute(AFileName: string; ASectionName: string);
+function Execute(AFileName: String; ASectionName: String): Integer;
+function Execute(AFileName: String; ASectionName: String; ALabelName: String): Integer;
 
 implementation
 
@@ -227,26 +227,22 @@ begin
   end;
 end;
 
-procedure Execute(AFileName: string; ASectionName: string);
-label
-  HandleGOTO;
+function Execute(AFileName: String; ASectionName: String): Integer;
+begin
+  Result := Execute(AFileName, ASectionName, '');
+end;
+
+function Execute(AFileName: String; ASectionName: String; ALabelName: String): Integer;
 var
-  LabelName: String;
   RTR: TRTReader;
 begin
-  LabelName := '';
-
-  HandleGOTO:
-
   AFileName := UpperCase(Trim(ChangeFileExt(AFileName, '')));
   ASectionName := UpperCase(Trim(ASectionName));
-  LabelName := UpperCase(Trim(LabelName));
+  ALabelName := UpperCase(Trim(ALabelName));
 
   RTR := TRTReader.Create();
-  RTR.Execute(AFileName, ASectionName, LabelName);
-  // TODO If returned with a GOTO, goto HandleGOTO
-  // TODO Also check for HALT (although maybe HALT will be handled immediately
-  //      and an ExitProc in LORD2.lpr can handle saving the player data?
+  Result := RTR.Execute(AFileName, ASectionName, ALabelName);
+  RTR.Free;
 end;
 
 constructor TRTReader.Create;
@@ -349,24 +345,24 @@ begin
       This makes the player appear 'red' to other players currently playing.  It
       also tells the Lord II engine to run @#busy in gametxt.ref if a player logs on
       and someone is attacking him or giving him an item. *)
-  // TODO Implement
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandBUYMANAGER(ATokens: TTokens);
 begin
-    (* @BUYMANAGER
-        <item number>
-        <item number>
-        <ect until next @ at beginning of string is hit>
-        This command offers items for sale at the price set in items.dat *)
-    // TODO Implement
+  (* @BUYMANAGER
+      <item number>
+      <item number>
+      <ect until next @ at beginning of string is hit>
+      This command offers items for sale at the price set in items.dat *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandCHECKMAIL(ATokens: TTokens);
 begin
-    (* @CHECKMAIL
-        Undocumented.  Will need to determine what this does *)
-    // TODO Implement
+  (* @CHECKMAIL
+      Undocumented.  Will need to determine what this does *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandCHOICE(ATokens: TTokens);
@@ -418,6 +414,16 @@ begin
 
   FInCHOICEOptions.Clear();
   FInCHOICE := true;
+end;
+
+procedure TRTReader.CommandCHOOSEPLAYER(ATokens: TTokens);
+begin
+  (* @CHOOSEPLAYER `p20
+      This will prompt user for another players name - its the standard 'full or
+      partial name' prompt, with a 'you mean this guy?'.  It returns the players #
+      or 0 if none.  If the player isn't found it will display "No one by that name
+      lives 'round here" and return 0. *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandCLEAR(ATokens: TTokens);
@@ -480,7 +486,7 @@ begin
       mGotoXY(78, 23);
     end;
     else
-      LogMissing(ATokens);
+      LogTODO(ATokens);
   end;
 end;
 
@@ -519,18 +525,18 @@ end;
 
 procedure TRTReader.CommandCONVERT_FILE_TO_ANSI(ATokens: TTokens);
 begin
-    (* @CONVERT_FILE_TO_ANSI <input file> <output file>
-        Converts a text file of Sethansi (whatever) to regular ansi.  This is good for
-        a final score output. *)
-    // TODO Implement
+  (* @CONVERT_FILE_TO_ANSI <input file> <output file>
+      Converts a text file of Sethansi (whatever) to regular ansi.  This is good for
+      a final score output. *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandCONVERT_FILE_TO_ASCII(ATokens: TTokens);
 begin
-    (* @CONVERT_FILE_TO_ASCII <input file> <output file>
-        Converts a text file of Sethansi (whatever) to regular ascii, ie, no colors at
-        all. *)
-    // TODO Implement
+  (* @CONVERT_FILE_TO_ASCII <input file> <output file>
+      Converts a text file of Sethansi (whatever) to regular ascii, ie, no colors at
+      all. *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandCOPYFILE(ATokens: TTokens);
@@ -781,23 +787,15 @@ begin
 end;
 
 procedure TRTReader.CommandDO_ADD(ATokens: TTokens);
-var
-  I: Integer;
-  S: String;
 begin
   (* @DO <Number To Change> <How To Change It> <Change With What> *)
   if (ATokens[3] = '+') then
   begin
-      AssignVariable(ATokens[2], IntToStr(StrToInt(TranslateVariables(ATokens[2])) + StrToInt(TranslateVariables(ATokens[4]))));
+    AssignVariable(ATokens[2], IntToStr(StrToInt(TranslateVariables(ATokens[2])) + StrToInt(TranslateVariables(ATokens[4]))));
   end else
   if (UpperCase(ATokens[3]) = 'ADD') then
   begin
-    S := ATokens[4];
-    for I := 5 to Length(ATokens) - 1 do
-    begin
-      S := S + ' ' + ATokens[I];
-    end;
-    AssignVariable(ATokens[2], TranslateVariables(ATokens[2] + S));
+    AssignVariable(ATokens[2], TranslateVariables(ATokens[2] + DeTokenize(ATokens, ' ', 4)));
   end;
 end;
 
@@ -877,43 +875,44 @@ begin
 end;
 
 procedure TRTReader.CommandDO_GOTO(ATokens: TTokens);
+var
+  I: Integer;
+  LabelName: String;
+  RefSection: TRTRefSection;
 begin
   (* @DO GOTO <header or label>
       Passes control of the script to the header or label specified. *)
-  (*TODO  if (_CurrentFile.Sections.ContainsKey(ATokens[3]))
-  {
-      // HEADER goto
-      RTReader RTR = new RTReader();
-      _InHALT = RTR.RunSection(_CurrentFile.Name, TranslateVariables(ATokens[3]));
-      _InCLOSESCRIPT = true; // Don't want to resume this ref
-  }
-  else if (_CurrentSection.Labels.ContainsKey(ATokens[3]))
-  {
-      // LABEL goto within current section
-      _CurrentLineNumber = _CurrentSection.Labels[tokens[2]];
-  }
-  else
-  {
-      foreach (KeyValuePair<string, RTRefSection> KVP in _CurrentFile.Sections)
-      {
-          if (KVP.Value.Labels.ContainsKey(ATokens[3]))
-          {
-              // LABEL goto within a different section
-              RTReader RTR = new RTReader();
-              _InHALT = RTR.RunSection(_CurrentFile.Name, KVP.Key, TranslateVariables(ATokens[3]));
-              _InCLOSESCRIPT = true; // Don't want to resume this ref
-              break;
-          }
-      }
-  }    *)
+  LabelName := UpperCase(Trim(ATokens[3]));
+
+  if (FCurrentSection.Labels.FindIndexOf(LabelName) <> -1) then
+  begin
+    // LABEL goto within current section
+    FCurrentLineNumber := TRTRefLabel(FCurrentSection.Labels.Find(LabelName)).LineNumber;
+  end else
+  if (FCurrentFile.Sections.FindIndexOf(LabelName) <> -1) then
+  begin
+    // HEADER goto
+    FInHALT := RTReader.Execute(FCurrentFile.Name, LabelName);
+    FInCLOSESCRIPT := true; // Don't want to resume this ref
+  end else
+  begin
+    for I := 0 to FCurrentFile.Sections.Count - 1 do
+    begin
+      RefSection := TRTRefSection(FCurrentFile.Sections.Items[I]);
+      if (RefSection.Labels.FindIndexOf(LabelName) <> -1) then
+      begin
+        // LABEL goto within a different section
+        FInHALT := RTReader.Execute(FCurrentFile.Name, RefSection.Name, LabelName);
+        FInCLOSESCRIPT := true; // Don't want to resume this ref
+      end;
+    end;
+  end;
 end;
 
 procedure TRTReader.CommandDO_IS(ATokens: TTokens);
 var
   F: File of TraderDatCollection;
-  I: Integer;
   PlayerNumber: Integer;
-  S: String;
   TDC: TraderDatCollection;
 begin
   (* @DO <Number To Change> <How To Change It> <Change With What> *)
@@ -967,12 +966,7 @@ begin
     AssignVariable(ATokens[2], IntToStr(Length(TranslateVariables(ATokens[5]))));
   end else
   begin
-    S := ATokens[4];
-    for I := 5 to Length(ATokens) - 1 do
-    begin
-      S := S + ' ' + ATokens[I];
-    end;
-    AssignVariable(ATokens[2], TranslateVariables(S));
+    AssignVariable(ATokens[2], TranslateVariables(DeTokenize(ATokens, ' ', 4)));
   end;
 end;
 
@@ -1010,39 +1004,53 @@ end;
 
 procedure TRTReader.CommandDO_MULTIPLY(ATokens: TTokens);
 begin
-(* @DO <Number To Change> <How To Change It> <Change With What> *)
-//TODO AssignVariable(ATokens[2], (StrToInt(TranslateVariables(ATokens[2])) * StrToInt(TranslateVariables(ATokens[4]))).ToString());
+  (* @DO <Number To Change> <How To Change It> <Change With What> *)
+  AssignVariable(ATokens[2], IntToStr(StrToInt(TranslateVariables(ATokens[2])) * StrToInt(TranslateVariables(ATokens[4]))));
 end;
 
 procedure TRTReader.CommandDO_NUMRETURN(ATokens: TTokens);
+var
+  Count: Integer;
+  I: Integer;
+  Translated: String;
 begin
-(* @DO NUMRETURN <int var> <string var>
-    Undocumented.  Seems to return the number of integers in the given string
-    Example "123test456" returns 6 because there are 6 numbers *)
-  (*TODOstring Translated = TranslateVariables(ATokens[4]);
-string TranslatedWithoutNumbers = Regex.Replace(Translated, "[0-9]", "", RegexOptions.IgnoreCase);
-AssignVariable(ATokens[3], (Translated.Length - TranslatedWithoutNumbers.Length).ToString());*)
+  (* @DO NUMRETURN <int var> <string var>
+      Undocumented.  Seems to return the number of integers in the given string
+      Example "123test456" returns 6 because there are 6 numbers *)
+  Count := 0;
+  Translated := TranslateVariables(ATokens[4]);
+  for I := 1 to Length(Translated) do
+  begin
+    if (Translated[I] in ['0'..'9']) then
+    begin
+      Count += 1;
+    end;
+  end;
+  AssignVariable(ATokens[3], IntToStr(Count));
 end;
 
 procedure TRTReader.CommandDO_PAD(ATokens: TTokens);
+var
+  RequestedLength: Integer;
+  StringLength: Integer;
 begin
-(* @DO PAD <string variable> <length>
-    This adds spaces to the end of the string until string is as long as <length>. *)
-  (*TODOint StringLength = mStripSeth(TranslateVariables(ATokens[3])).Length;
-int RequestedLength = StrToInt(ATokens[4]);
-if (StringLength < RequestedLength)
-{
-    AssignVariable(ATokens[3], StringUtils.PadRight(TranslateVariables(ATokens[3]), ' ', StrToInt(ATokens[4])));
-}       *)
+  (* @DO PAD <string variable> <length>
+      This adds spaces to the end of the string until string is as long as <length>. *)
+  StringLength := Length(TranslateVariables(ATokens[3])); // TODO mStripSeth(TranslateVariables(ATokens[3]));
+  RequestedLength := StrToInt(ATokens[4]);
+  if (StringLength < RequestedLength) then
+  begin
+    AssignVariable(ATokens[3], mStrings.PadRight(TranslateVariables(ATokens[3]), ' ', StrToInt(ATokens[4])));
+  end;
 end;
 
 procedure TRTReader.CommandDO_QUEBAR(ATokens: TTokens);
 begin
-    (* @DO quebar
-        <message>
-        This adds a message to the saybar que.  This will ensure that the message is
-        displayed at it's proper time instead of immediately. *)
-    // TODO Implement
+  (* @DO quebar
+      <message>
+      This adds a message to the saybar que.  This will ensure that the message is
+      displayed at it's proper time instead of immediately. *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandDO_RANDOM(ATokens: TTokens);
@@ -1050,9 +1058,7 @@ begin
   (* @DO <Varible to put # in> RANDOM <Highest number> <number to add to it>
       RANDOM 5 1 will pick a number between 0 (inclusive) and 5 (exclusive) and add 1 to it, resulting in 1-5
       RANDOM 100 200 will pick a number between 0 (inclusive) and 100 (exclusive) and add 200 to it, resulting in 200-299 *)
-  (*TODO  int Min = StrToInt(ATokens[5]);
-  int Max = Min + StrToInt(ATokens[4]);
-  AssignVariable(ATokens[2], _R.Next(Min, Max).ToString());*)
+  AssignVariable(ATokens[2], IntToStr(Random(StrToInt(ATokens[4])) + StrToInt(ATokens[5])));
 end;
 
 procedure TRTReader.CommandDO_READCHAR(ATokens: TTokens);
@@ -1061,15 +1067,7 @@ begin
                  Waits for a key to be pressed.  This uses DV and Windows time slicing while
                  waiting.  `S10 doesn't seem to work with this command.  All the other `S
                  variables do though. *)
-  (*TODO             char? Ch = mReadKey();
-             if (Ch == null)
-             {
-                 AssignVariable(ATokens[3], "\0");
-             }
-             else
-             {
-                 AssignVariable(ATokens[3], Ch.ToString());
-             }*)
+  AssignVariable(ATokens[3], mReadKey());
 end;
 
 procedure TRTReader.CommandDO_READNUM(ATokens: TTokens);
@@ -1078,6 +1076,7 @@ begin
     The number is put into `V40.
     The READNUM procedure is a very nice string editer to get a number in. It
     supports arrow keys and such. *)
+  LogTODO(ATokens);
   (*TODOstring Default = "";
 if (tokens.Length >= 4) Default = TranslateVariables(ATokens[4]);
 
@@ -1102,6 +1101,7 @@ begin
      @end
     The above would ONLY allow the person to hit Y or N - if he hit ENTER, it
     would be the same as hitting Y, because that was listed first.   *)
+  LogTODO(ATokens);
   (*TODOchar? Ch = null;
 while (true)
 {
@@ -1133,6 +1133,7 @@ begin
     also use these vars for the default.  (or `N)  Use NIL if you want the default
     to be nothing.  (if no variable to put it in is specified, it will be put into `S10
     for compatibilty with old .REF's) *)
+  LogTODO(ATokens);
   (*TODOstring ReadString = mInput(Regex.Replace(TranslateVariables(ATokens[4]), "NIL", "", RegexOptions.IgnoreCase), CharacterMask.All, '\0', StrToInt(TranslateVariables(ATokens[3])), StrToInt(TranslateVariables(ATokens[3])), 31);
 if (tokens.Length >= 5)
 {
@@ -1150,6 +1151,7 @@ begin
       Replaces X with Y in an `s variable. *)
   // Identified as @REPLACE not @DO REPLACE in the docs
   // The following regex matches only the first instance of the word foo: (?<!foo.*)foo (from http://stackoverflow.com/a/148561/342378)
+  LogTODO(ATokens);
 //TODO  AssignVariable(ATokens[5], Regex.Replace(TranslateVariables(ATokens[5]), "(?<!" + Regex.Escape(TranslateVariables(ATokens[3])) + ".*)" + Regex.Escape(TranslateVariables(ATokens[3])), TranslateVariables(ATokens[4]), RegexOptions.IgnoreCase));
 end;
 
@@ -1158,6 +1160,7 @@ begin
   (* @DO REPLACEALL <X> <Y> <in `S10>:
       Same as above but replaces all instances. *)
   // Identified as @REPLACEALL not @DO REPLACEALL in the docs
+  LogTODO(ATokens);
 //TODO  AssignVariable(ATokens[5], Regex.Replace(TranslateVariables(ATokens[5]), Regex.Escape(TranslateVariables(ATokens[3])), TranslateVariables(ATokens[4]), RegexOptions.IgnoreCase));
 end;
 
@@ -1165,6 +1168,7 @@ procedure TRTReader.CommandDO_RENAME(ATokens: TTokens);
 begin
   (* @DO RENAME <old name> <new name>
       Undocumented.  Renames a file *)
+  LogTODO(ATokens);
   (*TODO  string OldFile = Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
   string NewFile = Game.GetSafeAbsolutePath(TranslateVariables(ATokens[4]));
   if ((OldFile <> '') && (NewFile <> '') && (File.Exists(OldFile)))
@@ -1188,50 +1192,52 @@ begin
     (* @DO STATBAR
         This draws the statbar. *)
     // Identified as @STATBAR not @DO STATBAR in the docs
-    // TODO Unused
+  LogTODO(ATokens); // Unused
 end;
 
 procedure TRTReader.CommandDO_STRIP(ATokens: TTokens);
 begin
   (* @DO STRIP <string variable>
       This strips beginning and end spaces of a string. *)
+  LogTODO(ATokens);
 //TODO  AssignVariable(ATokens[3], TranslateVariables(ATokens[3]).Trim());
 end;
 
 procedure TRTReader.CommandDO_STRIPALL(ATokens: TTokens);
 begin
-    (* @DO STRIPALL
-        This command strips out all ` codes.  This is good for passwords, etc. *)
-    // TODO Unused
+  (* @DO STRIPALL
+      This command strips out all ` codes.  This is good for passwords, etc. *)
+  LogTODO(ATokens); // Unused
 end;
 
 procedure TRTReader.CommandDO_STRIPBAD(ATokens: TTokens);
 begin
-    (* @DO STRIPBAD
-        This strips out illegal ` codes, and replaces badwords with the standard
-        badword.dat file. *)
-    // TODO Implement
+  (* @DO STRIPBAD
+      This strips out illegal ` codes, and replaces badwords with the standard
+      badword.dat file. *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandDO_STRIPCODE(ATokens: TTokens);
 begin
-    (* @STRIPCODE <any `s variable>
-        This will remove ALL ` codes from a string. *)
-    // TODO Unused
+  (* @STRIPCODE <any `s variable>
+      This will remove ALL ` codes from a string. *)
+  LogTODO(ATokens); // Unused
 end;
 
 procedure TRTReader.CommandDO_SUBTRACT(ATokens: TTokens);
 begin
   (* @DO <Number To Change> <How To Change It> <Change With What> *)
+  LogTODO(ATokens);
 //TODO  AssignVariable(ATokens[2], (StrToInt(TranslateVariables(ATokens[2])) - StrToInt(TranslateVariables(ATokens[4]))).ToString());
 end;
 
 procedure TRTReader.CommandDO_TALK(ATokens: TTokens);
 begin
-    (* @DO TALK <message> [recipients]
-        Undocumented. Looks like recipients is usually ALL, which sends a global message
-        Lack of recipients value means message is only displayed to those on the same screen *)
-    // TODO Implement
+  (* @DO TALK <message> [recipients]
+      Undocumented. Looks like recipients is usually ALL, which sends a global message
+      Lack of recipients value means message is only displayed to those on the same screen *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandDO_TRIM(ATokens: TTokens);
@@ -1240,6 +1246,7 @@ begin
                   This nifty command makes text file larger than <number to trim to> get
                   smaller.  (It deletes lines from the top until the file is correct # of lines,
                   if smaller than <number to trim to>, it doesn't change the file) *)
+  LogTODO(ATokens);
   (*TODO              string FileName = Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
               if (File.Exists(FileName))
               {
@@ -1256,8 +1263,9 @@ end;
 
 procedure TRTReader.CommandDO_UPCASE(ATokens: TTokens);
 begin
-(* @DO UPCASE <string variable>
-    This makes a string all capitals. *)
+  (* @DO UPCASE <string variable>
+      This makes a string all capitals. *)
+  LogTODO(ATokens);
 //TODO AssignVariable(ATokens[3], TranslateVariables(ATokens[3]).ToUpper());
 end;
 
@@ -1278,16 +1286,17 @@ begin
   (* @DRAWMAP
       This draws the current map the user is on.  This command does NOT update the
       screen.  See the @update command below concerning updating the scren. *)
+  LogTODO(ATokens);
 (*TODO  EventHandler Handler = RTGlobal.OnDRAWMAP;
   if (Handler != null) Handler(null, EventArgs.Empty);*)
 end;
 
 procedure TRTReader.CommandDRAWPART(ATokens: TTokens);
 begin
-    (* @DRAWPART <x> <y>
-        This command will draw one block of the current map as defined by <x> and <y>
-        with whatever is supposed to be there, including any people. *)
-    // TODO Implement
+  (* @DRAWPART <x> <y>
+      This command will draw one block of the current map as defined by <x> and <y>
+      with whatever is supposed to be there, including any people. *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandEND(ATokens: TTokens);
@@ -1368,21 +1377,22 @@ begin
         You might also have a hotspot defined that calls a routine that will be a
         fight.  Make sure you DON'T clear the screen.  It won't hurt anything if you
         do, but it won't look very good. *)
-    // TODO Implement
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandGRAPHICS(ATokens: TTokens);
 begin
-    (* @GRAPHICS IS <Num>
-        3 or more enable remote ANSI.  If you never wanted to send ANSI, you could set
-        this to 1. You will probably never touch this one. *)
-    // TODO Unused
+  (* @GRAPHICS IS <Num>
+      3 or more enable remote ANSI.  If you never wanted to send ANSI, you could set
+      this to 1. You will probably never touch this one. *)
+  LogTODO(ATokens); // Unused
 end;
 
 procedure TRTReader.CommandHALT(ATokens: TTokens);
 begin
   (* @HALT <error level>
       This command closes the door and returns the specified error level. *)
+  LogTODO(ATokens);
   (*TODO  if (tokens.Length == 1)
   {
       _InHALT = 0;
@@ -1393,24 +1403,27 @@ begin
   }       *)
 end;
 
-procedure TRTReader.CommandIF_BITCHECK(ATokens: TTokens);
+function TRTReader.CommandIF_BITCHECK(ATokens: TTokens): Boolean;
 begin
   (* @IF bitcheck <`t variable> <bit number> <0 or 1>
       Check if the given bit is set or not in the given `t variable *)
+  LogTODO(ATokens);
   // TODO Untested
 //TODO  return ((StrToInt(TranslateVariables(ATokens[3])) & (1 << StrToInt(TranslateVariables(ATokens[4])))) == StrToInt(TranslateVariables(ATokens[5])));
 end;
 
-procedure TRTReader.CommandIF_BLOCKPASSABLE(ATokens: TTokens);
+function TRTReader.CommandIF_BLOCKPASSABLE(ATokens: TTokens): Boolean;
 begin
   (* @if blockpassable <is or not> <0 or 1> *)
+  LogTODO(ATokens);
 //TODO  return (Global.CurrentMap.W[(Global.Player.Y - 1) + ((Global.Player.X - 1) * 20)].Terrain == 1);
 end;
 
-procedure TRTReader.CommandIF_CHECKDUPE(ATokens: TTokens);
+function TRTReader.CommandIF_CHECKDUPE(ATokens: TTokens): Boolean;
 begin
   (* @if checkdupe <`s variable> <true or false>
       Check if the given player name already exists *)
+  LogTODO(ATokens);
   (*TODO  string GameName = TranslateVariables(ATokens[3]);
   bool TrueFalse = Convert.ToBoolean(TranslateVariables(ATokens[4]));
 
@@ -1419,10 +1432,11 @@ begin
   return (Exists == TrueFalse);*)
 end;
 
-procedure TRTReader.CommandIF_EXIST(ATokens: TTokens);
+function TRTReader.CommandIF_EXIST(ATokens: TTokens): Boolean;
 begin
   (* @IF <filename> EXIST <true or false>
       Undocumented.  Checks if given file exists *)
+  LogTODO(ATokens);
   (*TODO  string Left = TranslateVariables(ATokens[2]);
   string Right = TranslateVariables(ATokens[4]);
 
@@ -1431,19 +1445,21 @@ begin
   return (File.Exists(FileName) == TrueFalse);*)
 end;
 
-procedure TRTReader.CommandIF_INSIDE(ATokens: TTokens);
+function TRTReader.CommandIF_INSIDE(ATokens: TTokens): Boolean;
 begin
   (* @IF <Word or variable> INSIDE <Word or variable>
       This allows you to search a string for something inside of it.  Not case
       sensitive. *)
+  LogTODO(ATokens);
   (*TODO  string Left = TranslateVariables(ATokens[2]);
   string Right = TranslateVariables(ATokens[4]);
 
   return Right.ToUpper().Contains(Left.ToUpper());*)
 end;
 
-procedure TRTReader.CommandIF_IS(ATokens: TTokens);
+function TRTReader.CommandIF_IS(ATokens: TTokens): Boolean;
 begin
+  LogTODO(ATokens);
   (*TODO  string Left = TranslateVariables(ATokens[2]);
   string Right = TranslateVariables(ATokens[4]);
   int LeftInt;
@@ -1459,8 +1475,9 @@ begin
   }*)
 end;
 
-procedure TRTReader.CommandIF_LESS(ATokens: TTokens);
+function TRTReader.CommandIF_LESS(ATokens: TTokens): Boolean;
 begin
+  LogTODO(ATokens);
   (*TODO  string Left = TranslateVariables(ATokens[2]);
   string Right = TranslateVariables(ATokens[4]);
   int LeftInt;
@@ -1476,8 +1493,9 @@ begin
   }*)
 end;
 
-procedure TRTReader.CommandIF_MORE(ATokens: TTokens);
+function TRTReader.CommandIF_MORE(ATokens: TTokens): Boolean;
 begin
+  LogTODO(ATokens);
   (*TODO  string Left = TranslateVariables(ATokens[2]);
   string Right = TranslateVariables(ATokens[4]);
   int LeftInt;
@@ -1493,8 +1511,9 @@ begin
   }*)
 end;
 
-procedure TRTReader.CommandIF_NOT(ATokens: TTokens);
+function TRTReader.CommandIF_NOT(ATokens: TTokens): Boolean;
 begin
+  LogTODO(ATokens);
   (*TODO  string Left = TranslateVariables(ATokens[2]);
           string Right = TranslateVariables(ATokens[4]);
           int LeftInt;
@@ -1512,16 +1531,17 @@ end;
 
 procedure TRTReader.CommandITEMEXIT(ATokens: TTokens);
 begin
-    (* @ITEMEXIT
-        This tells the item editor to automatically return the player to the map
-        screen after the item is used.  It is up to you to use the @drawmap and
-        @update commands as usual though. *)
-    // TODO Implement
+  (* @ITEMEXIT
+      This tells the item editor to automatically return the player to the map
+      screen after the item is used.  It is up to you to use the @drawmap and
+      @update commands as usual though. *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandKEY(ATokens: TTokens);
 begin
 // Save text attribute
+  LogTODO(ATokens);
 (*TODO int SavedAttr = Crt.TextAttr;
 
 if (tokens.Length == 1)
@@ -1559,7 +1579,7 @@ else if (ATokens[2].ToUpper() == "TOP")
 }
 else
 {
-    // TODO Implement
+  LogTODO(ATokens);
 }
 
 // Restore text attribute
@@ -1575,19 +1595,19 @@ end;
 
 procedure TRTReader.CommandLOADCURSOR(ATokens: TTokens);
 begin
-    (* @LOADCURSOR
-        This command restores the cursor to the position before the last @SAVECURSOR
-        was issued.  This is good for creative graphics and text positioning with a
-        minimum of calculations.  See @SAVECURSOR below. *)
-    // TODO Implement
+  (* @LOADCURSOR
+      This command restores the cursor to the position before the last @SAVECURSOR
+      was issued.  This is good for creative graphics and text positioning with a
+      minimum of calculations.  See @SAVECURSOR below. *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandLOADGLOBALS(ATokens: TTokens);
 begin
-    (* @LOADGLOBALS
-        This command loads the last value of all global variables as existed when the
-        last @SAVEGLOBALS command was issued.  See @SAVEGLOBALS below. *)
-    // TODO Unused
+  (* @LOADGLOBALS
+      This command loads the last value of all global variables as existed when the
+      last @SAVEGLOBALS command was issued.  See @SAVEGLOBALS below. *)
+  LogTODO(ATokens); // Unused
 end;
 
 procedure TRTReader.CommandLOADMAP(ATokens: TTokens);
@@ -1599,48 +1619,50 @@ begin
       The L2 engine will display a runtime error and close the m   Be SURE to
       change the map variable too!!  Using this and changing the X and Y coordinates
       effectivly lets you do a 'warp' from a .ref file. *)
+  LogTODO(ATokens);
 //TODO  Global.LoadMap(StrToInt(TranslateVariables(ATokens[2])));
 end;
 
 procedure TRTReader.CommandLOADWORLD(ATokens: TTokens);
 begin
-    (* @LOADWORLD
-        This command loads globals and world data.  It has never been used but is
-        included just in case it becomes necessary to do this.  See @SAVEWORLD below. *)
-    // TODO Unused
+  (* @LOADWORLD
+      This command loads globals and world data.  It has never been used but is
+      included just in case it becomes necessary to do this.  See @SAVEWORLD below. *)
+  LogTODO(ATokens); // Unused
 end;
 
 procedure TRTReader.CommandLORDRANK(ATokens: TTokens);
 begin
-    (* @LORDRANK <filename> <`p variable to rank by>
-        This command produces a file as specified by <filename>.  It uses the `p
-        variable specified for the order of the ranking.  This parameter must be a
-        number without the `p.  The file that is created contains no headers and is
-        not deleted before writing.  If a file of the same name already exists, the
-        procedure will append the file.  The following table is the column numbers
-        where @LORDRANK places the ranking information.
-          COLUMN     STAT
-          1          Sex if female
-          3          Name
-          37         Stat to rank by (right justified) (Usually Experience)
-          42         Level
-          48         Status
-          60         Alignment
-          65         Quests completed *)
-    // TODO Implement
+  (* @LORDRANK <filename> <`p variable to rank by>
+      This command produces a file as specified by <filename>.  It uses the `p
+      variable specified for the order of the ranking.  This parameter must be a
+      number without the `p.  The file that is created contains no headers and is
+      not deleted before writing.  If a file of the same name already exists, the
+      procedure will append the file.  The following table is the column numbers
+      where @LORDRANK places the ranking information.
+        COLUMN     STAT
+        1          Sex if female
+        3          Name
+        37         Stat to rank by (right justified) (Usually Experience)
+        42         Level
+        48         Status
+        60         Alignment
+        65         Quests completed *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandMOREMAP(ATokens: TTokens);
 begin
-    (* @MOREMAP
-        The line UNDER this will be the new <more> prompt.  30 characters maximum. *)
-    // TODO Unused
+  (* @MOREMAP
+      The line UNDER this will be the new <more> prompt.  30 characters maximum. *)
+  LogTODO(ATokens); // Unused
 end;
 
 procedure TRTReader.CommandNAME(ATokens: TTokens);
 begin
   (* @NAME <name to put under picture>
       Undocumented. Puts a name under the picture window *)
+  LogTODO(ATokens);
 (*TODO  string Name = TranslateVariables(string.Join(" ", tokens, 1, tokens.Length - 1));
   mGotoXY(55 + StrToInt(Math.Truncate((22 - mStripSeth(Name).Length) / 2.0)), 15);
   mWrite(Name);*)
@@ -1663,57 +1685,57 @@ end;
 
 procedure TRTReader.CommandOFFMAP(ATokens: TTokens);
 begin
-    (* @OFFMAP
-        This takes the player's symbol off the map.  This makes the player appear to
-        disappear to other players currently playing.  This is usful to make it look
-        like they actually went into the hut, building, ect. *)
-    // TODO Implement
+  (* @OFFMAP
+      This takes the player's symbol off the map.  This makes the player appear to
+      disappear to other players currently playing.  This is usful to make it look
+      like they actually went into the hut, building, ect. *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandOVERHEADMAP(ATokens: TTokens);
 begin
-    (* @OVERHEADMAP
-        This command displays the visible portion of the map as defined in the world
-        editor of L2CFG.  All maps marked as no show and all unused maps will be
-        blue signifying ocean.  No marks or legend will be written on the map.  This
-        is your responsibility.  If you wish to mark the map you must do this in
-        help.ref under the @#M routine.  Be sure to include a legend so people have
-        some reference concerning what the marks mean. *)
-    // TODO Implement
+  (* @OVERHEADMAP
+      This command displays the visible portion of the map as defined in the world
+      editor of L2CFG.  All maps marked as no show and all unused maps will be
+      blue signifying ocean.  No marks or legend will be written on the map.  This
+      is your responsibility.  If you wish to mark the map you must do this in
+      help.ref under the @#M routine.  Be sure to include a legend so people have
+      some reference concerning what the marks mean. *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandPAUSEOFF(ATokens: TTokens);
 begin
-    (* @PAUSEOFF
-        This turns the 24 line pause off so you can show long ansis etc and it won't
-        pause every 24 lines. *)
-    // TODO Implement
+  (* @PAUSEOFF
+      This turns the 24 line pause off so you can show long ansis etc and it won't
+      pause every 24 lines. *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandPAUSEON(ATokens: TTokens);
 begin
-    (* @PAUSEON
-        Just the opposite of the above command.  This turns the pause back on. *)
-    // TODO Implement
+  (* @PAUSEON
+      Just the opposite of the above command.  This turns the pause back on. *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandPROGNAME(ATokens: TTokens);
 begin
-    (* @PROGNAME
-        The line UNDER this will be the status bar name of the game. *)
-    // TODO Unused
+  (* @PROGNAME
+      The line UNDER this will be the status bar name of the game. *)
+  LogTODO(ATokens); // Unused
 end;
 
 procedure TRTReader.CommandRANK(ATokens: TTokens);
 begin
-    (* @RANK <filename> <`p variable to rank by> <procedure to format the ranking>
-        This command is the same as above with the exception it uses a procedure to
-        format the ranking.  This procedure needs to be in the same file as the @RANK
-        command.  It is preferable to use the @LORDRANK command rather than this one,
-        if feasible.  This one works, but @LORDRANK uses a preset formatting
-        procedure and is therefore quicker.  There may be occasion, however, if you
-        write your own world to use this command rather than @LORDRANK. *)
-    // TODO Unused
+  (* @RANK <filename> <`p variable to rank by> <procedure to format the ranking>
+      This command is the same as above with the exception it uses a procedure to
+      format the ranking.  This procedure needs to be in the same file as the @RANK
+      command.  It is preferable to use the @LORDRANK command rather than this one,
+      if feasible.  This one works, but @LORDRANK uses a preset formatting
+      procedure and is therefore quicker.  There may be occasion, however, if you
+      write your own world to use this command rather than @LORDRANK. *)
+  LogTODO(ATokens); // Unused
 end;
 
 procedure TRTReader.CommandREADFILE(ATokens: TTokens);
@@ -1741,6 +1763,7 @@ begin
       have found that @ROUTINE cannot be nested.  That is if you use an @ROUTINE
       command inside of a routine called by @ROUTINE, the reader cannot return to
       the first procedure that ran @ROUTINE. *)
+  LogTODO(ATokens);
 (*TODO  RTReader RTR = new RTReader();
   if (tokens.Length < 4)
   {
@@ -1754,8 +1777,9 @@ end;
 
 procedure TRTReader.CommandRUN(ATokens: TTokens);
 begin
-(* @RUN <Header or label name> IN <Filename of .REF file>
-    Same thing as ROUTINE, but doesn't come back to the original .REF. *)
+  (* @RUN <Header or label name> IN <Filename of .REF file>
+      Same thing as ROUTINE, but doesn't come back to the original .REF. *)
+  LogTODO(ATokens);
   (*TODORTReader RTR = new RTReader();
 _InHALT = RTR.RunSection(TranslateVariables(ATokens[4]), TranslateVariables(ATokens[2]));
 _InCLOSESCRIPT = true; // Don't want to resume this ref*)
@@ -1763,24 +1787,24 @@ end;
 
 procedure TRTReader.CommandSAVECURSOR(ATokens: TTokens);
 begin
-    (* @SAVECURSOR
-        This command saves the current cursor positioning for later retrieval. *)
-    // TODO Implement
+  (* @SAVECURSOR
+      This command saves the current cursor positioning for later retrieval. *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandSAVEGLOBALS(ATokens: TTokens);
 begin
-    (* @SAVEGLOBALS
-        This command saves the current global variables for later retrieval *)
-    // TODO Implement
+  (* @SAVEGLOBALS
+      This command saves the current global variables for later retrieval *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandSAVEWORLD(ATokens: TTokens);
 begin
-    (* @SAVEWORLD
-        This command saves stats and world data.  The only use yet is right after
-        @#maint is called to save random stats set for that day and such. *)
-    // TODO Unused
+  (* @SAVEWORLD
+      This command saves stats and world data.  The only use yet is right after
+      @#maint is called to save random stats set for that day and such. *)
+  LogTODO(ATokens); // Unused
 end;
 
 procedure TRTReader.CommandSAY(ATokens: TTokens);
@@ -1792,29 +1816,30 @@ end;
 
 procedure TRTReader.CommandSELLMANAGER(ATokens: TTokens);
 begin
-    (* @SELLMANAGER
-        This command presents a menu of the player's current inventory.  The player
-        can then sell his items at 1/2 the price in items.dat.  Any item that has the
-        "Can be sold" field in the items.dat file set to 'no' will be greyed and if
-        the player chooses that item a box will appear saying "They don't seem
-        interested in that".  It is highly recommended that there be a routine such as
-        @clear screen
-        @do write
-        `cSo what do you want to sell?
-        @SELLMANAGER
-        OR
-        @clear screen
-        @show
-        `cSo what do you want to sell
-        @SELLMANAGER
-        The `c is included so that there will be two carriage returns issued.  This is
-        important for cosmetic purposes only.  I have found that if the @sellmanager
-        is issued at the top of the screen, the boxes don't dissapear as they should. *)
-    // TODO Implement
+  (* @SELLMANAGER
+      This command presents a menu of the player's current inventory.  The player
+      can then sell his items at 1/2 the price in items.dat.  Any item that has the
+      "Can be sold" field in the items.dat file set to 'no' will be greyed and if
+      the player chooses that item a box will appear saying "They don't seem
+      interested in that".  It is highly recommended that there be a routine such as
+      @clear screen
+      @do write
+      `cSo what do you want to sell?
+      @SELLMANAGER
+      OR
+      @clear screen
+      @show
+      `cSo what do you want to sell
+      @SELLMANAGER
+      The `c is included so that there will be two carriage returns issued.  This is
+      important for cosmetic purposes only.  I have found that if the @sellmanager
+      is issued at the top of the screen, the boxes don't dissapear as they should. *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandSHOW(ATokens: TTokens);
 begin
+  LogTODO(ATokens);
 (*TODO if ((tokens.Length > 1) && (ATokens[2].ToUpper() == "SCROLL"))
 {
     (* @SHOW SCROLL
@@ -1842,16 +1867,17 @@ procedure TRTReader.CommandUPDATE(ATokens: TTokens);
 begin
   (* @UPDATE
       Draws all the people on the screen. *)
+  LogTODO(ATokens);
   (*TODO   EventHandler Handler = RTGlobal.OnUPDATE;
   if (Handler != null) Handler(null, EventArgs.Empty);*)
 end;
 
 procedure TRTReader.CommandUPDATE_UPDATE(ATokens: TTokens);
 begin
-    (* @UPDATE_UPDATE
-        This command writes current player data to UPDATE.TMP file.  This is useful
-        when you just can't wait until the script is finished for some reason. *)
-    // TODO Implement
+  (* @UPDATE_UPDATE
+      This command writes current player data to UPDATE.TMP file.  This is useful
+      when you just can't wait until the script is finished for some reason. *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandVERSION(ATokens: TTokens);
@@ -1860,15 +1886,16 @@ begin
       For instance, you would put @VERSION 2 for this version of RTREADER.  (002) If
       it is run on Version 1, (could happen) a window will pop up warning the person
       he had better get the latest version. *)
+  LogTODO(ATokens);
 (*TODO  int RequiredVersion = StrToInt(ATokens[2]);
   if (RequiredVersion > _Version) throw new ArgumentOutOfRangeException("VERSION", "@VERSION requested version " + RequiredVersion + ", we only support version " + _Version);*)
 end;
 
 procedure TRTReader.CommandWHOISON(ATokens: TTokens);
 begin
-    (* @WHOISON
-        Undocumented.  Will need to find out what this does *)
-    // TODO Implement
+  (* @WHOISON
+      Undocumented.  Will need to find out what this does *)
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandWRITEFILE(ATokens: TTokens);
@@ -2169,7 +2196,7 @@ begin
   }    *)
 end;
 
-procedure TRTReader.Execute(AFileName: String; ASectionName: String; ALabelName: String);
+function TRTReader.Execute(AFileName: String; ASectionName: String; ALabelName: String): Integer;
 begin
   if (RTGlobal.RefFiles.FindIndexOf(AFileName) = -1) then
   begin
@@ -2205,44 +2232,37 @@ begin
   end;
 end;
 
-procedure TRTReader.LogMissing(ATokens: TTokens);
+procedure TRTReader.LogTODO(ATokens: TTokens);
 begin
-  FastWrite(mStrings.PadRight('TODO Missing: ' + ATokens[1], ' ', 80), 1, 25, 31);
-  ReadLn;
-  FastWrite(mStrings.PadRight('', ' ', 80), 1, 25, 7);
-end;
-
-procedure TRTReader.LogUnimplemented(ATokens: TTokens);
-begin
-  FastWrite(mStrings.PadRight('TODO Unimplemented: ' + ATokens[1], ' ', 80), 1, 25, 31);
-  ReadLn;
-  FastWrite(mStrings.PadRight('', ' ', 80), 1, 25, 7);
-end;
-
-procedure TRTReader.LogUnused(ATokens: TTokens);
-begin
-  FastWrite(mStrings.PadRight('TODO Unused: ' + ATokens[1], ' ', 80), 1, 25, 31);
-  ReadLn;
-  FastWrite(mStrings.PadRight('', ' ', 80), 1, 25, 7);
+  if (mLocal()) then
+  begin
+    FastWrite(mStrings.PadRight('TODO: ' + DeTokenize(ATokens, ' '), ' ', 80), 1, 25, 31);
+    mReadKey;
+    FastWrite(mStrings.PadRight('', ' ', 80), 1, 25, 7);
+  end;
 end;
 
 procedure TRTReader.ParseCommand(ATokens: TTokens);
+var
+  IFResult: Boolean;
 begin
+  IFResult := false;
+
   case UpperCase(ATokens[1]) of
     '@': CommandNOP(ATokens);
     '@ADDCHAR': CommandADDCHAR(ATokens);
     '@BEGIN': CommandBEGIN(ATokens);
     '@BITSET': CommandBITSET(ATokens);
-    '@BUSY': LogUnimplemented(ATokens);
-    '@BUYMANAGER': LogUnimplemented(ATokens);
-    '@CHECKMAIL': LogUnimplemented(ATokens);
+    '@BUSY': CommandBUSY(ATokens);
+    '@BUYMANAGER': CommandBUYMANAGER(ATokens);
+    '@CHECKMAIL': CommandCHECKMAIL(ATokens);
     '@CHOICE': CommandCHOICE(ATokens);
-    '@CHOOSEPLAYER': LogUnimplemented(ATokens);
+    '@CHOOSEPLAYER': CommandCHOOSEPLAYER(ATokens);
     '@CLEAR': CommandCLEAR(ATokens);
     '@CLEARBLOCK': CommandCLEARBLOCK(ATokens);
     '@CLOSESCRIPT': CommandCLOSESCRIPT(ATokens);
-    '@CONVERT_FILE_TO_ANSI': LogUnimplemented(ATokens);
-    '@CONVERT_FILE_TO_ASCII': LogUnimplemented(ATokens);
+    '@CONVERT_FILE_TO_ANSI': CommandCONVERT_FILE_TO_ANSI(ATokens);
+    '@CONVERT_FILE_TO_ASCII': CommandCONVERT_FILE_TO_ASCII(ATokens);
     '@COPYFILE': CommandCOPYFILE(ATokens);
     '@DATALOAD': CommandDATALOAD(ATokens);
     '@DATANEWDAY': CommandDATANEWDAY(ATokens);
@@ -2255,7 +2275,7 @@ begin
       // Check for @DO <COMMAND> commands
       case UpperCase(ATokens[2]) of
         'ADDLOG': CommandDO_ADDLOG(ATokens);
-        'BEEP': LogUnused(ATokens);
+        'BEEP': CommandDO_BEEP(ATokens);
         'COPYTONAME': CommandDO_COPYTONAME(ATokens);
         'DELETE': CommandDO_DELETE(ATokens);
         'FRONTPAD': CommandDO_FRONTPAD(ATokens);
@@ -2265,7 +2285,7 @@ begin
         'MOVEBACK': CommandDO_MOVEBACK(ATokens);
         'NUMRETURN': CommandDO_NUMRETURN(ATokens);
         'PAD': CommandDO_PAD(ATokens);
-        'QUEBAR': LogUnimplemented(ATokens);
+        'QUEBAR': CommandDO_QUEBAR(ATokens);
         'READCHAR': CommandDO_READCHAR(ATokens);
         'READNUM': CommandDO_READNUM(ATokens);
         'READSPECIAL': CommandDO_READSPECIAL(ATokens);
@@ -2274,12 +2294,12 @@ begin
         'REPLACEALL': CommandDO_REPLACEALL(ATokens);
         'RENAME': CommandDO_RENAME(ATokens);
         'SAYBAR': CommandDO_SAYBAR(ATokens);
-        'STATBAR': LogUnimplemented(ATokens);
+        'STATBAR': CommandDO_STATBAR(ATokens);
         'STRIP': CommandDO_STRIP(ATokens);
-        'STRIPALL': LogUnused(ATokens);
-        'STRIPBAD': LogUnimplemented(ATokens);
-        'STRIPCODE': LogUnused(ATokens);
-        'TALK': LogUnimplemented(ATokens);
+        'STRIPALL': CommandDO_STRIPALL(ATokens);
+        'STRIPBAD': CommandDO_STRIPBAD(ATokens);
+        'STRIPCODE': CommandDO_STRIPCODE(ATokens);
+        'TALK': CommandDO_TALK(ATokens);
         'TRIM': CommandDO_TRIM(ATokens);
         'UPCASE': CommandDO_UPCASE(ATokens);
         'WRITE': CommandDO_WRITE(ATokens);
@@ -2297,97 +2317,104 @@ begin
               'ADD': CommandDO_ADD(ATokens);
               'IS': CommandDO_IS(ATokens);
               'RANDOM': CommandDO_RANDOM(ATokens);
-              else LogMissing(ATokens);
+              else LogTODO(ATokens);
             end;
           end else
           begin
-            LogMissing(ATokens);
+            LogTODO(ATokens);
           end;
         end;
       end;
     end;
     '@DRAWMAP': CommandDRAWMAP(ATokens);
-    '@DRAWPART': LogUnimplemented(ATokens);
+    '@DRAWPART': CommandDRAWPART(ATokens);
     '@END': CommandEND(ATokens);
-    '@FIGHT': LogUnimplemented(ATokens);
-    '@GRAPHICS': LogUnused(ATokens);
+    '@FIGHT': CommandFIGHT(ATokens);
+    '@GRAPHICS': CommandGRAPHICS(ATokens);
     '@HALT': CommandHALT(ATokens);
     '@IF':
     begin
       // Check for @IF <COMMAND> commands
       case UpperCase(ATokens[2]) of
-        'BITCHECK': CommandIF_BITCHECK(ATokens);
-        'BLOCKPASSABLE': CommandIF_BLOCKPASSABLE(ATokens);
-        'CHECKDUPE': CommandIF_CHECKDUPE(ATokens);
+        'BITCHECK': IFResult := CommandIF_BITCHECK(ATokens);
+        'BLOCKPASSABLE': IFResult := CommandIF_BLOCKPASSABLE(ATokens);
+        'CHECKDUPE': IFResult := CommandIF_CHECKDUPE(ATokens);
         else
         begin
           // Check for @IF <SOMETHING> <COMMAND> commands
           case UpperCase(ATokens[3]) of
-            'EQUALS': CommandIF_IS(ATokens);
-            'EXIST': CommandIF_EXIST(ATokens);
-            'EXISTS': CommandIF_EXIST(ATokens);
-            'INSIDE': CommandIF_INSIDE(ATokens);
-            'IS': CommandIF_IS(ATokens);
-            'LESS': CommandIF_LESS(ATokens);
-            'MORE': CommandIF_MORE(ATokens);
-            'NOT': CommandIF_NOT(ATokens);
-            '=': CommandIF_IS(ATokens);
-            '<': CommandIF_LESS(ATokens);
-            '>': CommandIF_MORE(ATokens);
+            'EQUALS': IFResult := CommandIF_IS(ATokens);
+            'EXIST': IFResult := CommandIF_EXIST(ATokens);
+            'EXISTS': IFResult := CommandIF_EXIST(ATokens);
+            'INSIDE': IFResult := CommandIF_INSIDE(ATokens);
+            'IS': IFResult := CommandIF_IS(ATokens);
+            'LESS': IFResult := CommandIF_LESS(ATokens);
+            'MORE': IFResult := CommandIF_MORE(ATokens);
+            'NOT': IFResult := CommandIF_NOT(ATokens);
+            '=': IFResult := CommandIF_IS(ATokens);
+            '<': IFResult := CommandIF_LESS(ATokens);
+            '>': IFResult := CommandIF_MORE(ATokens);
+            else LogTODO(ATokens);
           end;
         end;
       end;
 
-                  // Check if it's an IF block, or inline IF
-                  (*TODO            if (string.Join(" ", tokens).ToUpper().Contains("THEN DO"))
-            {
-                // @BEGIN..@END coming, so skip it if our result was false
-                if (!Result) _InIFFalse = _InBEGINCount;
-            }
-            else
-            {
-                // Inline DO, so execute it
-                if (Result)
-                {
-                    int DOOffset = (ATokens[6].ToUpper() == "THEN") ? 6 : 5;
-                    string[] DOtokens = ("@DO " + string.Join(" ", tokens, DOOffset, tokens.Length - DOOffset)).Split(' ');
-                    CommandDO(DOtokens);
-                }
-            }      *)
+      // Check if it's an IF block, or inline IF
+      if (Pos('THEN DO', UpperCase(DeTokenize(ATokens, ' '))) > 0) then
+      begin
+        // @BEGIN..@END coming, so skip it if our result was false
+        if Not(IFResult) then
+        begin
+          FInIFFalse := FInBEGINCount;
+        end;
+      end else
+      begin
+        // Inline DO, so execute it
+        if (IFResult) then
+        begin
+          if (UpperCase(ATokens[6]) = 'THEN') then
+          begin
+            ParseCommand(Tokenize('@DO ' + DeTokenize(ATokens, ' ', 7), ' '));
+          end else
+          begin
+            ParseCommand(Tokenize('@DO ' + DeTokenize(ATokens, ' ', 6), ' '));
+          end;
+        end;
+      end;
     end;
-    '@ITEMEXIT': LogUnimplemented(ATokens);
+    '@ITEMEXIT': CommandITEMEXIT(ATokens);
     '@KEY': CommandKEY(ATokens);
     '@LABEL': CommandLABEL(ATokens);
-    '@LOADCURSOR': LogUnimplemented(ATokens);
-    '@LOADGLOBALS': LogUnused(ATokens);
+    '@LOADCURSOR': CommandLOADCURSOR(ATokens);
+    '@LOADGLOBALS': CommandLOADGLOBALS(ATokens);
     '@LOADMAP': CommandLOADMAP(ATokens);
-    '@LOADWORLD': LogUnused(ATokens);
-    '@LORDRANK': LogUnimplemented(ATokens);
-    '@MOREMAP': LogUnused(ATokens);
+    '@LOADWORLD': CommandLOADWORLD(ATokens);
+    '@LORDRANK': CommandLORDRANK(ATokens);
+    '@MOREMAP': CommandMOREMAP(ATokens);
     '@NAME': CommandNAME(ATokens);
     '@NOCHECK': CommandNOCHECK(ATokens);
-    '@OFFMAP': LogUnimplemented(ATokens);
-    '@OVERHEADMAP': LogUnimplemented(ATokens);
-    '@PAUSEOFF': LogUnimplemented(ATokens);
-    '@PAUSEON': LogUnimplemented(ATokens);
-    '@PROGNAME': LogUnused(ATokens);
-    '@RANK': LogUnused(ATokens);
+    '@OFFMAP': CommandOFFMAP(ATokens);
+    '@OVERHEADMAP': CommandOVERHEADMAP(ATokens);
+    '@PAUSEOFF': CommandPAUSEOFF(ATokens);
+    '@PAUSEON': CommandPAUSEON(ATokens);
+    '@PROGNAME': CommandPROGNAME(ATokens);
+    '@RANK': CommandRANK(ATokens);
     '@READFILE': CommandREADFILE(ATokens);
     '@ROUTINE': CommandROUTINE(ATokens);
     '@RUN': CommandRUN(ATokens);
-    '@SAVECURSOR': LogUnimplemented(ATokens);
-    '@SAVEGLOBALS': LogUnimplemented(ATokens);
-    '@SAVEWORLD': LogUnused(ATokens);
+    '@SAVECURSOR': CommandSAVECURSOR(ATokens);
+    '@SAVEGLOBALS': CommandSAVEGLOBALS(ATokens);
+    '@SAVEWORLD': CommandSAVEWORLD(ATokens);
     '@SAY': CommandSAY(ATokens);
-    '@SELLMANAGER': LogUnimplemented(ATokens);
+    '@SELLMANAGER': CommandSELLMANAGER(ATokens);
     '@SHOW': CommandSHOW(ATokens);
     '@SHOWLOCAL': CommandSHOWLOCAL(ATokens);
     '@UPDATE': CommandUPDATE(ATokens);
-    '@UPDATE_UPDATE': LogUnimplemented(ATokens);
+    '@UPDATE_UPDATE': CommandUPDATE_UPDATE(ATokens);
     '@VERSION': CommandVERSION(ATokens);
-    '@WHOISON': LogUnimplemented(ATokens);
+    '@WHOISON': CommandWHOISON(ATokens);
     '@WRITEFILE': CommandWRITEFILE(ATokens);
-    else LogMissing(ATokens);
+    else LogTODO(ATokens);
   end;
 end;
 
@@ -2395,7 +2422,7 @@ procedure TRTReader.ParseScript(ALines: TStringList);
 var
   Line: String;
   LineTrimmed: String;
-  ScriptLength: Integer;
+  ScriptLength: LongInt;
   Tokens: Array of String;
 begin
   ScriptLength := ALines.Count;
@@ -2656,5 +2683,7 @@ begin
   Result := AText;
 end;
 
+begin
+  Randomize;
 end.
 

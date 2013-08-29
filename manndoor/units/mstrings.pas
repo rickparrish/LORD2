@@ -21,6 +21,8 @@ const
 function AddSlash(ALine: String): String;
 function BoolToStr(AValue: Boolean; ATrue, AFalse: String): String;
 function Center(ALine: String): String;
+function DeTokenize(ATokens: TTokens; ADelim: Char): String;
+function DeTokenize(ATokens: TTokens; ADelim: Char; AStartIndex: Integer): String;
 function ciPos(ASubStr, ALine: String): LongInt;
 function GetFName(ALine: String): String;
 function GetLName(ALine: String): String;
@@ -86,6 +88,30 @@ end;
 function ciPos(ASubStr, ALine: String): LongInt;
 begin
      ciPos := Pos(UpperCase(ASubStr), UpperCase(ALine));
+end;
+
+function DeTokenize(ATokens: TTokens; ADelim: Char): String;
+begin
+  Result := DeTokenize(ATokens, ADelim, 1);
+end;
+
+function DeTokenize(ATokens: TTokens; ADelim: Char; AStartIndex: Integer): String;
+var
+  I: Integer;
+  S: String;
+begin
+  S := '';
+
+  if (AStartIndex <= High(ATokens)) then
+  begin
+    S := ATokens[AStartIndex];
+    for I := AStartIndex + 1 to High(ATokens) do
+    begin
+      S := S + ADelim + ATokens[I];
+    end;
+  end;
+
+  Result := S;
 end;
 
 {

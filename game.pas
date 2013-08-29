@@ -41,7 +41,7 @@ procedure Update;
 implementation
 
 var
-  FLastTotalAccounts: Integer;
+  FLastTotalAccounts: LongInt;
   FTotalAccounts: Integer = 0;
 
 function LoadItemsDat: Boolean; forward;

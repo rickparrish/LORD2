@@ -13,7 +13,7 @@ type
     Script: TStringList;
 
     constructor Create(ASectionName: String);
-    destructor Destroy;
+    destructor Destroy; override;
   end;
 
 implementation

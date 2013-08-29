@@ -13,7 +13,7 @@ type
     VisibleIndex: Integer;
 
     constructor Create(AText: String);
-    destructor Destroy;
+    destructor Destroy; override;
   end;
 
 implementation

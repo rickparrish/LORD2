@@ -3,7 +3,7 @@ unit Game;
 interface
 
 uses
-  Struct, SysUtils, RTGlobal, MannDoor, mAnsi, Crt, RTReader;
+  Struct, SysUtils, RTGlobal, MannDoor, mAnsi, Crt, RTReader, DateUtils;
 
 var
   CurrentMap: MapDatRecord;
@@ -41,7 +41,7 @@ procedure Update;
 implementation
 
 var
-  FLastTotalAccounts: LongInt;
+  FLastTotalAccounts: TDateTime = 0;
   FTotalAccounts: Integer = 0;
 
 function LoadItemsDat: Boolean; forward;
@@ -404,27 +404,78 @@ procedure Start;
 var
   Ch: Char;
 begin
-  LoadMap(Player.map);
-  DrawMap;
-  Update;
+  if (LoadDataFiles) then
+  begin
+    Player.RealName := DropInfo.Alias;
 
-  repeat
-    Ch := UpCase(mReadKey);
-    case Ch of
-      '8': MovePlayer(0, -1);
-      '4': MovePlayer(-1, 0);
-      '6': MovePlayer(1, 0);
-      '2': MovePlayer(0, 1);
+    RTReader.Execute('RULES.REF', 'RULES');
+
+    if (IsNewDay) then
+    begin
+      RTReader.Execute('MAINT.REF', 'MAINT');
     end;
-  until (Ch = 'Q');
+
+    PlayerNum := LoadPlayerByRealName(DropInfo.RealName, Player);
+    if (PlayerNum = -1) then
+    begin
+      if (TotalAccounts < 200) then
+      begin
+        RTReader.Execute('GAMETXT.REF', 'NEWPLAYER');
+      end else
+      begin
+        RTReader.Execute('GAMETXT.REF', 'FULL');
+      end;
+    end;
+
+    if (PlayerNum <> -1) then
+    begin
+      RTReader.Execute('GAMETXT.REF', 'STARTGAME');
+
+      LoadMap(Player.Map);
+      DrawMap;
+      Update;
+
+      repeat
+        Ch := UpCase(mReadKey);
+        case Ch of
+          '8': MovePlayer(0, -1);
+          '4': MovePlayer(-1, 0);
+          '6': MovePlayer(1, 0);
+          '2': MovePlayer(0, 1);
+        end;
+      until (Ch = 'Q');
+    end;
+
+    RTGlobal.RefFiles.Clear;
+    RTGlobal.RefFiles.Free;
+  end else
+  begin
+    mWriteLn('ERROR: Unable to load data files.  Please inform your SysOp');
+    mWriteLn('');
+    mWriteLn('Hit a key to quit');
+    mReadKey;
+  end;
 end;
 
 function TotalAccounts: Integer;
+var
+  F: File of TraderDatRecord;
 begin
-  // TODO This should see if X number of seconds have elapsed since the last check
-  // TODO If so, then re-check the TRADER.DAT to get an updated count
-  FLastTotalAccounts := 0;
-  FTotalAccounts := 0;
+  // Only check file once per minute
+  if (MinutesBetween(Now, FLastTotalAccounts) >= 1) then
+  begin
+    FLastTotalAccounts := Now;
+
+    // TODO Retry if IOError
+    Assign(F, TraderDatFileName);
+    {$I-}Reset(F);{$I+}
+    if (IOResult = 0) then
+    begin
+      FTotalAccounts := FileSize(F);
+    end;
+    Close(F);
+  end;
+
   Result := FTotalAccounts;
 end;
 

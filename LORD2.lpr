@@ -29,41 +29,8 @@ begin
   mStartUp;
   mClrScr;
 
-  if (Game.LoadDataFiles) then
-  begin
-    Game.Player.RealName := DropInfo.Alias;
-
-    RTReader.Execute('RULES.REF', 'RULES');
-
-    if (Game.IsNewDay) then
-    begin
-      RTReader.Execute('MAINT.REF', 'MAINT');
-    end;
-
-    Game.PlayerNum := Game.LoadPlayerByRealName(DropInfo.RealName, Game.Player);
-    if (Game.PlayerNum = -1) then
-    begin
-      if (Game.TotalAccounts < 200) then
-      begin
-        RTReader.Execute('GAMETXT.REF', 'NEWPLAYER');
-      end else
-      begin
-        RTReader.Execute('GAMETXT.REF', 'FULL');
-      end;
-    end;
-
-    if (Game.PlayerNum <> -1) then
-    begin
-      RTReader.Execute('GAMETXT.REF', 'STARTGAME');
-      Game.Start;
-    end;
-  end else
-  begin
-    mWriteLn('ERROR: Unable to load data files.  Please inform your SysOp');
-    mWriteLn('');
-    mWriteLn('Hit a key to quit');
-    mReadKey;
-  end;
+  // Start the game
+  Game.Start;
 
   // stop program loop
   if (mLocal) then
@@ -71,9 +38,6 @@ begin
     FastWrite(PadRight('Hit a key to quit', ' ', 80), 1, 25, 31);
     mReadKey;
   end;
-
-  RTGlobal.RefFiles.Clear;
-  RTGlobal.RefFiles.Free;
 
   Terminate;
 end;

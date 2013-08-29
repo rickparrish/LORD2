@@ -176,8 +176,6 @@ var
   VariableUpper: String;
   VariableSkipTwo: String;
 begin
-  // TODO Instead of translating before calling this function, maybe this function should translate and then
-  //      other functions could pass in the raw string
   VariableUpper := UpperCase(Trim(AVariable));
 
   // Handle variables that must match exactly
@@ -854,7 +852,7 @@ begin
   (* @DO FRONTPAD <string variable> <length>
       This adds spaces to the front of the string until the string is as long as
       <length>. *)
-  StringLength := Length(TranslateVariables(ATokens[3])); // TODO Length(mStripSeth(TranslateVariables(ATokens[3])));
+  StringLength := Length(SethStrip(TranslateVariables(ATokens[3])));
   RequestedLength := StrToInt(TranslateVariables(ATokens[4]));
   if (StringLength < RequestedLength) then
   begin
@@ -959,8 +957,7 @@ begin
   begin
     (* @DO <number variable> IS LENGTH <String variable>
         Gets length, smart way. *)
-    //TODO AssignVariable(ATokens[2], mStripSeth(TranslateVariables(ATokens[5])).Length.ToString());
-    AssignVariable(ATokens[2], IntToStr(Length(TranslateVariables(ATokens[5]))));
+    AssignVariable(ATokens[2], IntToStr(Length(StripSeth(TranslateVariables(ATokens[5])))));
   end else
   if (UpperCase(ATokens[4]) = 'REALLENGTH') then
   begin
@@ -1039,7 +1036,7 @@ var
 begin
   (* @DO PAD <string variable> <length>
       This adds spaces to the end of the string until string is as long as <length>. *)
-  StringLength := Length(TranslateVariables(ATokens[3])); // TODO mStripSeth(TranslateVariables(ATokens[3]));
+  StringLength := Length(StripSeth(TranslateVariables(ATokens[3])));
   RequestedLength := StrToInt(ATokens[4]);
   if (StringLength < RequestedLength) then
   begin
@@ -1432,7 +1429,7 @@ begin
   (* @if checkdupe <`s variable> <true or false>
       Check if the given player name already exists *)
 
-  Name := UpperCase(TranslateVariables(ATokens[3])); // TODO mStripSeth
+  Name := UpperCase(StripSeth(TranslateVariables(ATokens[3])));
   TrueFalse := StrToBool(TranslateVariables(ATokens[4]));
 
   // TODO Error handling
@@ -1447,7 +1444,7 @@ begin
   Exists := false;
   for I := Low(TDC.Player) to High(TDC.Player) do
   begin
-    Exists := Exists OR (UpperCase(TDC.Player[I].Name) = Name); // TODO mStripSeth
+    Exists := Exists OR (UpperCase(StripSeth(TDC.Player[I].Name)) = Name);
   end;
 
   Result := (Exists = TrueFalse);
@@ -1508,7 +1505,7 @@ begin
 
   if (LeftInt = -999) OR (RightInt = -999) then
   begin
-    Result := false; // TODO What does LORD2 with strings used in LESS
+    Result := false; // TODO What does LORD2 do with strings used in LESS
   end else
   begin
     Result := (LeftInt < RightInt);
@@ -1529,7 +1526,7 @@ begin
 
   if (LeftInt = -999) OR (RightInt = -999) then
   begin
-    Result := false; // TODO What does LORD2 with strings used in MORE
+    Result := false; // TODO What does LORD2 do with strings used in MORE
   end else
   begin
     Result := (LeftInt > RightInt);
@@ -1692,7 +1689,7 @@ begin
   (* @NAME <name to put under picture>
       Undocumented. Puts a name under the picture window *)
   Name := TranslateVariables(DeTokenize(ATokens, ' ', 2));
-  mGotoXY(55 + ((22 - Length(Name)) div 2), 15); // TODO mStripSeth
+  mGotoXY(55 + ((22 - Length(StripSeth(Name))) div 2), 15);
   mWrite(Name);
 end;
 
@@ -1983,7 +1980,7 @@ begin
 
 
   // Determine which options are Visible and assign VisibleIndex
-  (*TODO  int VisibleCount = 0;
+  (*REALTODO  int VisibleCount = 0;
   int LastVisibleLength = 0;
 
   char[] IfChars = { '=', '!', '>', '<', '+', '-' };
@@ -2135,17 +2132,25 @@ begin
 end;
 
 procedure TRTReader.EndREADFILE;
+var
+  I: Integer;
+  LoopMax: Integer;
+  SL: TStringList;
 begin
   // TODO _InWRITEFILE could be handled like this, so no need for multiple writes per writefile
   if (FileExists(FInREADFILE)) then
   begin
-      (*TODO      string[] Lines = FileUtils.FileReadAllLines(_InREADFILE, RMEncoding.Ansi);
+    // TODO Error handling
+    SL := TStringList.Create;
+    SL.LoadFromFile(FInREADFILE);
 
-      int LoopMax = Math.Min(Lines.Length, _InREADFILELines.Count);
-      for (int i = 0; i < LoopMax; i++)
-      {
-          AssignVariable(_InREADFILELines[i], TranslateVariables(Lines[i]));
-      }*)
+    LoopMax := Min(SL.Count, FInREADFILELines.Count) - 1;
+    for I := 0 to LoopMax do
+    begin
+      AssignVariable(FInREADFILELines[I], TranslateVariables(SL[I]));
+    end;
+
+    SL.Free;
   end;
 end;
 
@@ -2163,7 +2168,7 @@ begin
   // Output new bar
   mGotoXY(3, 21);
   mTextAttr(31);
-  StrippedLength := Length(AText); // TODO Length(mStripSeth(TranslateVariables(AText)));
+  StrippedLength := Length(StripSeth(TranslateVariables(AText)));
   SpacesLeft := Max(0, (76 - StrippedLength) div 2);
   SpacesRight := Max(0, 76 - StrippedLength - SpacesLeft);
   mWrite(mStrings.PadLeft('', ' ', SpacesLeft) + TranslateVariables(AText) + mStrings.PadRight('', ' ', SpacesRight));
@@ -2176,7 +2181,7 @@ end;
 
 procedure TRTReader.EndSHOWSCROLL;
 begin
-  (*TODO  char? Ch = null;
+  (*REALTODO  char? Ch = null;
   int Page = 1;
   int MaxPage = StrToInt(Math.Truncate(_InSHOWSCROLLLines.Count / 22.0));
   if (_InSHOWSCROLLLines.Count % 22 != 0) MaxPage += 1;
@@ -2253,6 +2258,8 @@ begin
       ParseScript(FCurrentSection.Script);
     end;
   end;
+
+  Result := FInHALT;
 end;
 
 procedure TRTReader.LogTODO(ATokens: TTokens);
@@ -2443,6 +2450,7 @@ end;
 
 procedure TRTReader.ParseScript(ALines: TStringList);
 var
+  F: Text;
   Line: String;
   LineTrimmed: String;
   ScriptLength: LongInt;
@@ -2506,9 +2514,21 @@ begin
         end else
         if (FInDO_ADDLOG) then
         begin
-          { TODO
-          FileUtils.FileAppendAllText(Game.GetSafeAbsolutePath("LOGNOW.TXT"), TranslateVariables(Line));
-            }
+          // TODO Error handling
+          Assign(F, Game.GetSafeAbsolutePath('LOGNOW.TXT'));
+          if (FileExists(Game.GetSafeAbsolutePath('LOGNOW.TXT'))) then
+          begin
+            {$I-}Append(F);{$I+}
+          end else
+          begin
+            {$I-}ReWrite(F);{$I+}
+          end;
+          if (IOResult = 0) then
+          begin
+            WriteLn(F, TranslateVariables(Line));
+          end;
+          Close(F);
+
           FInDO_ADDLOG := false;
         end else
         if (FInDO_WRITE) then
@@ -2544,7 +2564,20 @@ begin
         end else
         if (FInWRITEFILE <> '') then
         begin
-          // TODOFileUtils.FileAppendAllText(_InWRITEFILE, TranslateVariables(Line) + Environment.NewLine, RMEncoding.Ansi);
+          // TODO Error handling
+          Assign(F, FInWRITEFILE);
+          if (FileExists(FInWRITEFILE)) then
+          begin
+            {$I-}Append(F);{$I+}
+          end else
+          begin
+            {$I-}ReWrite(F);{$I+}
+          end;
+          if (IOResult = 0) then
+          begin
+            WriteLn(F, TranslateVariables(Line));
+          end;
+          Close(F);
         end;
       end;
     end;
@@ -2653,8 +2686,8 @@ begin
       begin
         // Handle "ampersand" codes
         AText := StringReplace(AText, '&realname', DropInfo.Alias, [rfReplaceAll, rfIgnoreCase]);
-        AText := StringReplace(AText, '&date', 'TODO &date', [rfReplaceAll, rfIgnoreCase]);
-        AText := StringReplace(AText, '&nicedate', 'TODO &nicedate', [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&date', FormatDateTime('yyyy/mm/dd', Now), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&nicedate', FormatDateTime('h:nn') + ' on ' + FormatDateTime('yyyy/mm/dd', Now), [rfReplaceAll, rfIgnoreCase]);
         if (Game.Player.ArmourNumber = 0) then
         begin
           AText := StringReplace(AText, 's&armour', '', [rfReplaceAll, rfIgnoreCase]);

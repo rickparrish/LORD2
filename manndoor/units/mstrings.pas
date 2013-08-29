@@ -38,6 +38,7 @@ function SecToDHMS(ASec: LongInt): String;
 function SecToHM(ASec: LongInt): String;
 function SecToHMS(ASec: LongInt): String;
 function SecToMS(ASec: LongInt): String;
+function SethStrip(ALine: String): String;
 function SethToPipe(ALine: String): String;
 function StripChar(ALine: String; ACh: Char): String;
 function Tokenize(ALine: String; ADelim: Char): TTokens;
@@ -330,6 +331,44 @@ begin
      M := ASec div 60;
      S := ASec mod 60;
      SecToMS := PadLeft(IntToStr(M), '0', 2) + ':' + PadLeft(IntToStr(S), '0', 2);
+end;
+
+function SethStrip(ALine: String): String;
+begin
+  if (Pos('`', ALine) > 0) then
+  begin
+    ALine := StringReplace(ALine, '`1', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`2', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`3', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`4', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`5', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`6', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`7', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`8', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`9', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`0', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`!', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`@', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`#', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`$', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`%', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`b', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`c', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`k', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`l', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`w', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`\', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`|', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`.', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`r0', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`r1', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`r2', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`r3', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`r4', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`r5', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`r6', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`r7', '', [rfIgnoreCase, rfReplaceAll]);
+  end;
 end;
 
 {

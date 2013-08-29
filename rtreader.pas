@@ -1071,23 +1071,27 @@ begin
 end;
 
 procedure TRTReader.CommandDO_READNUM(ATokens: TTokens);
+var
+  Default: String;
+  ReadNum: String;
 begin
 (* @DO READNUM <MAX LENGTH> <DEFAULT> (Optional: <FOREGROUND COLOR> <BACKGROUND COLOR>
     The number is put into `V40.
     The READNUM procedure is a very nice string editer to get a number in. It
     supports arrow keys and such. *)
-  LogTODO(ATokens);
-  (*TODOstring Default = "";
-if (tokens.Length >= 4) Default = TranslateVariables(ATokens[4]);
+  Default := '';
+  if (High(ATokens) >= 4) then
+  begin
+    Default := TranslateVariables(ATokens[4]);
+  end;
 
-string ReadNum = mInput(Default, CharacterMask.Numeric, '\0', StrToInt(TranslateVariables(ATokens[3])), StrToInt(TranslateVariables(ATokens[3])), 31);
-int AnswerInt = 0;
-if (!int.TryParse(ReadNum, out AnswerInt)) AnswerInt = 0;
-
-AssignVariable("`V40", AnswerInt.ToString());*)
+  ReadNum := mInput(Default, CHARS_NUMERIC, #0, StrToInt(TranslateVariables(ATokens[3])), StrToInt(TranslateVariables(ATokens[3])), 31);
+  AssignVariable('`V40', ReadNum);
 end;
 
 procedure TRTReader.CommandDO_READSPECIAL(ATokens: TTokens);
+var
+  Ch: Char;
 begin
 (* @DO READSPECIAL (String variable to put it in> <legal chars, 1st is default>
     Example:
@@ -1101,31 +1105,29 @@ begin
      @end
     The above would ONLY allow the person to hit Y or N - if he hit ENTER, it
     would be the same as hitting Y, because that was listed first.   *)
-  LogTODO(ATokens);
-  (*TODOchar? Ch = null;
-while (true)
-{
-    Ch = mReadKey();
-    if (Ch != null)
-    {
-        Ch = char.ToUpper((char)Ch);
-        if (Ch == '\r')
-        {
-            // Assign first option when enter is hit
-            AssignVariable(ATokens[3], tokens[3][0].ToString());
-            break;
-        }
-        else if (UpperCase(ATokens[4]).Contains(Ch.ToString()))
-        {
-            // Assign selected character
-            AssignVariable(ATokens[3], Ch.ToString());
-            break;
-        }
-    }
-}       *)
+  Ch := #0;
+  repeat
+    Ch := UpCase(mReadKey);
+    if (Ch = #13) then
+    begin
+      // Assign first option when enter is hit
+      AssignVariable(ATokens[3], ATokens[4][0]);
+    end else
+    if (Pos(Ch, UpperCase(ATokens[4])) > 0) then
+    begin
+      // Assign selected character
+      AssignVariable(ATokens[3], Ch);
+    end else
+    begin
+      // Not a valid character
+      Ch := #0
+    end;
+  until (Ch <> #0);
 end;
 
 procedure TRTReader.CommandDO_READSTRING(ATokens: TTokens);
+var
+  ReadString: String;
 begin
 (* @DO READSTRING <MAX LENGTH> <DEFAULT> <variable TO PUT IT IN>
     Get a string.  Uses same string editer as READNUM.
@@ -1133,16 +1135,14 @@ begin
     also use these vars for the default.  (or `N)  Use NIL if you want the default
     to be nothing.  (if no variable to put it in is specified, it will be put into `S10
     for compatibilty with old .REF's) *)
-  LogTODO(ATokens);
-  (*TODOstring ReadString = mInput(Regex.Replace(TranslateVariables(ATokens[4]), "NIL", "", RegexOptions.IgnoreCase), CharacterMask.All, '\0', StrToInt(TranslateVariables(ATokens[3])), StrToInt(TranslateVariables(ATokens[3])), 31);
-if (tokens.Length >= 5)
-{
+  ReadString := mInput(TranslateVariables(ATokens[4]), CHARS_ALL, #0, StrToInt(TranslateVariables(ATokens[3])), StrToInt(TranslateVariables(ATokens[3])), 31);
+  if (High(ATokens) >= 5) then
+  begin
     AssignVariable(ATokens[5], ReadString);
-}
-else
-{
-    AssignVariable("`S10", ReadString);
-}       *)
+  end else
+  begin
+    AssignVariable('`S10', ReadString);
+  end;
 end;
 
 procedure TRTReader.CommandDO_REPLACE(ATokens: TTokens);
@@ -1150,9 +1150,7 @@ begin
   (* @DO REPLACE <X> <Y> <in `S10>
       Replaces X with Y in an `s variable. *)
   // Identified as @REPLACE not @DO REPLACE in the docs
-  // The following regex matches only the first instance of the word foo: (?<!foo.*)foo (from http://stackoverflow.com/a/148561/342378)
-  LogTODO(ATokens);
-//TODO  AssignVariable(ATokens[5], Regex.Replace(TranslateVariables(ATokens[5]), "(?<!" + Regex.Escape(TranslateVariables(ATokens[3])) + ".*)" + Regex.Escape(TranslateVariables(ATokens[3])), TranslateVariables(ATokens[4]), RegexOptions.IgnoreCase));
+  AssignVariable(ATokens[5], StringReplace(TranslateVariables(ATokens[5]), TranslateVariables(ATokens[3]), TranslateVariables(ATokens[4]), [rfIgnoreCase]));
 end;
 
 procedure TRTReader.CommandDO_REPLACEALL(ATokens: TTokens);
@@ -1160,21 +1158,22 @@ begin
   (* @DO REPLACEALL <X> <Y> <in `S10>:
       Same as above but replaces all instances. *)
   // Identified as @REPLACEALL not @DO REPLACEALL in the docs
-  LogTODO(ATokens);
-//TODO  AssignVariable(ATokens[5], Regex.Replace(TranslateVariables(ATokens[5]), Regex.Escape(TranslateVariables(ATokens[3])), TranslateVariables(ATokens[4]), RegexOptions.IgnoreCase));
+  AssignVariable(ATokens[5], StringReplace(TranslateVariables(ATokens[5]), TranslateVariables(ATokens[3]), TranslateVariables(ATokens[4]), [rfIgnoreCase, rfReplaceAll]));
 end;
 
 procedure TRTReader.CommandDO_RENAME(ATokens: TTokens);
+var
+  NewFile: String;
+  OldFile: String;
 begin
   (* @DO RENAME <old name> <new name>
       Undocumented.  Renames a file *)
-  LogTODO(ATokens);
-  (*TODO  string OldFile = Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
-  string NewFile = Game.GetSafeAbsolutePath(TranslateVariables(ATokens[4]));
-  if ((OldFile <> '') && (NewFile <> '') && (File.Exists(OldFile)))
-  {
-      FileUtils.FileMove(OldFile, NewFile);
-  }*)
+  OldFile := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
+  NewFile := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[4]));
+  if ((OldFile <> '') AND (NewFile <> '') AND (FileExists(OldFile))) then
+  begin
+    RenameFile(OldFile, NewFile);
+  end;
 end;
 
 procedure TRTReader.CommandDO_SAYBAR(ATokens: TTokens);
@@ -2306,7 +2305,7 @@ begin
         else
         begin
           // Check for @DO <SOMETHING> <COMMAND> commands
-          if (Length(ATokens) >= 4) then // ATokens[0] is ignored, but must be included in count
+          if (High(ATokens) >= 3) then
           begin
             case UpperCase(ATokens[3]) of
               '/': CommandDO_DIVIDE(ATokens);

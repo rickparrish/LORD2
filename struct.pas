@@ -120,11 +120,6 @@ type
     Extra: array[1..354] of char; {reserved for me}
 end;
 
-type
-  TraderDatCollection = packed record
-    Player: array[1..200] of TraderDatRecord;
-end;
-
 {The update.tmp file is made up of this record, one for each player
 in order.  Just in case you wanted to write an ap that needed to know
 what was going on realtime.}

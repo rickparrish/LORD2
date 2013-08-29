@@ -3,7 +3,7 @@ unit Game;
 interface
 
 uses
-  Struct, SysUtils, RTGlobal, MannDoor, mAnsi, Crt, RTReader, DateUtils;
+  Struct, SysUtils, RTGlobal, MannDoor, mAnsi, Crt, RTReader, DateUtils, mStrings;
 
 var
   CurrentMap: MapDatRecord;
@@ -32,6 +32,8 @@ procedure DrawMap;
 function GetSafeAbsolutePath(AFileName: String): String;
 function LoadDataFiles: Boolean;
 procedure LoadMap(AMapNumber: Integer);
+function LoadPlayerByGameName(AGameName: String; var ARecord: TraderDatRecord): Integer;
+function LoadPlayerByPlayerNumber(APlayerNumber: Integer; var ARecord: TraderDatRecord): Integer;
 function LoadPlayerByRealName(ARealName: String; var ARecord: TraderDatRecord): Integer;
 procedure MoveBack;
 procedure Start;
@@ -159,6 +161,64 @@ begin
   begin
     mWriteLn('Unable to open ' + MapDatFileName);
     Result := false;
+  end;
+  Close(F);
+end;
+
+function LoadPlayerByGameName(AGameName: String; var ARecord: TraderDatRecord): Integer;
+var
+  F: File of TraderDatRecord;
+  I: Integer;
+  Rec: TraderDatRecord;
+begin
+  Result := -1;
+
+  AGameName := UpperCase(Trim(SethStrip(AGameName)));
+
+  // TODO Retry if IOError
+  Assign(F, TraderDatFileName);
+  {$I-}Reset(F);{$I+}
+  if (IOResult = 0) then
+  begin
+    I := 0;
+    repeat
+      I := I + 1;
+      Read(F, Rec);
+      if (UpperCase(Trim(SethStrip(Rec.Name))) = AGameName) then
+      begin
+        ARecord := Rec;
+        Result := I;
+        break;
+      end;
+    until EOF(F);
+  end;
+  Close(F);
+end;
+
+function LoadPlayerByPlayerNumber(APlayerNumber: Integer; var ARecord: TraderDatRecord): Integer;
+var
+  F: File of TraderDatRecord;
+  I: Integer;
+  Rec: TraderDatRecord;
+begin
+  Result := -1;
+
+  // TODO Retry if IOError
+  Assign(F, TraderDatFileName);
+  {$I-}Reset(F);{$I+}
+  if (IOResult = 0) then
+  begin
+    I := 0;
+    repeat
+      I := I + 1;
+      Read(F, Rec);
+      if (I = APlayerNumber) then
+      begin
+        ARecord := Rec;
+        Result := I;
+        break;
+      end;
+    until EOF(F);
   end;
   Close(F);
 end;

@@ -912,9 +912,8 @@ end;
 
 procedure TRTReader.CommandDO_IS(ATokens: TTokens);
 var
-  F: File of TraderDatCollection;
   PlayerNumber: Integer;
-  TDC: TraderDatCollection;
+  TDR: TraderDatRecord;
 begin
   (* @DO <Number To Change> <How To Change It> <Change With What> *)
   if (UpperCase(ATokens[4]) = 'DELETED') then
@@ -924,16 +923,13 @@ begin
         works with `p variables.  The account number can be a `p variable. *)
     PlayerNumber := StrToInt(TranslateVariables(ATokens[5]));
 
-    // TODO Error handling
-    Assign(F, TraderDatFileName);
-    {$I-}Reset(F);{$I+}
-    if (IOResult = 0) then
+    if (PlayerNumber = Game.LoadPlayerByPlayerNumber(PlayerNumber, TDR)) then
     begin
-      Read(F, TDC);
+      AssignVariable(ATokens[2], IntToStr(TDR.Deleted));
+    end else
+    begin
+      AssignVariable(ATokens[2], '0');
     end;
-    Close(F);
-
-    AssignVariable(ATokens[2], IntToStr(TDC.Player[PlayerNumber].Deleted));
   end else
   if (UpperCase(ATokens[4]) = 'GETNAME') then
   begin
@@ -942,22 +938,16 @@ begin
         `s variables.  The account number can be a `p variable. *)
     PlayerNumber := StrToInt(TranslateVariables(ATokens[5]));
 
-    // TODO Error handling
-    Assign(F, TraderDatFileName);
-    {$I-}Reset(F);{$I+}
-    if (IOResult = 0) then
+    if (PlayerNumber = Game.LoadPlayerByPlayerNumber(PlayerNumber, TDR)) then
     begin
-      Read(F, TDC);
+      AssignVariable(ATokens[2], TDR.Name);
     end;
-    Close(F);
-
-    AssignVariable(ATokens[2], TDC.Player[PlayerNumber].Name);
   end else
   if (UpperCase(ATokens[4]) = 'LENGTH') then
   begin
     (* @DO <number variable> IS LENGTH <String variable>
         Gets length, smart way. *)
-    AssignVariable(ATokens[2], IntToStr(Length(StripSeth(TranslateVariables(ATokens[5])))));
+    AssignVariable(ATokens[2], IntToStr(Length(SethStrip(TranslateVariables(ATokens[5])))));
   end else
   if (UpperCase(ATokens[4]) = 'REALLENGTH') then
   begin
@@ -1036,7 +1026,7 @@ var
 begin
   (* @DO PAD <string variable> <length>
       This adds spaces to the end of the string until string is as long as <length>. *)
-  StringLength := Length(StripSeth(TranslateVariables(ATokens[3])));
+  StringLength := Length(SethStrip(TranslateVariables(ATokens[3])));
   RequestedLength := StrToInt(ATokens[4]);
   if (StringLength < RequestedLength) then
   begin
@@ -1420,32 +1410,18 @@ end;
 function TRTReader.CommandIF_CHECKDUPE(ATokens: TTokens): Boolean;
 var
   Exists: Boolean;
-  F: File of TraderDatCollection;
   I: Integer;
   Name: String;
-  TDC: TraderDatCollection;
+  TDR: TraderDatRecord;
   TrueFalse: Boolean;
 begin
   (* @if checkdupe <`s variable> <true or false>
       Check if the given player name already exists *)
 
-  Name := UpperCase(StripSeth(TranslateVariables(ATokens[3])));
+  Name := TranslateVariables(ATokens[3]);
   TrueFalse := StrToBool(TranslateVariables(ATokens[4]));
 
-  // TODO Error handling
-  Assign(F, TraderDatFileName);
-  {$I-}Reset(F);{$I+}
-  if (IOResult = 0) then
-  begin
-    Read(F, TDC);
-  end;
-  Close(F);
-
-  Exists := false;
-  for I := Low(TDC.Player) to High(TDC.Player) do
-  begin
-    Exists := Exists OR (UpperCase(StripSeth(TDC.Player[I].Name)) = Name);
-  end;
+  Exists := (Game.LoadPlayerByGameName(Name, TDR) <> -1);
 
   Result := (Exists = TrueFalse);
 end;
@@ -1689,7 +1665,7 @@ begin
   (* @NAME <name to put under picture>
       Undocumented. Puts a name under the picture window *)
   Name := TranslateVariables(DeTokenize(ATokens, ' ', 2));
-  mGotoXY(55 + ((22 - Length(StripSeth(Name))) div 2), 15);
+  mGotoXY(55 + ((22 - Length(SethStrip(Name))) div 2), 15);
   mWrite(Name);
 end;
 
@@ -1932,6 +1908,21 @@ begin
 end;
 
 procedure TRTReader.EndCHOICE;
+const
+  IfChars = '=!><+-';
+var
+  Ch: Char;
+  I: Integer;
+  LastVisibleLength: Integer;
+  MakeVisible: Boolean;
+  Option: TRTChoiceOption;
+  IfChar: Char;
+  OldSelectedIndex: Integer;
+  SelectedIndex: Integer;
+  Spaces: String;
+  Value: String;
+  Variable: String;
+  VisibleCount: Integer;
 begin
   (* @CHOICE
       <A choice>
@@ -1980,155 +1971,148 @@ begin
 
 
   // Determine which options are Visible and assign VisibleIndex
-  (*REALTODO  int VisibleCount = 0;
-  int LastVisibleLength = 0;
+  VisibleCount := 0;
+  LastVisibleLength := 0;
 
-  char[] IfChars = { '=', '!', '>', '<', '+', '-' };
-  for (int i = 0; i < _InCHOICEOptions.Count; i++)
-  {
-      bool MakeVisible = true;
+  for I := 0 to FInCHOICEOptions.Count - 1 do
+  begin
+    Option := TRTChoiceOption(FInCHOICEOptions.Items[I]);
+    MakeVisible := true;
 
-      // Parse out the IF statements
-      while (Array.IndexOf(IfChars, _InCHOICEOptions[i].Text[0]) != -1)
-      {
-          // Extract operator
-          char Operator = _InCHOICEOptions[i].Text[0];
-          _InCHOICEOptions[i].Text = _InCHOICEOptions[i].Text.Substring(1);
+    // Parse out the IF statements
+    while (Pos(Option.Text[1], IfChars) > 0) do
+    begin
+        // Extract operator
+        IfChar := Option.Text[1];
+        Delete(Option.Text, 1, 1);
 
-          // Extract variable and translate
-          string Variable = _InCHOICEOptions[i].Text.Split(' ')[0];
-          _InCHOICEOptions[i].Text = _InCHOICEOptions[i].Text.Substring(Variable.Length + 1);
-          Variable = TranslateVariables(Variable);
+        // Extract variable and translate
+        Variable := Tokenize(Option.Text, ' ')[1];
+        Delete(Option.Text, 1, Length(Variable) + 1);
+        Variable := TranslateVariables(Variable);
 
-          // Extract value
-          string Value = _InCHOICEOptions[i].Text.Split(' ')[0];
-          _InCHOICEOptions[i].Text = _InCHOICEOptions[i].Text.Substring(Value.Length + 1);
+        // Extract value
+        Value := Tokenize(Option.Text, ' ')[1];
+        Delete(Option.Text, 1, Length(Value) + 1);
+        Value := TranslateVariables(Value);
 
-          // Determine result of if
-          switch (Operator)
-          {
-              case '=':
-                  MakeVisible = MakeVisible && (StrToInt(Variable) == StrToInt(Value));
-                  break;
-              case '!':
-                  MakeVisible = MakeVisible && (StrToInt(Variable) != StrToInt(Value));
-                  break;
-              case '>':
-                  MakeVisible = MakeVisible && (StrToInt(Variable) > StrToInt(Value));
-                  break;
-              case '<':
-                  MakeVisible = MakeVisible && (StrToInt(Variable) < StrToInt(Value));
-                  break;
-              case '+':
-                  MakeVisible = MakeVisible && ((StrToInt(Variable) & (1 << StrToInt(Value))) != 0);
-                  break;
-              case '-':
-                  MakeVisible = MakeVisible && ((StrToInt(Variable) & (1 << StrToInt(Value))) == 0);
-                  break;
-          }
-      }
+        // Determine result of if
+        case ifChar of
+          '=': MakeVisible := MakeVisible AND (StrToInt(Variable) = StrToInt(Value));
+          '!': MakeVisible := MakeVisible AND (StrToInt(Variable) <> StrToInt(Value));
+          '>': MakeVisible := MakeVisible AND (StrToInt(Variable) > StrToInt(Value));
+          '<': MakeVisible := MakeVisible AND (StrToInt(Variable) < StrToInt(Value));
+          '+': MakeVisible := MakeVisible AND ((StrToInt(Variable) AND (1 SHL StrToInt(Value))) <> 0);
+          '-': MakeVisible := MakeVisible AND ((StrToInt(Variable) AND (1 SHL StrToInt(Value))) = 0);
+        end;
+    end;
 
-      // Determine if option is visible
-      if (MakeVisible)
-      {
-          VisibleCount += 1;
-          LastVisibleLength = mStripSeth(_InCHOICEOptions[i].Text).Length;
-          _InCHOICEOptions[i].Visible = true;
-          _InCHOICEOptions[i].VisibleIndex = VisibleCount;
-      }
-      else
-      {
-          _InCHOICEOptions[i].Visible = false;
-      }
-  }
+    // Determine if option is visible
+    if (MakeVisible) then
+    begin
+      VisibleCount += 1;
+      LastVisibleLength := Length(SethStrip(Option.Text));
+      Option.Visible := true; // TODO Might have to reference via
+      Option.VisibleIndex := VisibleCount; // TODO Might have to reference via TRTChoiceOption(FInCHOICEOptions.Items[I])
+    end else
+    begin
+      Option.Visible := false; // TODO Might have to reference via TRTChoiceOption(FInCHOICEOptions.Items[I])
+    end;
+
+    //FInCHOICEOptions.Items[I] := Option;
+  end;
 
   // Ensure `V01 specified a valid/visible selection
-  int SelectedIndex = StrToInt(TranslateVariables("`V01"));
-  if ((SelectedIndex < 1) || (SelectedIndex > _InCHOICEOptions.Count)) SelectedIndex = 1;
-  while (!_InCHOICEOptions[SelectedIndex - 1].Visible) SelectedIndex += 1;
+  SelectedIndex := StrToInt(TranslateVariables('`V01'));
+  if ((SelectedIndex < 1) OR (SelectedIndex > FInCHOICEOptions.Count)) then
+  begin
+    SelectedIndex := 1;
+  end;
+  while Not(TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).Visible) do
+  begin
+    SelectedIndex += 1;
+  end;
 
   // Determine how many spaces to indent by (all lines should be indented same as first line)
-  string Spaces = "\r\n" + new string(' ', Crt.WhereX() - 1);
+  Spaces := #13#10 + mStrings.PadRight('', ' ', Crt.WhereX - 1);
 
   // Output options
-  mCursorSave();
+  mCursorSave;
   mTextAttr(15);
-  for (int i = 0; i < _InCHOICEOptions.Count; i++)
-  {
-      if (_InCHOICEOptions[i].Visible)
-      {
-          if (_InCHOICEOptions[i].VisibleIndex > 1) mWrite(Spaces);
-          if (i == (SelectedIndex - 1)) mTextBackground(Crt.Blue);
-          mWrite(TranslateVariables(_InCHOICEOptions[i].Text));
-          if (i == (SelectedIndex - 1)) mTextBackground(Crt.Black);
-      }
-  }
+  for I := 0 to FInCHOICEOptions.Count - 1 do
+  begin
+    Option := TRTChoiceOption(FInCHOICEOptions.Items[I]);
+    if (Option.Visible) then
+    begin
+      if (Option.VisibleIndex > 1) then mWrite(Spaces);
+      if (I = (SelectedIndex - 1)) then mTextBackground(Crt.Blue);
+      mWrite(TranslateVariables(Option.Text));
+      if (I = (SelectedIndex - 1)) then mTextBackground(Crt.Black);
+    end;
+  end;
 
   // Get response
-  char? Ch = null;
-  while (Ch != '\r')
-  {
-      int OldSelectedIndex = SelectedIndex;
+  repeat
+      OldSelectedIndex := SelectedIndex;
 
-      Ch = mReadKey();
-      switch (Ch)
-      {
-          case '8':
-          case '4':
-              while (true)
-              {
+      Ch := mReadKey;
+      case Ch of
+          '8', '4':
+          begin
+              while (true) do
+              begin
                   // Go to previous item
                   SelectedIndex -= 1;
 
                   // Wrap to bottom if we were at the top item
-                  if (SelectedIndex < 1) SelectedIndex = _InCHOICEOptions.Count;
+                  if (SelectedIndex < 1) then SelectedIndex := FInCHOICEOptions.Count;
 
                   // Check if new selected item is visible (and break if so)
-                  if (_InCHOICEOptions[SelectedIndex - 1].Visible) break;
-              }
-              break;
-          case '6':
-          case '2':
-              while (true)
-              {
+                  if (TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).Visible) then break;
+              end;
+          end;
+          '6', '2':
+          begin
+              while (true) do
+              begin
                   // Go to previous item
                   SelectedIndex += 1;
 
                   // Wrap to bottom if we were at the top item
-                  if (SelectedIndex > _InCHOICEOptions.Count) SelectedIndex = 1;
+                  if (SelectedIndex > FInCHOICEOptions.Count) then SelectedIndex := 1;
 
                   // Check if new selected item is visible (and break if so)
-                  if (_InCHOICEOptions[SelectedIndex - 1].Visible) break;
-              }
-              break;
-      }
+                  if (TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).Visible) then break;
+              end;
+          end;
+      end;
 
-      if (OldSelectedIndex != SelectedIndex)
-      {
+      if (OldSelectedIndex <> SelectedIndex) then
+      begin
           // Store new selection
-          AssignVariable("`V01", SelectedIndex.ToString());
+          AssignVariable('`V01', IntToStr(SelectedIndex));
 
           // Redraw old selection without blue highlight
-          mCursorRestore();
-          if (_InCHOICEOptions[OldSelectedIndex - 1].VisibleIndex > 1) mCursorDown(_InCHOICEOptions[OldSelectedIndex - 1].VisibleIndex - 1);
-          mWrite(TranslateVariables(_InCHOICEOptions[OldSelectedIndex - 1].Text));
+          mCursorRestore;
+          if (TRTChoiceOption(FInCHOICEOptions[OldSelectedIndex - 1]).VisibleIndex > 1) then mCursorDown(TRTChoiceOption(FInCHOICEOptions[OldSelectedIndex - 1]).VisibleIndex - 1);
+          mWrite(TranslateVariables(TRTChoiceOption(FInCHOICEOptions[OldSelectedIndex - 1]).Text));
 
           // Draw new selection with blue highlight
-          mCursorRestore();
-          if (_InCHOICEOptions[SelectedIndex - 1].VisibleIndex > 1) mCursorDown(_InCHOICEOptions[SelectedIndex - 1].VisibleIndex - 1);
+          mCursorRestore;
+          if (TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).VisibleIndex > 1) then mCursorDown(TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).VisibleIndex - 1);
           mTextBackground(Crt.Blue);
-          mWrite(TranslateVariables(_InCHOICEOptions[SelectedIndex - 1].Text));
+          mWrite(TranslateVariables(TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).Text));
           mTextBackground(Crt.Black);
-      }
-  }
+      end;
+  until (Ch = #13);
 
   // Move cursor below choice statement
-  mCursorRestore();
+  mCursorRestore;
   mCursorDown(VisibleCount - 1);
   mCursorRight(LastVisibleLength);
 
   // Update global variable responses
-  RTGlobal.RESPONSE = SelectedIndex.ToString();*)
+  Game.RESPONSE := IntToStr(SelectedIndex);
 end;
 
 procedure TRTReader.EndREADFILE;
@@ -2168,7 +2152,7 @@ begin
   // Output new bar
   mGotoXY(3, 21);
   mTextAttr(31);
-  StrippedLength := Length(StripSeth(TranslateVariables(AText)));
+  StrippedLength := Length(SethStrip(TranslateVariables(AText)));
   SpacesLeft := Max(0, (76 - StrippedLength) div 2);
   SpacesRight := Max(0, 76 - StrippedLength - SpacesLeft);
   mWrite(mStrings.PadLeft('', ' ', SpacesLeft) + TranslateVariables(AText) + mStrings.PadRight('', ' ', SpacesRight));
@@ -2180,48 +2164,58 @@ begin
 end;
 
 procedure TRTReader.EndSHOWSCROLL;
+var
+  Ch: Char;
+  I: Integer;
+  LineEnd: Integer;
+  LineStart: Integer;
+  MaxPage: Integer;
+  Page: Integer;
+  SavedTextAttr: Integer;
 begin
-  (*REALTODO  char? Ch = null;
-  int Page = 1;
-  int MaxPage = StrToInt(Math.Truncate(_InSHOWSCROLLLines.Count / 22.0));
-  if (_InSHOWSCROLLLines.Count % 22 != 0) MaxPage += 1;
-  int SavedAttr = 7;
+  Page := 1;
 
-  while (Ch != 'Q')
-  {
-      mTextAttr(SavedAttr);
-      mClrScr();
+  MaxPage := FInSHOWSCROLLLines.Count div 22;
+  if (FInSHOWSCROLLLines.Count mod 22 <> 0) then
+  begin
+    MaxPage += 1;
+  end;
 
-      int LineStart = (Page - 1) * 22;
-      int LineEnd = LineStart + 21;
-      for (int i = LineStart; i <= LineEnd; i++)
-      {
-          if (i >= _InSHOWSCROLLLines.Count) break;
-          mWriteLn(_InSHOWSCROLLLines[i]);
-      }
-      SavedAttr = Crt.TextAttr;
+  SavedTextAttr := 7;
 
-      mGotoXY(1, 23);
-      mTextAttr(31);
-      mWrite(new string(' ', 79));
-      mGotoXY(3, 23);
-      mWrite("(" + Page + ")");
-      mGotoXY(9, 23);
-      mWrite("[N]ext Page, [P]revious Page, [Q]uit, [S]tart, [E]nd");
+  Ch := #0;
+  repeat
+    mTextAttr(SavedTextAttr);
+    mClrScr;
 
-      Ch = mReadKey();
-      if (Ch != null)
-      {
-          Ch = char.ToUpper((char)Ch);
-          switch (Ch)
-          {
-              case 'E': Page = MaxPage; break;
-              case 'N': Page = Math.Min(MaxPage, Page + 1); break;
-              case 'P': Page = Math.Max(1, Page - 1); break;
-              case 'S': Page = 1; break;
-          }
-      }
-  }    *)
+    LineStart := (Page - 1) * 22;
+    LineEnd := LineStart + 21;
+    for I := LineStart to LineEnd do
+    begin
+      if (I >= FInSHOWSCROLLLines.Count) then
+      begin
+        break;
+      end;
+      mWriteLn(FInSHOWSCROLLLines[I]);
+    end;
+    SavedTextAttr := Crt.TextAttr;
+
+    mGotoXY(1, 23);
+    mTextAttr(31);
+    mWrite(mStrings.PadRight('', ' ', 79));
+    mGotoXY(3, 23);
+    mWrite('(' + IntToStr(Page) + ')');
+    mGotoXY(9, 23);
+    mWrite('[N]ext Page, [P]revious Page, [Q]uit, [S]tart, [E]nd');
+
+    Ch := UpCase(mReadKey);
+    case Ch of
+      'E': Page := MaxPage;
+      'N': Page := Math.Min(MaxPage, Page + 1);
+      'P': Page := Math.Max(1, Page - 1);
+      'S': Page := 1;
+    end;
+  until (Ch = 'Q');
 end;
 
 function TRTReader.Execute(AFileName: String; ASectionName: String; ALabelName: String): Integer;
@@ -2620,74 +2614,12 @@ begin
     'Y': AText := IntToStr(Game.Player.y);
     else
     begin
-      // Handle player and global variables
-      if (Pos('`', TextUpper) > 0) then
-      begin
-        if (Pos('`I', TextUpper) > 0) then
-        begin
-          for I := Low(Game.Player.I) to High(Game.Player.I) do
-          begin
-            AText := StringReplace(AText, '`I' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.I[I]), [rfReplaceAll, rfIgnoreCase]);
-          end;
-        end;
-        if (Pos('`P', TextUpper) > 0) then
-        begin
-          for I := Low(Game.Player.p) to High(Game.Player.p) do
-          begin
-            AText := StringReplace(AText, '`P' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.p[I]), [rfReplaceAll, rfIgnoreCase]);
-          end;
-        end;
-        if (Pos('`+', TextUpper) > 0) then
-        begin
-          for I := Low(Game.ItemsDat.Item) to High(Game.ItemsDat.Item) do
-          begin
-            AText := StringReplace(AText, '`+' + mStrings.PadLeft(IntToStr(I), '0', 2), Game.ItemsDat.Item[I].name, [rfReplaceAll, rfIgnoreCase]);
-          end;
-        end;
-        if (Pos('`S', TextUpper) > 0) then
-        begin
-          for I := Low(Game.WorldDat.s) to High(Game.WorldDat.s) do
-          begin
-            AText := StringReplace(AText, '`S' + mStrings.PadLeft(IntToStr(I), '0', 2), Game.WorldDat.s[I], [rfReplaceAll, rfIgnoreCase]);
-          end;
-        end;
-        if (Pos('`T', TextUpper) > 0) then
-        begin
-          for I := Low(Game.Player.T) to High(Game.Player.T) do
-          begin
-            AText := StringReplace(AText, '`T' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.T[I]), [rfReplaceAll, rfIgnoreCase]);
-          end;
-        end;
-        if (Pos('`V', TextUpper) > 0) then
-        begin
-          for I := Low(Game.WorldDat.v) to High(Game.WorldDat.v) do
-          begin
-            AText := StringReplace(AText, '`V' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.WorldDat.v[I]), [rfReplaceAll, rfIgnoreCase]);
-          end;
-        end;
-
-        // Handle "Seth" codes
-        AText := StringReplace(AText, '`N', Game.Player.name, [rfReplaceAll, rfIgnoreCase]);
-        AText := StringReplace(AText, '`E', Game.ENEMY, [rfReplaceAll, rfIgnoreCase]);
-        if (DropInfo.Emulation = etANSI) then
-        begin
-          AText := StringReplace(AText, '`G', '3', [rfReplaceAll, rfIgnoreCase]);
-        end else
-        begin
-          AText := StringReplace(AText, '`G', '0', [rfReplaceAll, rfIgnoreCase]);
-        end;
-        AText := StringReplace(AText, '`X', ' ', [rfReplaceAll, rfIgnoreCase]);
-        AText := StringReplace(AText, '`D', #8, [rfReplaceAll, rfIgnoreCase]);
-        AText := StringReplace(AText, '`\', #13#10, [rfReplaceAll, rfIgnoreCase]);
-        AText := StringReplace(AText, '`c', mAnsi.aClrScr + #13#10#13#10, [rfReplaceAll, rfIgnoreCase]);
-      end;
-
       if (Pos('&', TextUpper) > 0) then
       begin
         // Handle "ampersand" codes
         AText := StringReplace(AText, '&realname', DropInfo.Alias, [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&date', FormatDateTime('yyyy/mm/dd', Now), [rfReplaceAll, rfIgnoreCase]);
-        AText := StringReplace(AText, '&nicedate', FormatDateTime('h:nn') + ' on ' + FormatDateTime('yyyy/mm/dd', Now), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&nicedate', FormatDateTime('h:nn', Now) + ' on ' + FormatDateTime('yyyy/mm/dd', Now), [rfReplaceAll, rfIgnoreCase]);
         if (Game.Player.ArmourNumber = 0) then
         begin
           AText := StringReplace(AText, 's&armour', '', [rfReplaceAll, rfIgnoreCase]);
@@ -2732,6 +2664,68 @@ begin
         AText := StringReplace(AText, '&sex', IntToStr(Game.Player.SexMale), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&playernum', IntToStr(Game.PlayerNum), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&totalaccounts', IntToStr(Game.TotalAccounts), [rfReplaceAll, rfIgnoreCase]);
+      end;
+
+      if (Pos('`', TextUpper) > 0) then
+      begin
+        // Handle "Seth" codes
+        AText := StringReplace(AText, '`N', Game.Player.name, [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '`E', Game.ENEMY, [rfReplaceAll, rfIgnoreCase]);
+        if (DropInfo.Emulation = etANSI) then
+        begin
+          AText := StringReplace(AText, '`G', '3', [rfReplaceAll, rfIgnoreCase]);
+        end else
+        begin
+          AText := StringReplace(AText, '`G', '0', [rfReplaceAll, rfIgnoreCase]);
+        end;
+        AText := StringReplace(AText, '`X', ' ', [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '`D', #8, [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '`\', #13#10, [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '`c', mAnsi.aClrScr + #13#10#13#10, [rfReplaceAll, rfIgnoreCase]);
+
+        // Handle player and global variables
+        if (Pos('`I', TextUpper) > 0) then
+        begin
+          for I := Low(Game.Player.I) to High(Game.Player.I) do
+          begin
+            AText := StringReplace(AText, '`I' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.I[I]), [rfReplaceAll, rfIgnoreCase]);
+          end;
+        end;
+        if (Pos('`P', TextUpper) > 0) then
+        begin
+          for I := Low(Game.Player.p) to High(Game.Player.p) do
+          begin
+            AText := StringReplace(AText, '`P' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.p[I]), [rfReplaceAll, rfIgnoreCase]);
+          end;
+        end;
+        if (Pos('`+', TextUpper) > 0) then
+        begin
+          for I := Low(Game.ItemsDat.Item) to High(Game.ItemsDat.Item) do
+          begin
+            AText := StringReplace(AText, '`+' + mStrings.PadLeft(IntToStr(I), '0', 2), Game.ItemsDat.Item[I].name, [rfReplaceAll, rfIgnoreCase]);
+          end;
+        end;
+        if (Pos('`S', TextUpper) > 0) then
+        begin
+          for I := Low(Game.WorldDat.s) to High(Game.WorldDat.s) do
+          begin
+            AText := StringReplace(AText, '`S' + mStrings.PadLeft(IntToStr(I), '0', 2), Game.WorldDat.s[I], [rfReplaceAll, rfIgnoreCase]);
+          end;
+        end;
+        if (Pos('`T', TextUpper) > 0) then
+        begin
+          for I := Low(Game.Player.T) to High(Game.Player.T) do
+          begin
+            AText := StringReplace(AText, '`T' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.T[I]), [rfReplaceAll, rfIgnoreCase]);
+          end;
+        end;
+        if (Pos('`V', TextUpper) > 0) then
+        begin
+          for I := Low(Game.WorldDat.v) to High(Game.WorldDat.v) do
+          begin
+            AText := StringReplace(AText, '`V' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.WorldDat.v[I]), [rfReplaceAll, rfIgnoreCase]);
+          end;
+        end;
       end;
     end;
   end;

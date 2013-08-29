@@ -27,6 +27,7 @@ procedure TLORD2.DoRun;
 begin
   { add your program here }
   mStartUp;
+  SethWrite := true;
   mClrScr;
 
   // Start the game

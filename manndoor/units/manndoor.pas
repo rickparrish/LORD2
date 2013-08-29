@@ -78,6 +78,7 @@ var
    LastKey: TLastKey;
    MOREPrompts: TMOREPrompts;
    Session: TSession;
+   SethWrite: Boolean;
 
    {
      Event variables that may be called at various times throughout
@@ -773,16 +774,253 @@ end;
 }
 procedure mWrite(ALine: String);
 var
-   NumWritten: LongInt;
+  BackTick2: String;
+  BackTick3: String;
+  BeforeBackTick: String;
+  NumWritten: LongInt;
 begin
-     if (Pos('`', ALine) > 0) then
-        ALine := SethToPipe(ALine);
-     if (Pos('|', ALine) > 0) then
-        ALine := PipeToAnsi(ALine);
+  if (Pos('|', ALine) > 0) then ALine := PipeToAnsi(ALine);
 
-     aWrite(ALine);
-     if Not(mLocal) then
-        Com_SendBlock(ALine[1], Length(ALine), NumWritten);
+  if (SethWrite AND (Pos('`', ALine) > 0) AND (Length(ALine) > 1)) then
+  begin
+    while (Length(ALine) > 0) do
+    begin
+      // Write everything up to the next backtick
+      if (Pos('`', ALine) <> 1) then
+      begin
+        // First check if we have another backtick
+        if (Pos('`', ALine) = 0) then
+        begin
+          // Nope, so write everything and we're done
+          mWrite(ALine);
+          ALine := '';
+        end else
+        begin
+          // Yep, so only write up until the backtick
+          BeforeBackTick := Copy(ALine, 1, Pos('`', ALine) - 1);
+          mWrite(BeforeBackTick);
+          Delete(ALine, 1, Length(BeforeBackTick));
+        end;
+      end;
+
+      // Now we have a backtick at the beginning of the string
+      while (Pos('`', ALine) = 1) do
+      begin
+        if (Length(ALine) >= 2) then
+        begin
+          BackTick2 := Copy(ALine, 1, 2);
+        end else
+        begin
+          BackTick2 := '';
+        end;
+
+        case BackTick2 of
+          '``':
+          begin
+            mWrite('`');
+            Delete(ALine, 1, 2);
+          end;
+          '`1':
+          begin
+              mTextColor(Crt.Blue);
+              Delete(ALine, 1, 2);
+          end;
+          '`2':
+          begin
+              mTextColor(Crt.Green);
+              Delete(ALine, 1, 2);
+          end;
+          '`3':
+          begin
+              mTextColor(Crt.Cyan);
+              Delete(ALine, 1, 2);
+          end;
+          '`4':
+          begin
+              mTextColor(Crt.Red);
+              Delete(ALine, 1, 2);
+          end;
+          '`5':
+          begin
+              mTextColor(Crt.Magenta);
+              Delete(ALine, 1, 2);
+          end;
+          '`6':
+          begin
+              mTextColor(Crt.Brown);
+              Delete(ALine, 1, 2);
+          end;
+          '`7':
+          begin
+              mTextColor(Crt.LightGray);
+              Delete(ALine, 1, 2);
+          end;
+          '`8':
+          begin
+              mTextColor(Crt.White); // Supposed to be dark gray, but a bug has this as white (TODO Check if this is still accurate)
+              Delete(ALine, 1, 2);
+          end;
+          '`9':
+          begin
+              mTextColor(Crt.LightBlue);
+              Delete(ALine, 1, 2);
+          end;
+          '`0':
+          begin
+              mTextColor(Crt.LightGreen);
+              Delete(ALine, 1, 2);
+          end;
+          '`!':
+          begin
+              mTextColor(Crt.LightCyan);
+              Delete(ALine, 1, 2);
+          end;
+          '`@':
+          begin
+              mTextColor(Crt.LightRed);
+              Delete(ALine, 1, 2);
+          end;
+          '`#':
+          begin
+              mTextColor(Crt.LightMagenta);
+              Delete(ALine, 1, 2);
+          end;
+          '`$':
+          begin
+              mTextColor(Crt.Yellow);
+              Delete(ALine, 1, 2);
+          end;
+          '`%':
+          begin
+              mTextColor(Crt.White);
+              Delete(ALine, 1, 2);
+          end;
+          '`*':
+          begin
+              mTextColor(Crt.Black);
+              Delete(ALine, 1, 2);
+          end;
+          '`b': // TODO Case sensitive?
+          begin
+              // TODO
+              Delete(ALine, 1, 2);
+          end;
+          '`c': // TODO Case sensitive?
+          begin
+              mTextAttr(7);
+              mClrScr();
+              mWrite(#13#10#13#10);
+              Delete(ALine, 1, 2);
+          end;
+          '`d': // TODO Case sensitive?
+          begin
+              mWrite(#8);
+              Delete(ALine, 1, 2);
+          end;
+          '`k': // TODO Case sensitive?
+          begin
+              mWrite('  `2<`0MORE`2>');
+              mReadKey;
+              mWrite(#8#8#8#8#8#8#8#8 + '        ' + #8#8#8#8#8#8#8#8);
+              Delete(ALine, 1, 2);
+          end;
+          '`l': // TODO Case sensitive?
+          begin
+              Crt.Delay(500);
+              Delete(ALine, 1, 2);
+          end;
+          '`w': // TODO Case sensitive?
+          begin
+              Crt.Delay(100);
+              Delete(ALine, 1, 2);
+          end;
+          '`x': // TODO Case sensitive?
+          begin
+              mWrite(' ');
+              Delete(ALine, 1, 2);
+          end;
+          '`\':
+          begin
+              mWrite(#13#10);
+              Delete(ALine, 1, 2);
+          end;
+          '`|':
+          begin
+              // TODO Unknown what this does, but it's used once in LORD2
+              Delete(ALine, 1, 2);
+          end;
+          '`.':
+          begin
+              // TODO Also unknown, used by RTNEWS
+              Delete(ALine, 1, 2);
+          end;
+          else
+          begin
+            if (Length(ALine) >= 3) then
+            begin
+              BackTick3 := Copy(ALine, 1, 3);
+            end else
+            begin
+              BackTick3 := '';
+            end;
+
+            case BackTick3 of
+              '`r0':
+              begin
+                  mTextBackground(Crt.Black);
+                  Delete(ALine, 1, 3);
+              end;
+              '`r1':
+              begin
+                  mTextBackground(Crt.Blue);
+                  Delete(ALine, 1, 3);
+              end;
+              '`r2':
+              begin
+                  mTextBackground(Crt.Green);
+                  Delete(ALine, 1, 3);
+              end;
+              '`r3':
+              begin
+                  mTextBackground(Crt.Cyan);
+                  Delete(ALine, 1, 3);
+              end;
+              '`r4':
+              begin
+                  mTextBackground(Crt.Red);
+                  Delete(ALine, 1, 3);
+              end;
+              '`r5':
+              begin
+                  mTextBackground(Crt.Magenta);
+                  Delete(ALine, 1, 3);
+              end;
+              '`r6':
+              begin
+                  mTextBackground(Crt.Brown);
+                  Delete(ALine, 1, 3);
+              end;
+              '`r7':
+              begin
+                  mTextBackground(Crt.LightGray);
+                  Delete(ALine, 1, 3);
+              end;
+              else
+              begin
+                  // No match, so output the backtick
+                  mWrite('`');
+                  Delete(ALine, 1, 1);
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;
+  end else
+  begin
+    aWrite(ALine);
+    if Not(mLocal) then Com_SendBlock(ALine[1], Length(ALine), NumWritten);
+  end;
 end;
 
 {
@@ -1247,6 +1485,8 @@ end;
 begin
      OldExitProc := ExitProc;
      ExitProc := @NewExitProc;
+
+     SethWrite := false;
 
      mOnCLP := nil;
      mOnHangup := @OnHangup;

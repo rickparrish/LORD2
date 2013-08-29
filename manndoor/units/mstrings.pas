@@ -39,7 +39,6 @@ function SecToHM(ASec: LongInt): String;
 function SecToHMS(ASec: LongInt): String;
 function SecToMS(ASec: LongInt): String;
 function SethStrip(ALine: String): String;
-function SethToPipe(ALine: String): String;
 function StripChar(ALine: String; ACh: Char): String;
 function Tokenize(ALine: String; ADelim: Char): TTokens;
 
@@ -335,7 +334,7 @@ end;
 
 function SethStrip(ALine: String): String;
 begin
-  if (Pos('`', ALine) > 0) then
+  while (Pos('`', ALine) > 0) do
   begin
     ALine := StringReplace(ALine, '`1', '', [rfIgnoreCase, rfReplaceAll]);
     ALine := StringReplace(ALine, '`2', '', [rfIgnoreCase, rfReplaceAll]);
@@ -352,11 +351,14 @@ begin
     ALine := StringReplace(ALine, '`#', '', [rfIgnoreCase, rfReplaceAll]);
     ALine := StringReplace(ALine, '`$', '', [rfIgnoreCase, rfReplaceAll]);
     ALine := StringReplace(ALine, '`%', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`*', '', [rfIgnoreCase, rfReplaceAll]);
     ALine := StringReplace(ALine, '`b', '', [rfIgnoreCase, rfReplaceAll]);
     ALine := StringReplace(ALine, '`c', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`d', '', [rfIgnoreCase, rfReplaceAll]);
     ALine := StringReplace(ALine, '`k', '', [rfIgnoreCase, rfReplaceAll]);
     ALine := StringReplace(ALine, '`l', '', [rfIgnoreCase, rfReplaceAll]);
     ALine := StringReplace(ALine, '`w', '', [rfIgnoreCase, rfReplaceAll]);
+    ALine := StringReplace(ALine, '`x', '', [rfIgnoreCase, rfReplaceAll]);
     ALine := StringReplace(ALine, '`\', '', [rfIgnoreCase, rfReplaceAll]);
     ALine := StringReplace(ALine, '`|', '', [rfIgnoreCase, rfReplaceAll]);
     ALine := StringReplace(ALine, '`.', '', [rfIgnoreCase, rfReplaceAll]);
@@ -369,111 +371,8 @@ begin
     ALine := StringReplace(ALine, '`r6', '', [rfIgnoreCase, rfReplaceAll]);
     ALine := StringReplace(ALine, '`r7', '', [rfIgnoreCase, rfReplaceAll]);
   end;
-end;
 
-{
-  Converts Seth ` codes to PIPE codes
-}
-function SethToPipe(ALine: String): String;
-const
-  HEX: array[0..15] of Char = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F');
-var
-  BG: Byte;
-  FG: Byte;
-  I: Integer;
-  S: String;
-begin
-     BG := TextAttr div 16;
-     FG := TextAttr mod 16;
-
-     if (Length(ALine) >= 2) then
-     begin
-          I := 0;
-          S := '';
-          while (I < Length(ALine)) do
-          begin
-               Inc(I);
-               if (ALine[I] = '`') and (Length(ALine) - I >= 1) then
-               begin
-                    Inc(I);
-                    case ALine[I] of
-                         '`': S := S + '`';
-                         '1': begin
-                                   FG := 1;
-                                   S := S + '|' + HEX[BG] + HEX[FG];
-                              end;
-                         '2': begin
-                                   FG := 2;
-                                   S := S + '|' + HEX[BG] + HEX[FG];
-                              end;
-                         '3': begin
-                                   FG := 3;
-                                   S := S + '|' + HEX[BG] + HEX[FG];
-                              end;
-                         '4': begin
-                                   FG := 4;
-                                   S := S + '|' + HEX[BG] + HEX[FG];
-                              end;
-                         '5': begin
-                                   FG := 5;
-                                   S := S + '|' + HEX[BG] + HEX[FG];
-                              end;
-                         '6': begin
-                                   FG := 6;
-                                   S := S + '|' + HEX[BG] + HEX[FG];
-                              end;
-                         '7': begin
-                                   FG := 7;
-                                   S := S + '|' + HEX[BG] + HEX[FG];
-                              end;
-                         '8': begin
-                                   FG := 8;
-                                   S := S + '|' + HEX[BG] + HEX[FG];
-                              end;
-                         '9': begin
-                                   FG := 9;
-                                   S := S + '|' + HEX[BG] + HEX[FG];
-                              end;
-                         '0': begin
-                                   FG := 10;
-                                   S := S + '|' + HEX[BG] + HEX[FG];
-                              end;
-                         '!': begin
-                                   FG := 11;
-                                   S := S + '|' + HEX[BG] + HEX[FG];
-                              end;
-                         '@': begin
-                                   FG := 12;
-                                   S := S + '|' + HEX[BG] + HEX[FG];
-                              end;
-                         '#': begin
-                                   FG := 13;
-                                   S := S + '|' + HEX[BG] + HEX[FG];
-                              end;
-                         '$': begin
-                                   FG := 14;
-                                   S := S + '|' + HEX[BG] + HEX[FG];
-                              end;
-                         '%': begin
-                                   FG := 15;
-                                   S := S + '|' + HEX[BG] + HEX[FG];
-                              end;
-                         'r': begin
-                                   Inc(I);
-                                   if (I <= Length(ALine)) and (ALine[I] in ['0'..'7']) then
-                                   begin
-                                        BG := StrToIntDef(ALine[I] + '', 0); { + '' needed for VPascal 2.1b279 }
-                                        S := S + '|' + HEX[BG] + HEX[FG];
-                                   end;
-                              end;
-                    end;
-               end else
-                   S := S + ALine[I];
-          end;
-     end else
-         S := ALine;
-
-     SethToPipe := S;
+  Result := ALine;
 end;
 
 {

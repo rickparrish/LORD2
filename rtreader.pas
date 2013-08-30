@@ -1,10 +1,13 @@
 unit RTReader;
 
+{$mode objfpc}
+
 interface
 
 uses
-  MannDoor, mCrt, mStrings, SysUtils, Classes, contnrs, RTRefFile, RTRefSection,
-  RTRefLabel, RTGlobal, RTChoiceOption, Crt, Math, mAnsi, StrUtils, Struct;
+  RTChoiceOption, RTGlobal, RTRefLabel, RTRefFile, RTRefSection, Struct,
+  Ansi, Door, StringUtils,
+  Classes, contnrs, Crt, Math, StrUtils, SysUtils;
 
 const
   FVersion: Integer = 99;
@@ -436,18 +439,18 @@ begin
     begin
       (* @CLEAR ALL
           This clears user text, picture, game text, name and redraws screen. *)
-      CommandCLEAR(Tokenize('@CLEAR USERSCREEN', ' '));
-      CommandCLEAR(Tokenize('@CLEAR PICTURE', ' '));
-      CommandCLEAR(Tokenize('@CLEAR TEXT', ' '));
-      CommandCLEAR(Tokenize('@CLEAR NAME', ' '));
+      CommandCLEAR(StrToTok('@CLEAR USERSCREEN', ' '));
+      CommandCLEAR(StrToTok('@CLEAR PICTURE', ' '));
+      CommandCLEAR(StrToTok('@CLEAR TEXT', ' '));
+      CommandCLEAR(StrToTok('@CLEAR NAME', ' '));
       // TODO And redraws the screen
     end;
     'NAME':
     begin
       (* @CLEAR NAME
           This deletes the name line of the game window. *)
-      mGotoXY(55, 15);
-      mWrite(mStrings.PadRight('', ' ', 22));
+      DoorGotoXY(55, 15);
+      DoorWrite(PadRight('', 22));
     end;
     'PICTURE':
     begin
@@ -455,15 +458,15 @@ begin
           This clears the picture. *)
       for Y := 3 to 13 do
       begin
-          mGotoXY(55, y);
-          mWrite(mStrings.PadRight('', ' ', 22));
+          DoorGotoXY(55, y);
+          DoorWrite(PadRight('', 22));
       end;
     end;
     'SCREEN':
     begin
       (* @CLEAR SCREEN
           This command clears the entire screen. *)
-      mClrScr();
+      DoorClrScr;
     end;
     'TEXT':
     begin
@@ -471,8 +474,8 @@ begin
           This clears game text. *)
       for Y := 3 to 13 do
       begin
-          mGotoXY(32, y);
-          mWrite(mStrings.PadRight('', ' ', 22));
+          DoorGotoXY(32, y);
+          DoorWrite(PadRight('', 22));
       end;
     end;
     'USERSCREEN':
@@ -481,10 +484,10 @@ begin
           This clears user text. *)
       for Y := 16 to 23 do
       begin
-          mGotoXY(1, y);
-          mWrite(mStrings.PadRight('', ' ', 80));
+          DoorGotoXY(1, y);
+          DoorWrite(PadRight('', 80));
       end;
-      mGotoXY(78, 23);
+      DoorGotoXY(78, 23);
     end;
     else
       LogTODO(ATokens);
@@ -503,18 +506,18 @@ begin
       last line you want to clear.  Example:  @clear block 20 24   This would clear
       4 lines starting at line 20. *)
   SavedTextAttr := Crt.TextAttr;
-  mTextAttr(7);
+  DoorTextAttr(7);
 
   Top := StrToInt(ATokens[2]);
   Bottom := StrToInt(ATokens[3]);
   for I := Top to Bottom do
   begin
-      mGotoXY(1, i);
-      mWrite(mStrings.PadRight('', ' ', 80));
+      DoorGotoXY(1, i);
+      DoorWrite(PadRight('', 80));
   end;
 
-  mGotoXY(1, bottom);
-  mTextColor(SavedTextAttr AND $0F);
+  DoorGotoXY(1, bottom);
+  DoorTextColour(SavedTextAttr AND $0F);
 end;
 
 procedure TRTReader.CommandCLOSESCRIPT(ATokens: TTokens);
@@ -527,7 +530,7 @@ end;
 procedure TRTReader.CommandCONVERT_FILE_TO_ANSI(ATokens: TTokens);
 begin
   (* @CONVERT_FILE_TO_ANSI <input file> <output file>
-      Converts a text file of Sethansi (whatever) to regular ansi.  This is good for
+      Converts a text file of Sethansi (whatever) to regular Ansi  This is good for
       a final score output. *)
   LogTODO(ATokens);
 end;
@@ -751,20 +754,20 @@ begin
 
   if (RTGlobal.RefFiles.FindIndexOf(FileName) = -1) then
   begin
-    mWriteLn('`4`b**`b `%ERROR : `2File `0' + FileName + ' `2not found. `4`b**`b`2');
-    mReadKey;
+    DoorWriteLn('`4`b**`b `%ERROR : `2File `0' + FileName + ' `2not found. `4`b**`b`2');
+    DoorReadKey;
   end else
   begin
     RefFile := TRTRefFile(RTGlobal.RefFiles.Find(FileName));
 
     if (RefFile.Sections.FindIndexOf(SectionName) = -1) then
     begin
-      mWriteLn('`4`b**`b `%ERROR : Section `0' + SectionName + ' `2not found in `0' + FileName + ' `4`b**`b`2');
-      mReadKey;
+      DoorWriteLn('`4`b**`b `%ERROR : Section `0' + SectionName + ' `2not found in `0' + FileName + ' `4`b**`b`2');
+      DoorReadKey;
     end else
     begin
       RefSection := TRTRefSection(RefFile.Sections.Find(SectionName));
-      mWriteLn(TranslateVariables(RefSection.Script.Text));
+      DoorWriteLn(TranslateVariables(RefSection.Script.Text));
     end;
   end;
 end;
@@ -782,7 +785,7 @@ begin
   begin
     SL := TStringList.Create;
     SL.LoadFromFile(FileName);
-    mWrite(TranslateVariables(SL.Text));
+    DoorWrite(TranslateVariables(SL.Text));
     SL.Free;
   end;
 end;
@@ -796,7 +799,7 @@ begin
   end else
   if (UpperCase(ATokens[3]) = 'ADD') then
   begin
-    AssignVariable(ATokens[2], TranslateVariables(ATokens[2] + DeTokenize(ATokens, ' ', 4)));
+    AssignVariable(ATokens[2], TranslateVariables(ATokens[2] + TokToStr(ATokens, ' ', 4)));
   end;
 end;
 
@@ -856,7 +859,7 @@ begin
   RequestedLength := StrToInt(TranslateVariables(ATokens[4]));
   if (StringLength < RequestedLength) then
   begin
-      AssignVariable(ATokens[3], mStrings.PadLeft(TranslateVariables(ATokens[3]), ' ', RequestedLength));
+      AssignVariable(ATokens[3], PadLeft(TranslateVariables(ATokens[3]), RequestedLength));
   end;
 end;
 
@@ -866,9 +869,9 @@ begin
       This command is useful, *IF* a key IS CURRENTLY being pressed, it puts that
       key into the string variable.  Otherwise, it puts a '_' in to signal no key was
       pressed.  This is a good way to stop a loop. *)
-  if (mKeyPressed) then
+  if (DoorKeyPressed) then
   begin
-    AssignVariable(ATokens[3], mReadKey);
+    AssignVariable(ATokens[3], DoorReadKey);
   end else
   begin
     AssignVariable(ATokens[3], '_');
@@ -956,7 +959,7 @@ begin
     AssignVariable(ATokens[2], IntToStr(Length(TranslateVariables(ATokens[5]))));
   end else
   begin
-    AssignVariable(ATokens[2], TranslateVariables(DeTokenize(ATokens, ' ', 4)));
+    AssignVariable(ATokens[2], TranslateVariables(TokToStr(ATokens, ' ', 4)));
   end;
 end;
 
@@ -971,15 +974,15 @@ begin
   Y := StrToInt(TranslateVariables(ATokens[4]));
   if ((X > 0) AND (Y > 0)) then
   begin
-    mGotoXY(X, Y);
+    DoorGotoXY(X, Y);
   end else
   if (X > 0) then
   begin
-    mGotoX(X);
+    DoorGotoX(X);
   end else
   if (Y > 0) then
   begin
-    mGotoY(Y);
+    DoorGotoY(Y);
   end;
 end;
 
@@ -1030,7 +1033,7 @@ begin
   RequestedLength := StrToInt(ATokens[4]);
   if (StringLength < RequestedLength) then
   begin
-    AssignVariable(ATokens[3], mStrings.PadRight(TranslateVariables(ATokens[3]), ' ', StrToInt(ATokens[4])));
+    AssignVariable(ATokens[3], PadRight(TranslateVariables(ATokens[3]), StrToInt(ATokens[4])));
   end;
 end;
 
@@ -1057,7 +1060,7 @@ begin
                  Waits for a key to be pressed.  This uses DV and Windows time slicing while
                  waiting.  `S10 doesn't seem to work with this command.  All the other `S
                  variables do though. *)
-  AssignVariable(ATokens[3], mReadKey());
+  AssignVariable(ATokens[3], DoorReadKey);
 end;
 
 procedure TRTReader.CommandDO_READNUM(ATokens: TTokens);
@@ -1075,7 +1078,7 @@ begin
     Default := TranslateVariables(ATokens[4]);
   end;
 
-  ReadNum := mInput(Default, CHARS_NUMERIC, #0, StrToInt(TranslateVariables(ATokens[3])), StrToInt(TranslateVariables(ATokens[3])), 31);
+  ReadNum := DoorInput(Default, DOOR_INPUT_CHARS_NUMERIC, #0, StrToInt(TranslateVariables(ATokens[3])), StrToInt(TranslateVariables(ATokens[3])), 31);
   AssignVariable('`V40', ReadNum);
 end;
 
@@ -1097,7 +1100,7 @@ begin
     would be the same as hitting Y, because that was listed first.   *)
   Ch := #0;
   repeat
-    Ch := UpCase(mReadKey);
+    Ch := UpCase(DoorReadKey);
     if (Ch = #13) then
     begin
       // Assign first option when enter is hit
@@ -1125,7 +1128,7 @@ begin
     also use these vars for the default.  (or `N)  Use NIL if you want the default
     to be nothing.  (if no variable to put it in is specified, it will be put into `S10
     for compatibilty with old .REF's) *)
-  ReadString := mInput(TranslateVariables(ATokens[4]), CHARS_ALL, #0, StrToInt(TranslateVariables(ATokens[3])), StrToInt(TranslateVariables(ATokens[3])), 31);
+  ReadString := DoorInput(TranslateVariables(ATokens[4]), DOOR_INPUT_CHARS_ALL, #0, StrToInt(TranslateVariables(ATokens[3])), StrToInt(TranslateVariables(ATokens[3])), 31);
   if (High(ATokens) >= 5) then
   begin
     AssignVariable(ATokens[5], ReadString);
@@ -1375,7 +1378,7 @@ end;
 procedure TRTReader.CommandGRAPHICS(ATokens: TTokens);
 begin
   (* @GRAPHICS IS <Num>
-      3 or more enable remote ANSI.  If you never wanted to send ANSI, you could set
+      3 or more enable remote Ansi  If you never wanted to send ANSI, you could set
       this to 1. You will probably never touch this one. *)
   LogTODO(ATokens); // Unused
 end;
@@ -1410,7 +1413,6 @@ end;
 function TRTReader.CommandIF_CHECKDUPE(ATokens: TTokens): Boolean;
 var
   Exists: Boolean;
-  I: Integer;
   Name: String;
   TDR: TraderDatRecord;
   TrueFalse: Boolean;
@@ -1551,40 +1553,40 @@ begin
       (* @KEY
           Does a [MORE] prompt, centered on current line.
           NOTE: Actually indents two lines, not centered *)
-      mWrite(TranslateVariables('  `2<`0MORE`2>'));
-      mReadKey();
-      mWrite('\b\b\b\b\b\b\b\b        \b\b\b\b\b\b\b\b');
+      DoorWrite(TranslateVariables('  `2<`0MORE`2>'));
+      DoorReadKey;
+      DoorWrite('\b\b\b\b\b\b\b\b        \b\b\b\b\b\b\b\b');
   end else
   if (UpperCase(ATokens[2]) = 'BOTTOM') then
   begin
       (* @KEY BOTTOM
           This does <MORE> prompt at user text window. *)
-      mGotoXY(35, 24);
-      mWrite(TranslateVariables('`2<`0MORE`2>'));
-      mReadKey();
-      mWrite('\b\b\b\b\b\b      \b\b\b\b\b\b');
+      DoorGotoXY(35, 24);
+      DoorWrite(TranslateVariables('`2<`0MORE`2>'));
+      DoorReadKey;
+      DoorWrite('\b\b\b\b\b\b      \b\b\b\b\b\b');
   end else
   if (UpperCase(ATokens[2]) = 'NODISPLAY') then
   begin
       (* @KEY NODISPLAY
           Waits for keypress without saying anything. *)
-      mReadKey();
+      DoorReadKey;
   end else
   if (UpperCase(ATokens[2]) = 'TOP') then
   begin
       (* @KEY TOP
           This does <MORE> prompt at game text window. *)
-      mGotoXY(40, 15);
-      mWrite(TranslateVariables('`2<`0MORE`2>'));
-      mReadKey();
-      mWrite('\b\b\b\b\b\b      \b\b\b\b\b\b');
+      DoorGotoXY(40, 15);
+      DoorWrite(TranslateVariables('`2<`0MORE`2>'));
+      DoorReadKey;
+      DoorWrite('\b\b\b\b\b\b      \b\b\b\b\b\b');
   end else
   begin
     LogTODO(ATokens);
   end;
 
   // Restore text attribute
-  mWrite(mAnsi.aTextAttr(SavedTextAttr));
+  DoorWrite(AnsiTextAttr(SavedTextAttr));
 end;
 
 procedure TRTReader.CommandLABEL(ATokens: TTokens);
@@ -1664,9 +1666,9 @@ var
 begin
   (* @NAME <name to put under picture>
       Undocumented. Puts a name under the picture window *)
-  Name := TranslateVariables(DeTokenize(ATokens, ' ', 2));
-  mGotoXY(55 + ((22 - Length(SethStrip(Name))) div 2), 15);
-  mWrite(Name);
+  Name := TranslateVariables(TokToStr(ATokens, ' ', 2));
+  DoorGotoXY(55 + ((22 - Length(SethStrip(Name))) div 2), 15);
+  DoorWrite(Name);
 end;
 
 procedure TRTReader.CommandNOCHECK(ATokens: TTokens);
@@ -1845,7 +1847,7 @@ begin
   end else
   begin
     (* @SHOW
-        Shows following text/ansi.  Stops when a @ is hit on beginning of line. *)
+        Shows following text/Ansi  Stops when a @ is hit on beginning of line. *)
     FInSHOW := true;
   end;
 end;
@@ -1987,12 +1989,12 @@ begin
         Delete(Option.Text, 1, 1);
 
         // Extract variable and translate
-        Variable := Tokenize(Option.Text, ' ')[1];
+        Variable := StrToTok(Option.Text, ' ')[1];
         Delete(Option.Text, 1, Length(Variable) + 1);
         Variable := TranslateVariables(Variable);
 
         // Extract value
-        Value := Tokenize(Option.Text, ' ')[1];
+        Value := StrToTok(Option.Text, ' ')[1];
         Delete(Option.Text, 1, Length(Value) + 1);
         Value := TranslateVariables(Value);
 
@@ -2034,20 +2036,20 @@ begin
   end;
 
   // Determine how many spaces to indent by (all lines should be indented same as first line)
-  Spaces := #13#10 + mStrings.PadRight('', ' ', Crt.WhereX - 1);
+  Spaces := #13#10 + PadRight('', Crt.WhereX - 1);
 
   // Output options
-  mCursorSave;
-  mTextAttr(15);
+  DoorCursorSave;
+  DoorTextAttr(15);
   for I := 0 to FInCHOICEOptions.Count - 1 do
   begin
     Option := TRTChoiceOption(FInCHOICEOptions.Items[I]);
     if (Option.Visible) then
     begin
-      if (Option.VisibleIndex > 1) then mWrite(Spaces);
-      if (I = (SelectedIndex - 1)) then mTextBackground(Crt.Blue);
-      mWrite(TranslateVariables(Option.Text));
-      if (I = (SelectedIndex - 1)) then mTextBackground(Crt.Black);
+      if (Option.VisibleIndex > 1) then DoorWrite(Spaces);
+      if (I = (SelectedIndex - 1)) then DoorTextBackground(Crt.Blue);
+      DoorWrite(TranslateVariables(Option.Text));
+      if (I = (SelectedIndex - 1)) then DoorTextBackground(Crt.Black);
     end;
   end;
 
@@ -2055,7 +2057,7 @@ begin
   repeat
       OldSelectedIndex := SelectedIndex;
 
-      Ch := mReadKey;
+      Ch := DoorReadKey;
       case Ch of
           '8', '4':
           begin
@@ -2093,23 +2095,23 @@ begin
           AssignVariable('`V01', IntToStr(SelectedIndex));
 
           // Redraw old selection without blue highlight
-          mCursorRestore;
-          if (TRTChoiceOption(FInCHOICEOptions[OldSelectedIndex - 1]).VisibleIndex > 1) then mCursorDown(TRTChoiceOption(FInCHOICEOptions[OldSelectedIndex - 1]).VisibleIndex - 1);
-          mWrite(TranslateVariables(TRTChoiceOption(FInCHOICEOptions[OldSelectedIndex - 1]).Text));
+          DoorCursorRestore;
+          if (TRTChoiceOption(FInCHOICEOptions[OldSelectedIndex - 1]).VisibleIndex > 1) then DoorCursorDown(TRTChoiceOption(FInCHOICEOptions[OldSelectedIndex - 1]).VisibleIndex - 1);
+          DoorWrite(TranslateVariables(TRTChoiceOption(FInCHOICEOptions[OldSelectedIndex - 1]).Text));
 
           // Draw new selection with blue highlight
-          mCursorRestore;
-          if (TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).VisibleIndex > 1) then mCursorDown(TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).VisibleIndex - 1);
-          mTextBackground(Crt.Blue);
-          mWrite(TranslateVariables(TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).Text));
-          mTextBackground(Crt.Black);
+          DoorCursorRestore;
+          if (TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).VisibleIndex > 1) then DoorCursorDown(TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).VisibleIndex - 1);
+          DoorTextBackground(Crt.Blue);
+          DoorWrite(TranslateVariables(TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).Text));
+          DoorTextBackground(Crt.Black);
       end;
   until (Ch = #13);
 
   // Move cursor below choice statement
-  mCursorRestore;
-  mCursorDown(VisibleCount - 1);
-  mCursorRight(LastVisibleLength);
+  DoorCursorRestore;
+  DoorCursorDown(VisibleCount - 1);
+  DoorCursorRight(LastVisibleLength);
 
   // Update global variable responses
   Game.RESPONSE := IntToStr(SelectedIndex);
@@ -2147,20 +2149,20 @@ var
 begin
   // Save cursor and text attr
   SavedTextAttr := Crt.TextAttr;
-  mCursorSave();
+  DoorCursorSave;
 
   // Output new bar
-  mGotoXY(3, 21);
-  mTextAttr(31);
+  DoorGotoXY(3, 21);
+  DoorTextAttr(31);
   StrippedLength := Length(SethStrip(TranslateVariables(AText)));
   SpacesLeft := Max(0, (76 - StrippedLength) div 2);
   SpacesRight := Max(0, 76 - StrippedLength - SpacesLeft);
-  mWrite(mStrings.PadLeft('', ' ', SpacesLeft) + TranslateVariables(AText) + mStrings.PadRight('', ' ', SpacesRight));
+  DoorWrite(PadRight('', SpacesLeft) + TranslateVariables(AText) + PadRight('', SpacesRight));
   // TODO say bar should be removed after 3 seconds or so
 
   // Restore
-  mCursorRestore();
-  mTextAttr(SavedTextAttr);
+  DoorCursorRestore;
+  DoorTextAttr(SavedTextAttr);
 end;
 
 procedure TRTReader.EndSHOWSCROLL;
@@ -2185,8 +2187,8 @@ begin
 
   Ch := #0;
   repeat
-    mTextAttr(SavedTextAttr);
-    mClrScr;
+    DoorTextAttr(SavedTextAttr);
+    DoorClrScr;
 
     LineStart := (Page - 1) * 22;
     LineEnd := LineStart + 21;
@@ -2196,19 +2198,19 @@ begin
       begin
         break;
       end;
-      mWriteLn(FInSHOWSCROLLLines[I]);
+      DoorWriteLn(FInSHOWSCROLLLines[I]);
     end;
     SavedTextAttr := Crt.TextAttr;
 
-    mGotoXY(1, 23);
-    mTextAttr(31);
-    mWrite(mStrings.PadRight('', ' ', 79));
-    mGotoXY(3, 23);
-    mWrite('(' + IntToStr(Page) + ')');
-    mGotoXY(9, 23);
-    mWrite('[N]ext Page, [P]revious Page, [Q]uit, [S]tart, [E]nd');
+    DoorGotoXY(1, 23);
+    DoorTextAttr(31);
+    DoorWrite(PadRight('', 79));
+    DoorGotoXY(3, 23);
+    DoorWrite('(' + IntToStr(Page) + ')');
+    DoorGotoXY(9, 23);
+    DoorWrite('[N]ext Page, [P]revious Page, [Q]uit, [S]tart, [E]nd');
 
-    Ch := UpCase(mReadKey);
+    Ch := UpCase(DoorReadKey);
     case Ch of
       'E': Page := MaxPage;
       'N': Page := Math.Min(MaxPage, Page + 1);
@@ -2222,16 +2224,16 @@ function TRTReader.Execute(AFileName: String; ASectionName: String; ALabelName: 
 begin
   if (RTGlobal.RefFiles.FindIndexOf(AFileName) = -1) then
   begin
-    mWriteLn('`4`b**`b `%ERROR : `2File `0' + AFileName + ' `2not found. `4`b**`b`2');
-    mReadKey;
+    DoorWriteLn('`4`b**`b `%ERROR : `2File `0' + AFileName + ' `2not found. `4`b**`b`2');
+    DoorReadKey;
   end else
   begin
     FCurrentFile := TRTRefFile(RTGlobal.RefFiles.Find(AFileName));
 
     if (FCurrentFile.Sections.FindIndexOf(ASectionName) = -1) then
     begin
-      mWriteLn('`4`b**`b `%ERROR : Section `0' + ASectionName + ' `2not found in `0' + AFileName + ' `4`b**`b`2');
-      mReadKey;
+      DoorWriteLn('`4`b**`b `%ERROR : Section `0' + ASectionName + ' `2not found in `0' + AFileName + ' `4`b**`b`2');
+      DoorReadKey;
     end else
     begin
       FCurrentSection := TRTRefSection(FCurrentFile.Sections.Find(ASectionName));
@@ -2240,8 +2242,8 @@ begin
       begin
         if (FCurrentSection.Labels.FindIndexOf(ALabelName) = -1) then
         begin
-          mWriteLn('`4`b**`b `%ERROR : Label `0' + ASectionName + ' `2not found in `0' + AFileName + ' `4`b**`b`2');
-          mReadKey;
+          DoorWriteLn('`4`b**`b `%ERROR : Label `0' + ASectionName + ' `2not found in `0' + AFileName + ' `4`b**`b`2');
+          DoorReadKey;
         end else
         begin
           FCurrentLabel := TRTRefLabel(FCurrentSection.Labels.Find(ALabelName));
@@ -2258,11 +2260,11 @@ end;
 
 procedure TRTReader.LogTODO(ATokens: TTokens);
 begin
-  if (mLocal()) then
+  if (DoorLocal) then
   begin
-    FastWrite(mStrings.PadRight('TODO: ' + DeTokenize(ATokens, ' '), ' ', 80), 1, 25, 31);
-    mReadKey;
-    FastWrite(mStrings.PadRight('', ' ', 80), 1, 25, 7);
+    (*TODOFastWrite(mStrings.PadRight('TODO: ' + TokToStr(ATokens, ' '), ' ', 80), 1, 25, 31);
+    DoorReadKey;
+    FastWrite(mStrings.PadRight('', ' ', 80), 1, 25, 7);*)
   end;
 end;
 
@@ -2384,7 +2386,7 @@ begin
       end;
 
       // Check if it's an IF block, or inline IF
-      if (Pos('THEN DO', UpperCase(DeTokenize(ATokens, ' '))) > 0) then
+      if (Pos('THEN DO', UpperCase(TokToStr(ATokens, ' '))) > 0) then
       begin
         // @BEGIN..@END coming, so skip it if our result was false
         if Not(IFResult) then
@@ -2398,10 +2400,10 @@ begin
         begin
           if (UpperCase(ATokens[6]) = 'THEN') then
           begin
-            ParseCommand(Tokenize('@DO ' + DeTokenize(ATokens, ' ', 7), ' '));
+            ParseCommand(StrToTok('@DO ' + TokToStr(ATokens, ' ', 7), ' '));
           end else
           begin
-            ParseCommand(Tokenize('@DO ' + DeTokenize(ATokens, ' ', 6), ' '));
+            ParseCommand(StrToTok('@DO ' + TokToStr(ATokens, ' ', 6), ' '));
           end;
         end;
       end;
@@ -2468,7 +2470,7 @@ begin
     begin
       if (Pos('@', LineTrimmed) = 1) then
       begin
-        Tokens := Tokenize(LineTrimmed, ' ');
+        Tokens := StrToTok(LineTrimmed, ' ');
         case UpperCase(Tokens[1]) of
           '@BEGIN':
             FInBEGINCount += 1;
@@ -2498,7 +2500,7 @@ begin
         FInSHOWSCROLL := false;
         FInWRITEFILE := '';
 
-        Tokens := Tokenize(LineTrimmed, ' ');
+        Tokens := StrToTok(LineTrimmed, ' ');
         ParseCommand(Tokens);
       end else
       begin
@@ -2527,7 +2529,7 @@ begin
         end else
         if (FInDO_WRITE) then
         begin
-          mWrite(TranslateVariables(Line));
+          DoorWrite(TranslateVariables(Line));
           FInDO_WRITE := false;
         end else
         if (FInREADFILE <> '') then
@@ -2537,7 +2539,7 @@ begin
         if (FInSAY) then
         begin
           // TODO SHould be in TEXT window (but since LORD2 doesn't use @SAY, not a high priority)
-          mWrite(TranslateVariables(Line));
+          DoorWrite(TranslateVariables(Line));
         end else
         if (FInSAYBAR) then
         begin
@@ -2546,11 +2548,11 @@ begin
         end else
         if (FInSHOW) then
         begin
-          mWriteLn(TranslateVariables(Line));
+          DoorWriteLn(TranslateVariables(Line));
         end else
         if (FInSHOWLOCAL) then
         begin
-          mAnsi.aWrite(TranslateVariables(Line) + #13#10);
+          AnsiWrite(TranslateVariables(Line) + #13#10);
         end else
         if (FInSHOWSCROLL) then
         begin
@@ -2595,7 +2597,7 @@ begin
     'ENEMY': AText := Game.ENEMY;
     'LOCAL':
     begin
-      if (mLocal()) then
+      if (DoorLocal) then
       begin
         AText := '5';
       end else
@@ -2617,7 +2619,7 @@ begin
       if (Pos('&', TextUpper) > 0) then
       begin
         // Handle "ampersand" codes
-        AText := StringReplace(AText, '&realname', DropInfo.Alias, [rfReplaceAll, rfIgnoreCase]);
+        //TODO AText := StringReplace(AText, '&realname', DropInfo.Alias, [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&date', FormatDateTime('yyyy/mm/dd', Now), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&nicedate', FormatDateTime('h:nn', Now) + ' on ' + FormatDateTime('yyyy/mm/dd', Now), [rfReplaceAll, rfIgnoreCase]);
         if (Game.Player.ArmourNumber = 0) then
@@ -2660,7 +2662,7 @@ begin
         AText := StringReplace(AText, '&map', IntToStr(Game.Player.map), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&lmap', IntToStr(Game.Player.LastMap), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&time', IntToStr(Game.Time), [rfReplaceAll, rfIgnoreCase]);
-        AText := StringReplace(AText, '&timeleft', IntToStr(mTimeLeft div 60), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&timeleft', IntToStr(DoorSecondsLeft div 60), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&sex', IntToStr(Game.Player.SexMale), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&playernum', IntToStr(Game.PlayerNum), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&totalaccounts', IntToStr(Game.TotalAccounts), [rfReplaceAll, rfIgnoreCase]);
@@ -2671,7 +2673,7 @@ begin
         // Handle "Seth" codes
         AText := StringReplace(AText, '`N', Game.Player.name, [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '`E', Game.ENEMY, [rfReplaceAll, rfIgnoreCase]);
-        if (DropInfo.Emulation = etANSI) then
+        if (true) then // TODO if (DropInfo.Emulation = etANSI) then
         begin
           AText := StringReplace(AText, '`G', '3', [rfReplaceAll, rfIgnoreCase]);
         end else
@@ -2681,49 +2683,49 @@ begin
         AText := StringReplace(AText, '`X', ' ', [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '`D', #8, [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '`\', #13#10, [rfReplaceAll, rfIgnoreCase]);
-        AText := StringReplace(AText, '`c', mAnsi.aClrScr + #13#10#13#10, [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '`c', AnsiClrScr + #13#10#13#10, [rfReplaceAll, rfIgnoreCase]);
 
         // Handle player and global variables
         if (Pos('`I', TextUpper) > 0) then
         begin
           for I := Low(Game.Player.I) to High(Game.Player.I) do
           begin
-            AText := StringReplace(AText, '`I' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.I[I]), [rfReplaceAll, rfIgnoreCase]);
+            AText := StringReplace(AText, '`I' + AddChar('0', IntToStr(I), 2), IntToStr(Game.Player.I[I]), [rfReplaceAll, rfIgnoreCase]);
           end;
         end;
         if (Pos('`P', TextUpper) > 0) then
         begin
           for I := Low(Game.Player.p) to High(Game.Player.p) do
           begin
-            AText := StringReplace(AText, '`P' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.p[I]), [rfReplaceAll, rfIgnoreCase]);
+            AText := StringReplace(AText, '`P' + AddChar('0', IntToStr(I), 2), IntToStr(Game.Player.p[I]), [rfReplaceAll, rfIgnoreCase]);
           end;
         end;
         if (Pos('`+', TextUpper) > 0) then
         begin
           for I := Low(Game.ItemsDat.Item) to High(Game.ItemsDat.Item) do
           begin
-            AText := StringReplace(AText, '`+' + mStrings.PadLeft(IntToStr(I), '0', 2), Game.ItemsDat.Item[I].name, [rfReplaceAll, rfIgnoreCase]);
+            AText := StringReplace(AText, '`+' + AddChar('0', IntToStr(I), 2), Game.ItemsDat.Item[I].name, [rfReplaceAll, rfIgnoreCase]);
           end;
         end;
         if (Pos('`S', TextUpper) > 0) then
         begin
           for I := Low(Game.WorldDat.s) to High(Game.WorldDat.s) do
           begin
-            AText := StringReplace(AText, '`S' + mStrings.PadLeft(IntToStr(I), '0', 2), Game.WorldDat.s[I], [rfReplaceAll, rfIgnoreCase]);
+            AText := StringReplace(AText, '`S' + AddChar('0', IntToStr(I), 2), Game.WorldDat.s[I], [rfReplaceAll, rfIgnoreCase]);
           end;
         end;
         if (Pos('`T', TextUpper) > 0) then
         begin
           for I := Low(Game.Player.T) to High(Game.Player.T) do
           begin
-            AText := StringReplace(AText, '`T' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.Player.T[I]), [rfReplaceAll, rfIgnoreCase]);
+            AText := StringReplace(AText, '`T' + AddChar('0', IntToStr(I), 2), IntToStr(Game.Player.T[I]), [rfReplaceAll, rfIgnoreCase]);
           end;
         end;
         if (Pos('`V', TextUpper) > 0) then
         begin
           for I := Low(Game.WorldDat.v) to High(Game.WorldDat.v) do
           begin
-            AText := StringReplace(AText, '`V' + mStrings.PadLeft(IntToStr(I), '0', 2), IntToStr(Game.WorldDat.v[I]), [rfReplaceAll, rfIgnoreCase]);
+            AText := StringReplace(AText, '`V' + AddChar('0', IntToStr(I), 2), IntToStr(Game.WorldDat.v[I]), [rfReplaceAll, rfIgnoreCase]);
           end;
         end;
       end;

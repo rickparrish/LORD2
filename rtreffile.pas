@@ -1,5 +1,7 @@
 unit RTRefFile;
 
+{$mode objfpc}
+
 interface
 
 uses

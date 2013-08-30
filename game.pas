@@ -1,9 +1,13 @@
 unit Game;
 
+{$mode objfpc}
+
 interface
 
 uses
-  Struct, SysUtils, RTGlobal, MannDoor, mAnsi, Crt, RTReader, DateUtils, mStrings;
+  RTGlobal, RTReader, Struct,
+  Ansi, Door, StringUtils,
+  Crt, DateUtils, SysUtils;
 
 var
   CurrentMap: MapDatRecord;
@@ -64,8 +68,8 @@ begin
   // Draw the map
   BG := 0;
   FG := 7;
-  mTextAttr(FG);
-  mClrScr;
+  DoorTextAttr(FG);
+  DoorClrScr;
 
   for Y := 1 to 20 do
   begin
@@ -77,15 +81,15 @@ begin
 
       if (BG <> MI.BackColour) then
       begin
-        ToSend := ToSend + mAnsi.aTextBackground(MI.BackColour);
-        Crt.TextBackground(MI.BackColour); // Gotta do this to ensure calls to Ansi.* work right
+        ToSend := ToSend + AnsiTextBackground(MI.BackColour);
+        Crt.TextBackground(MI.BackColour); // Gotta do this to ensure calls to Ansi* work right
         BG := MI.BackColour;
       end;
 
       if (FG <> MI.ForeColour) then
       begin
-        ToSend := ToSend + mAnsi.aTextColor(MI.ForeColour);
-        Crt.TextColor(MI.ForeColour); // Gotta do this to ensure calls to Ansi.* work right
+        ToSend := ToSend + AnsiTextColour(MI.ForeColour);
+        Crt.TextColor(MI.ForeColour); // Gotta do this to ensure calls to Ansi* work right
         FG := MI.ForeColour;
       end;
 
@@ -93,7 +97,7 @@ begin
       ToSend := ToSend + MI.Ch;
     end;
 
-    mWrite(ToSend);
+    DoorWrite(ToSend);
   end;
 end;
 
@@ -129,7 +133,7 @@ begin
     Result := true;
   end else
   begin
-    mWriteLn('Unable to open ' + ItemsDatFileName);
+    DoorWriteLn('Unable to open ' + ItemsDatFileName);
     Result := false;
   end;
   Close(F);
@@ -159,7 +163,7 @@ begin
     Result := true;
   end else
   begin
-    mWriteLn('Unable to open ' + MapDatFileName);
+    DoorWriteLn('Unable to open ' + MapDatFileName);
     Result := false;
   end;
   Close(F);
@@ -350,7 +354,7 @@ begin
     Result := true;
   end else
   begin
-    mWriteLn('Unable to open ' + WorldDatFileName);
+    DoorWriteLn('Unable to open ' + WorldDatFileName);
     Result := false;
   end;
   Close(F);
@@ -359,10 +363,10 @@ end;
 procedure MoveBack;
 begin
   // Erase player
-  mTextBackground(CurrentMap.MapInfo[Player.x][Player.y].BackColour);
-  mTextColor(CurrentMap.MapInfo[Player.x][Player.y].ForeColour);
-  mGotoXY(Player.x, Player.y);
-  mWrite(CurrentMap.MapInfo[Player.x][Player.y].Ch);
+  DoorTextBackground(CurrentMap.MapInfo[Player.x][Player.y].BackColour);
+  DoorTextColour(CurrentMap.MapInfo[Player.x][Player.y].ForeColour);
+  DoorGotoXY(Player.x, Player.y);
+  DoorWrite(CurrentMap.MapInfo[Player.x][Player.y].Ch);
 
   // Update position and draw player
   Player.X := LastX;
@@ -422,10 +426,10 @@ begin
     if (CurrentMap.MapInfo[x][y].Terrain = 1) then
     begin
       // Erase player
-      mTextBackground(CurrentMap.MapInfo[Player.x][Player.y].BackColour);
-      mTextColor(CurrentMap.MapInfo[Player.x][Player.y].ForeColour);
-      mGotoXY(Player.x, Player.y);
-      mWrite(CurrentMap.MapInfo[Player.x][Player.y].Ch);
+      DoorTextBackground(CurrentMap.MapInfo[Player.x][Player.y].BackColour);
+      DoorTextColour(CurrentMap.MapInfo[Player.x][Player.y].ForeColour);
+      DoorGotoXY(Player.x, Player.y);
+      DoorWrite(CurrentMap.MapInfo[Player.x][Player.y].Ch);
 
       // Update position and draw player
       LastX := Player.X;
@@ -466,7 +470,7 @@ var
 begin
   if (LoadDataFiles) then
   begin
-    Player.RealName := DropInfo.Alias;
+    //TODO Player.RealName := DropInfo.Alias;
 
     RTReader.Execute('RULES.REF', 'RULES');
 
@@ -475,7 +479,7 @@ begin
       RTReader.Execute('MAINT.REF', 'MAINT');
     end;
 
-    PlayerNum := LoadPlayerByRealName(DropInfo.RealName, Player);
+    //TODO PlayerNum := LoadPlayerByRealName(DropInfo.RealName, Player);
     if (PlayerNum = -1) then
     begin
       if (TotalAccounts < 200) then
@@ -496,7 +500,7 @@ begin
       Update;
 
       repeat
-        Ch := UpCase(mReadKey);
+        Ch := UpCase(DoorReadKey);
         case Ch of
           '8': MovePlayer(0, -1);
           '4': MovePlayer(-1, 0);
@@ -510,10 +514,10 @@ begin
     RTGlobal.RefFiles.Free;
   end else
   begin
-    mWriteLn('ERROR: Unable to load data files.  Please inform your SysOp');
-    mWriteLn('');
-    mWriteLn('Hit a key to quit');
-    mReadKey;
+    DoorWriteLn('ERROR: Unable to load data files.  Please inform your SysOp');
+    DoorWriteLn;
+    DoorWriteLn('Hit a key to quit');
+    DoorReadKey;
   end;
 end;
 
@@ -542,10 +546,10 @@ end;
 procedure Update;
 begin
   // Draw the Player
-  mTextBackground(CurrentMap.MapInfo[Player.x][Player.y].BackColour);
-  mTextColor(Crt.White);
-  mGotoXY(Player.x, Player.y);
-  mWrite(#02);
+  DoorTextBackground(CurrentMap.MapInfo[Player.x][Player.y].BackColour);
+  DoorTextColour(White);
+  DoorGotoXY(Player.x, Player.y);
+  DoorWrite(#02);
 
   // TODO Draw the other players
 end;

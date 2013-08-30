@@ -1,5 +1,7 @@
 unit RTGlobal;
 
+{$mode objfpc}
+
 interface
 
 uses

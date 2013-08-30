@@ -1,9 +1,8 @@
 unit Struct;
 
-interface
+{$mode objfpc}
 
-uses
-  Compat;
+interface
 
 type
   // The format for the new *.IDF files.

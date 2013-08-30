@@ -1,5 +1,7 @@
 unit RTRefLabel;
 
+{$mode objfpc}
+
 interface
 
 uses

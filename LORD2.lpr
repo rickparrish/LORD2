@@ -1,13 +1,15 @@
 program LORD2;
 
+{$mode objfpc}
+
 uses
   {$IFDEF UNIX}{$IFDEF UseCThreads}
   cthreads,
   {$ENDIF}{$ENDIF}
   Classes, SysUtils, CustApp,
   { you can add units after this }
-  MannDoor, Game, Struct, RTReader, RTGlobal, mCrt, mStrings, RTRefFile,
-  RTRefSection, RTRefLabel, RTChoiceOption;
+  Game, RTChoiceOption, RTGlobal, RTReader, RTRefLabel, RTRefFile, RTRefSection, StringUtils, Struct,
+  Ansi, Comm, Door;
 
 type
 
@@ -26,18 +28,18 @@ type
 procedure TLORD2.DoRun;
 begin
   { add your program here }
-  mStartUp;
-  SethWrite := true;
-  mClrScr;
+  DoorStartUp;
+  DoorSession.SethWrite := true;
+  DoorClrScr;
 
   // Start the game
   Game.Start;
 
   // stop program loop
-  if (mLocal) then
+  if (DoorLocal) then
   begin
-    FastWrite(PadRight('Hit a key to quit', ' ', 80), 1, 25, 31);
-    mReadKey;
+    //TODO FastWrite(PadRight('Hit a key to quit', ' ', 80), 1, 25, 31);
+    DoorReadKey;
   end;
 
   Terminate;

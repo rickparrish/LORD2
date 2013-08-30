@@ -96,6 +96,7 @@ begin
     AText := StringReplace(AText, '`r5', '', [rfIgnoreCase, rfReplaceAll]);
     AText := StringReplace(AText, '`r6', '', [rfIgnoreCase, rfReplaceAll]);
     AText := StringReplace(AText, '`r7', '', [rfIgnoreCase, rfReplaceAll]);
+    // TODO ANY OTHER ` AND THE NEXT CHARACTER SHOULD ALSO BE REMOVED
   end;
 
   Result := AText;

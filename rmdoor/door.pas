@@ -6,7 +6,7 @@ interface
 
 uses
   Ansi, Comm, StringUtils,
-  Classes, Crt, StrUtils, SysUtils;
+  Classes, Crt, DateUtils, StrUtils, SysUtils;
 
 const
   DOOR_INPUT_CHARS_ALL = '`1234567890-=\qwertyuiop[]asdfghjkl;''zxcvbnm,./~!@#$%^&*()_+|QWERTYUIOP{}ASDFGHJKL:"ZXCVBNM<>? ';
@@ -38,7 +38,7 @@ type
     ComType   : Byte;               {A----} {Comm Type (0=Local, 1=Serial, 2=Socket, 3=WC5}
     Emulation : TDoorEmulationType; {ABCDE} {User's Emulation (etANSI or etASCII)}
     Fairy     : Boolean;            {---D-} {Does LORD User Have Fairy?}
-    MaxTime   : LongInt;            {ABCDE} {User's Time Left At Start (In Seconds)}
+    MaxSeconds: LongInt;            {ABCDE} {User's Time Left At Start (In Seconds)}
     Node      : LongInt;            {A-C-E} {Node Number}
     RealName  : String;             {ABCDE} {User's Real Name}
     RecPos    : LongInt;            {A-CD-} {User's Userfile Record Position (Always 0 Based)}
@@ -77,7 +77,7 @@ type
     LocalIO: Boolean;     { Whether to enable local i/o }
     MaxIdle: LongInt;     { Max idle before kick (in seconds) }
     SethWrite: Boolean;   { Whether to interpret ` codes }
-    TimeOn: LongInt;      { SecToday program was started }
+    TimeOn: TDateTime;    { SecToday program was started }
   end;
 
 var
@@ -99,6 +99,7 @@ procedure DoorGotoY(AY: Byte);
 function DoorInput(ADefaultText, AAllowedCharacters: String; APasswordCharacter: Char; AVisibleLength, AMaxLength, AAttr: Byte): String;
 function DoorKeyPressed: Boolean;
 function DoorLocal: Boolean;
+function DoorOpenComm: Boolean;
 function DoorReadKey: Char;
 function DoorSecondsLeft: LongInt;
 procedure DoorStartUp;
@@ -306,7 +307,49 @@ end;
 }
 function DoorLocal: Boolean;
 begin
-  Result := true; // TODO DropInfo.ComType = 0;
+  Result := DoorDropInfo.ComType = 0;
+end;
+
+{
+  Returns TRUE if it was able to open an existing connection
+  mStartUp calls this, so you should never have to directly
+}
+function DoorOpenComm: Boolean;
+{$IFDEF WIN32_TODO}
+var
+  WC5User: TWC5User;
+{$ENDIF}
+begin
+  if (DoorDropInfo.ComNum = 0) or (DoorDropInfo.ComType = 0) then
+  begin
+   DoorOpenComm := true;
+  end else
+  begin
+    CommOpen(DoorDropInfo.ComNum);
+    DoorOpenComm := CommCarrier;
+
+    {$IFDEF WIN32_TODO}
+    if (DropInfo.ComType = 3) then
+    begin
+         if (InitWC5) then
+         begin
+              if (WC5_WildcatLoggedIn^(WC5User) = 1) then
+              begin
+                   DropInfo.RealName := WC5User.Info.Name;
+                   DropInfo.Alias := GetFName(WC5User.Info.Name);
+                   DropInfo.MaxTime := WC5User.TimeLeftToday * 60;
+                   if (WC5User.TerminalType = 0) then
+                      DropInfo.Emulation := etANSI
+                   else
+                       DropInfo.Emulation := etASCII;
+                   DropInfo.Node := WC5_GetNode^();
+              end else
+                  mOpen := False;
+         end else
+             mOpen := False;
+    end;
+    {$ENDIF}
+  end;
 end;
 
 {
@@ -366,7 +409,7 @@ end;
 }
 function DoorSecondsLeft: LongInt;
 begin
-     Result := 60; // TODO DropInfo.MaxTime - SecElapsed(Session.TimeOn, SecToday);
+     Result := DoorDropInfo.MaxSeconds - SecondsBetween(Now, DoorSession.TimeOn);
 end;
 
 {
@@ -389,120 +432,126 @@ var
    Telnet: Boolean;
    Wildcat: Boolean;
 begin
-     (*TODODropFile := '';
-     Local := True;
-     Node := 0;
-     Socket := -1;
-     Telnet := False;
-     Wildcat := False;
+  DropFile := '';
+  Local := True;
+  Node := 0;
+  Socket := -1;
+  Telnet := False;
+  Wildcat := False;
 
-     if (ParamCount > 0) then
-     begin
-          for I := 1 to ParamCount do
-          begin
-               S := ParamStr(I);
-               if (Length(S) >= 2) and (S[1] in ['/', '-']) then
-               begin
-                    Ch := UpCase(S[2]);
-                    Delete(S, 1, 2);
-                    Case UpCase(Ch) of
-                         'D': begin
-                                   Local := False;
-                                   DropFile := S;
-                              end;
-                         'H': begin
-                                   Local := False;
-                                   Socket := StrToIntDef(S, -1);
-                              end;
-                         'N': Node := StrToIntDef(S, 0);
-                         'T': begin
-                                   Local := False;
-                                   Telnet := True;
-                              end;
-                         {$IFDEF WIN32}
-                         'W': begin
-                                   Local := False;
-                                   Wildcat := True;
-                              end;
-                         {$ENDIF}
-                         else
-                             if Assigned(mOnCLP) then
-                                mOnCLP(Ch, S);
-                    end;
+  if (ParamCount > 0) then
+  begin
+    for I := 1 to ParamCount do
+    begin
+      S := ParamStr(I);
+      if (Length(S) >= 2) and (S[1] in ['/', '-']) then
+      begin
+        Ch := UpCase(S[2]);
+        Delete(S, 1, 2);
+        Case UpCase(Ch) of
+          'D': begin
+                 Local := False;
+                 DropFile := S;
                end;
-          end;
-     end;
+          'H': begin
+                 Local := False;
+                 Socket := StrToIntDef(S, -1);
+               end;
+          'N': Node := StrToIntDef(S, 0);
+          'T': begin
+                 Local := False;
+                 Telnet := True;
+               end;
+          {$IFDEF WIN32}
+          'W': begin
+                 Local := False;
+                 Wildcat := True;
+               end;
+          {$ENDIF}
+          //TODO else if Assigned(mOnCLP) then DoorOnCLP(Ch, S);
+        end;
+      end;
+    end;
+  end;
 
-     if (Local) then
-     begin
-          DropInfo.Node := Node;
-          if Assigned(mOnLocalLogin) then
-          begin
-               mOnLocalLogin;
-               mClrScr;
-          end;
-     end else
-     if (Wildcat) then
-     begin
-          DropInfo.ComNum := 1;
-          DropInfo.ComType := 3;
-     end else
-     if (Socket >= 0) and (Node > 0) then
-     begin
-          DropInfo.ComNum := Socket;
-          DropInfo.Node := Node;
+  if (Local) then
+  begin
+    DoorDropInfo.Node := Node;
+    (*TODO if Assigned(DoorOnLocalLogin) then
+    begin
+      mOnLocalLogin;
+      mClrScr;
+    end;*)
+  end else
+  if (Wildcat) then
+  begin
+    DoorDropInfo.ComNum := 1;
+    DoorDropInfo.ComType := 3;
+  end else
+  if (Socket >= 0) and (Node > 0) then
+  begin
+    DoorDropInfo.ComNum := Socket;
+    DoorDropInfo.Node := Node;
 
-          if (Telnet) then
-             DropInfo.ComType := 2
-          else
-              DropInfo.ComType := 1;
-     end else
-     if (DropFile <> '') then
-     begin
-          if (FileExists(DropFile)) and (ciPos('DOOR32.SYS', DropFile) > 0) then
-             ReadDoor32(DropFile)
-          else
-          if (FileExists(DropFile)) and (ciPos('DoorSYS', DropFile) > 0) then
-             ReadDoorSys(DropFile)
-          else
-          if (FileExists(DropFile)) and (ciPos('DORINFO', DropFile) > 0) then
-             ReadDorinfo(DropFile)
-          else
-          if (FileExists(DropFile)) and (ciPos('INFO.', DropFile) > 0) then
-             ReadInfo(DropFile)
-          else
-          begin
-               ClrScr;
-               WriteLn;
-               WriteLn('  Drop File Not Found');
-               WriteLn;
-               Delay(1500);
-               Halt;
-          end;
-     end else
-     if Assigned(mOnUsage) then
-        mOnUsage;
+    if (Telnet) then
+    begin
+      DoorDropInfo.ComType := 2
+    end else
+    begin
+      DoorDropInfo.ComType := 1;
+    end;
+  end else
+  if (DropFile <> '') then
+  begin
+    if (FileExists(DropFile)) and (AnsiContainsText(DropFile, 'DOOR32.SYS')) then
+    begin
+      //TODO ReadDoor32(DropFile)
+    end else
+    if (FileExists(DropFile)) and (AnsiContainsText(DropFile, 'DOOR.SYS')) then
+    begin
+      //TODO ReadDoorSys(DropFile)
+    end else
+    if (FileExists(DropFile)) and (AnsiContainsText(DropFile, 'DORINFO')) then
+    begin
+      //TODO ReadDorinfo(DropFile)
+    end else
+    if (FileExists(DropFile)) and (AnsiContainsText(DropFile, 'INFO.')) then
+    begin
+      //TODO ReadInfo(DropFile)
+    end else
+    begin
+      ClrScr;
+      WriteLn;
+      WriteLn('  Drop File Not Found');
+      WriteLn;
+      Delay(2500);
+      Halt;
+    end;
+  end else
+  begin
+    //TODO if Assigned(DoorOnUsage) then DoorOnUsage;
+  end;
 
-     if Not(mLocal) then
-     begin
-          if Not(mOpen) then
-          begin
-               ClrScr;
-               WriteLn;
-               WriteLn('  No Carrier Detected');
-               WriteLn;
-               Delay(1500);
-               Halt;
-          end;
+  if Not(DoorLocal) then
+  begin
+    if Not(DoorOpenComm) then
+    begin
+      ClrScr;
+      WriteLn;
+      WriteLn('  No Carrier Detected');
+      WriteLn;
+      Delay(1500);
+      Halt;
+    end;
 
-          LastKey.Time := SecToday;
-          Session.Events := True;
-          Session.EventsTime := MSecToday - 500;
-          Session.TimeOn := SecToday;
+    DoorLastKey.Time := Now;
+    DoorSession.Events := True;
+    DoorSession.EventsTime := 0;
+    DoorSession.TimeOn := Now;
 
-          mClrScr;
-          {$IFNDEF UNIX}Window(1, 1, 80, 24);{$ENDIF}
-     end;*)
+    DoorClrScr;
+    if (DoorSession.LocalIO) then Window(1, 1, 80, 24);
+  end;
 end;
 
 {
@@ -567,210 +616,227 @@ begin
       // Now we have a backtick at the beginning of the string
       while (Pos('`', AText) = 1) do
       begin
-        if (Length(AText) >= 2) then
+        if (Length(AText) = 1) then
         begin
-          BackTick2 := Copy(AText, 1, 2);
+          AText := '';
         end else
         begin
-          BackTick2 := '';
-        end;
+          BackTick2 := Copy(AText, 1, 2);
 
-        case BackTick2 of
-          '``':
-          begin
-            DoorWrite('`');
-            Delete(AText, 1, 2);
-          end;
-          '`1':
-          begin
-              DoorTextColour(Blue);
-              Delete(AText, 1, 2);
-          end;
-          '`2':
-          begin
-              DoorTextColour(Green);
-              Delete(AText, 1, 2);
-          end;
-          '`3':
-          begin
-              DoorTextColour(Cyan);
-              Delete(AText, 1, 2);
-          end;
-          '`4':
-          begin
-              DoorTextColour(Red);
-              Delete(AText, 1, 2);
-          end;
-          '`5':
-          begin
-              DoorTextColour(Magenta);
-              Delete(AText, 1, 2);
-          end;
-          '`6':
-          begin
-              DoorTextColour(Brown);
-              Delete(AText, 1, 2);
-          end;
-          '`7':
-          begin
-              DoorTextColour(LightGray);
-              Delete(AText, 1, 2);
-          end;
-          '`8':
-          begin
-              DoorTextColour(White); // Supposed to be dark gray, but a bug has this as white (TODO Check if this is still accurate)
-              Delete(AText, 1, 2);
-          end;
-          '`9':
-          begin
-              DoorTextColour(LightBlue);
-              Delete(AText, 1, 2);
-          end;
-          '`0':
-          begin
-              DoorTextColour(LightGreen);
-              Delete(AText, 1, 2);
-          end;
-          '`!':
-          begin
-              DoorTextColour(LightCyan);
-              Delete(AText, 1, 2);
-          end;
-          '`@':
-          begin
-              DoorTextColour(LightRed);
-              Delete(AText, 1, 2);
-          end;
-          '`#':
-          begin
-              DoorTextColour(LightMagenta);
-              Delete(AText, 1, 2);
-          end;
-          '`$':
-          begin
-              DoorTextColour(Yellow);
-              Delete(AText, 1, 2);
-          end;
-          '`%':
-          begin
-              DoorTextColour(White);
-              Delete(AText, 1, 2);
-          end;
-          '`*':
-          begin
-              DoorTextColour(Black);
-              Delete(AText, 1, 2);
-          end;
-          '`b': // TODO Case sensitive?
-          begin
-              // TODO
-              Delete(AText, 1, 2);
-          end;
-          '`c': // TODO Case sensitive?
-          begin
-              DoorTextAttr(7);
-              DoorClrScr;
-              DoorWrite(#13#10#13#10);
-              Delete(AText, 1, 2);
-          end;
-          '`d': // TODO Case sensitive?
-          begin
-              DoorWrite(#8);
-              Delete(AText, 1, 2);
-          end;
-          '`k': // TODO Case sensitive?
-          begin
-              DoorWrite('  `2<`0MORE`2>');
-              DoorReadKey;
-              DoorWrite(#8#8#8#8#8#8#8#8 + '        ' + #8#8#8#8#8#8#8#8);
-              Delete(AText, 1, 2);
-          end;
-          '`l': // TODO Case sensitive?
-          begin
-              Delay(500);
-              Delete(AText, 1, 2);
-          end;
-          '`w': // TODO Case sensitive?
-          begin
-              Delay(100);
-              Delete(AText, 1, 2);
-          end;
-          '`x': // TODO Case sensitive?
-          begin
-              DoorWrite(' ');
-              Delete(AText, 1, 2);
-          end;
-          '`\':
-          begin
-              DoorWrite(#13#10);
-              Delete(AText, 1, 2);
-          end;
-          '`|':
-          begin
-              // TODO Unknown what this does, but it's used once in LORD2
-              Delete(AText, 1, 2);
-          end;
-          '`.':
-          begin
-              // TODO Also unknown, used by RTNEWS
-              Delete(AText, 1, 2);
-          end;
-          else
-          begin
-            if (Length(AText) >= 3) then
+          case BackTick2 of
+            '``':
             begin
-              BackTick3 := Copy(AText, 1, 3);
-            end else
-            begin
-              BackTick3 := '';
+              DoorWrite('`');
+              Delete(AText, 1, 2);
             end;
+            '`1':
+            begin
+                DoorTextColour(Blue);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`2':
+            begin
+                DoorTextColour(Green);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`3':
+            begin
+                DoorTextColour(Cyan);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`4':
+            begin
+                DoorTextColour(Red);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`5':
+            begin
+                DoorTextColour(Magenta);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`6':
+            begin
+                DoorTextColour(Brown);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`7':
+            begin
+                DoorTextColour(LightGray);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`8':
+            begin
+                DoorTextColour(DarkGray);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`9':
+            begin
+                DoorTextColour(LightBlue);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`0':
+            begin
+                DoorTextColour(LightGreen);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`!':
+            begin
+                DoorTextColour(LightCyan);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`@':
+            begin
+                DoorTextColour(LightRed);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`#':
+            begin
+                DoorTextColour(LightMagenta);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`$':
+            begin
+                DoorTextColour(Yellow);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`%':
+            begin
+                DoorTextColour(White);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`*':
+            begin
+                DoorTextColour(Black);
+                // TODO Disable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`b':
+            begin
+                DoorTextColour(Red);
+                // TODO enable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`c':
+            begin
+                DoorTextAttr(7);
+                DoorClrScr;
+                DoorWrite(#13#10#13#10);
+                Delete(AText, 1, 2);
+            end;
+            '`d':
+            begin
+                DoorWrite(#8);
+                Delete(AText, 1, 2);
+            end;
+            '`k':
+            begin
+                DoorWrite('  `2<`0MORE`2>');
+                DoorReadKey;
+                DoorWrite(#8#8#8#8#8#8#8#8 + '        ' + #8#8#8#8#8#8#8#8);
+                Delete(AText, 1, 2);
+            end;
+            '`l':
+            begin
+                Delay(500);
+                Delete(AText, 1, 2);
+            end;
+            '`w':
+            begin
+                Delay(100);
+                Delete(AText, 1, 2);
+            end;
+            '`x':
+            begin
+                DoorWrite(' ');
+                Delete(AText, 1, 2);
+            end;
+            '`y':
+            begin
+                DoorTextColour(Yellow);
+                // TODO enable blinking
+                Delete(AText, 1, 2);
+            end;
+            '`\':
+            begin
+                DoorWrite(#13#10);
+                Delete(AText, 1, 2);
+            end;
+            '`|':
+            begin
+              DoorWrite('|`w`d\`w`d-`w`d/`w`d|`w`d\`w`d-`w`d/`w`d|`w`d `d');
+              Delete(AText, 1, 2);
+            end;
+            else
+            begin
+              if (Length(AText) >= 3) then
+              begin
+                BackTick3 := Copy(AText, 1, 3);
+              end else
+              begin
+                BackTick3 := '';
+              end;
 
-            case BackTick3 of
-              '`r0':
-              begin
-                  DoorTextBackground(Black);
-                  Delete(AText, 1, 3);
-              end;
-              '`r1':
-              begin
-                  DoorTextBackground(Blue);
-                  Delete(AText, 1, 3);
-              end;
-              '`r2':
-              begin
-                  DoorTextBackground(Green);
-                  Delete(AText, 1, 3);
-              end;
-              '`r3':
-              begin
-                  DoorTextBackground(Cyan);
-                  Delete(AText, 1, 3);
-              end;
-              '`r4':
-              begin
-                  DoorTextBackground(Red);
-                  Delete(AText, 1, 3);
-              end;
-              '`r5':
-              begin
-                  DoorTextBackground(Magenta);
-                  Delete(AText, 1, 3);
-              end;
-              '`r6':
-              begin
-                  DoorTextBackground(Brown);
-                  Delete(AText, 1, 3);
-              end;
-              '`r7':
-              begin
-                  DoorTextBackground(LightGray);
-                  Delete(AText, 1, 3);
-              end;
-              else
-              begin
-                  // No match, so output the backtick
-                  DoorWrite('`');
-                  Delete(AText, 1, 1);
+              case BackTick3 of
+                '`r0':
+                begin
+                    DoorTextBackground(Black);
+                    Delete(AText, 1, 3);
+                end;
+                '`r1':
+                begin
+                    DoorTextBackground(Blue);
+                    Delete(AText, 1, 3);
+                end;
+                '`r2':
+                begin
+                    DoorTextBackground(Green);
+                    Delete(AText, 1, 3);
+                end;
+                '`r3':
+                begin
+                    DoorTextBackground(Cyan);
+                    Delete(AText, 1, 3);
+                end;
+                '`r4':
+                begin
+                    DoorTextBackground(Red);
+                    Delete(AText, 1, 3);
+                end;
+                '`r5':
+                begin
+                    DoorTextBackground(Magenta);
+                    Delete(AText, 1, 3);
+                end;
+                '`r6':
+                begin
+                    DoorTextBackground(Brown);
+                    Delete(AText, 1, 3);
+                end;
+                '`r7':
+                begin
+                    DoorTextBackground(LightGray);
+                    Delete(AText, 1, 3);
+                end;
+                else
+                begin
+                  // No match, so delete ` and next char
+                  Delete(AText, 1, 2);
+                end;
               end;
             end;
           end;
@@ -824,7 +890,7 @@ begin
        ComType := 0;
        Emulation := etANSI;
        Fairy := False;
-       MaxTime := 3600;
+       MaxSeconds := 3600;
        Node := 0;
        RealName := '';
        RecPos := 0;

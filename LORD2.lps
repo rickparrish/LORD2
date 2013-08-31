@@ -22,8 +22,8 @@
         <UnitName Value="Game"/>
         <EditorIndex Value="3"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="90"/>
-        <CursorPos X="37" Y="120"/>
+        <TopLine Value="456"/>
+        <CursorPos X="43" Y="482"/>
         <UsageCount Value="200"/>
         <Loaded Value="True"/>
       </Unit1>
@@ -42,10 +42,11 @@
         <Filename Value="rtreader.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="RTReader"/>
+        <IsVisibleTab Value="True"/>
         <EditorIndex Value="1"/>
         <WindowIndex Value="0"/>
-        <TopLine Value="2533"/>
-        <CursorPos X="13" Y="2574"/>
+        <TopLine Value="1870"/>
+        <CursorPos X="17" Y="1891"/>
         <UsageCount Value="239"/>
         <Loaded Value="True"/>
       </Unit3>
@@ -82,7 +83,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="104"/>
         <CursorPos X="11" Y="114"/>
-        <UsageCount Value="14"/>
+        <UsageCount Value="13"/>
       </Unit7>
       <Unit8>
         <Filename Value="manndoor\units\elecom\w32sock.pas"/>
@@ -232,19 +233,18 @@
         <WindowIndex Value="0"/>
         <TopLine Value="68"/>
         <CursorPos X="1" Y="99"/>
-        <UsageCount Value="65"/>
+        <UsageCount Value="66"/>
         <Loaded Value="True"/>
       </Unit25>
       <Unit26>
         <Filename Value="rmdoor\door.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="Door"/>
-        <IsVisibleTab Value="True"/>
         <EditorIndex Value="5"/>
         <WindowIndex Value="0"/>
         <TopLine Value="481"/>
-        <CursorPos X="10" Y="510"/>
-        <UsageCount Value="64"/>
+        <CursorPos X="33" Y="495"/>
+        <UsageCount Value="65"/>
         <Loaded Value="True"/>
       </Unit26>
       <Unit27>
@@ -255,7 +255,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="2"/>
-        <UsageCount Value="64"/>
+        <UsageCount Value="65"/>
         <Loaded Value="True"/>
       </Unit27>
       <Unit28>
@@ -273,7 +273,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="11"/>
-        <UsageCount Value="64"/>
+        <UsageCount Value="65"/>
       </Unit29>
       <Unit30>
         <Filename Value="rmdoor\comm.pas"/>
@@ -292,7 +292,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1013"/>
         <CursorPos X="21" Y="1041"/>
-        <UsageCount Value="26"/>
+        <UsageCount Value="27"/>
         <Loaded Value="True"/>
       </Unit31>
       <Unit32>
@@ -302,7 +302,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="380"/>
         <CursorPos X="19" Y="385"/>
-        <UsageCount Value="26"/>
+        <UsageCount Value="27"/>
         <Loaded Value="True"/>
       </Unit32>
       <Unit33>
@@ -313,7 +313,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="19"/>
         <CursorPos X="1" Y="1"/>
-        <UsageCount Value="43"/>
+        <UsageCount Value="44"/>
         <Loaded Value="True"/>
       </Unit33>
       <Unit34>
@@ -323,7 +323,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="410"/>
         <CursorPos X="33" Y="439"/>
-        <UsageCount Value="21"/>
+        <UsageCount Value="22"/>
         <Loaded Value="True"/>
       </Unit34>
       <Unit35>
@@ -333,7 +333,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="634"/>
         <CursorPos X="27" Y="663"/>
-        <UsageCount Value="21"/>
+        <UsageCount Value="22"/>
         <Loaded Value="True"/>
       </Unit35>
       <Unit36>
@@ -343,7 +343,7 @@
         <WindowIndex Value="0"/>
         <TopLine Value="1"/>
         <CursorPos X="1" Y="1"/>
-        <UsageCount Value="20"/>
+        <UsageCount Value="21"/>
         <Loaded Value="True"/>
       </Unit36>
     </Units>
@@ -353,123 +353,123 @@
     <JumpHistory Count="30" HistoryIndex="29">
       <Position1>
         <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="96" Column="16" TopLine="78"/>
+        <Caret Line="106" Column="11" TopLine="97"/>
       </Position1>
       <Position2>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="12" Column="12" TopLine="1"/>
+        <Filename Value="rmdoor\door.pas"/>
+        <Caret Line="2" Column="1" TopLine="1"/>
       </Position2>
       <Position3>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="96" Column="5" TopLine="78"/>
+        <Filename Value="rmdoor\door.pas"/>
+        <Caret Line="108" Column="1" TopLine="78"/>
       </Position3>
       <Position4>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="97" Column="5" TopLine="79"/>
+        <Filename Value="rmdoor\door.pas"/>
+        <Caret Line="109" Column="20" TopLine="81"/>
       </Position4>
       <Position5>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="102" Column="5" TopLine="83"/>
+        <Filename Value="rmdoor\door.pas"/>
+        <Caret Line="421" Column="1" TopLine="400"/>
       </Position5>
       <Position6>
         <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="113" Column="19" TopLine="93"/>
+        <Caret Line="48" Column="16" TopLine="18"/>
       </Position6>
       <Position7>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="59" Column="3" TopLine="34"/>
+        <Filename Value="LORD2.lpr"/>
+        <Caret Line="54" Column="18" TopLine="24"/>
       </Position7>
       <Position8>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="47" Column="20" TopLine="29"/>
+        <Filename Value="LORD2.lpr"/>
+        <Caret Line="32" Column="8" TopLine="28"/>
       </Position8>
       <Position9>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="12" Column="19" TopLine="1"/>
+        <Filename Value="LORD2.lpr"/>
+        <Caret Line="31" Column="1" TopLine="22"/>
       </Position9>
       <Position10>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="10" Column="11" TopLine="1"/>
+        <Filename Value="LORD2.lpr"/>
+        <Caret Line="79" Column="1" TopLine="46"/>
       </Position10>
       <Position11>
         <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
+        <Caret Line="51" Column="28" TopLine="29"/>
       </Position11>
       <Position12>
         <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="33" Column="5" TopLine="4"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
       </Position12>
       <Position13>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="58" Column="5" TopLine="29"/>
-      </Position13>
-      <Position14>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="63" Column="3" TopLine="32"/>
-      </Position14>
-      <Position15>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="66" Column="5" TopLine="37"/>
-      </Position15>
-      <Position16>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="111" Column="1" TopLine="81"/>
-      </Position16>
-      <Position17>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="106" Column="11" TopLine="97"/>
-      </Position17>
-      <Position18>
-        <Filename Value="rmdoor\door.pas"/>
-        <Caret Line="2" Column="1" TopLine="1"/>
-      </Position18>
-      <Position19>
-        <Filename Value="rmdoor\door.pas"/>
-        <Caret Line="108" Column="1" TopLine="78"/>
-      </Position19>
-      <Position20>
-        <Filename Value="rmdoor\door.pas"/>
-        <Caret Line="109" Column="20" TopLine="81"/>
-      </Position20>
-      <Position21>
-        <Filename Value="rmdoor\door.pas"/>
-        <Caret Line="421" Column="1" TopLine="400"/>
-      </Position21>
-      <Position22>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="48" Column="16" TopLine="18"/>
-      </Position22>
-      <Position23>
-        <Filename Value="LORD2.lpr"/>
-        <Caret Line="54" Column="18" TopLine="24"/>
-      </Position23>
-      <Position24>
-        <Filename Value="LORD2.lpr"/>
-        <Caret Line="32" Column="8" TopLine="28"/>
-      </Position24>
-      <Position25>
-        <Filename Value="LORD2.lpr"/>
-        <Caret Line="31" Column="1" TopLine="22"/>
-      </Position25>
-      <Position26>
-        <Filename Value="LORD2.lpr"/>
-        <Caret Line="79" Column="1" TopLine="46"/>
-      </Position26>
-      <Position27>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="51" Column="28" TopLine="29"/>
-      </Position27>
-      <Position28>
-        <Filename Value="rmdoor\comm.pas"/>
-        <Caret Line="1" Column="1" TopLine="1"/>
-      </Position28>
-      <Position29>
         <Filename Value="rmdoor\door.pas"/>
         <Caret Line="137" Column="1" TopLine="125"/>
-      </Position29>
-      <Position30>
+      </Position13>
+      <Position14>
         <Filename Value="rmdoor\door.pas"/>
         <Caret Line="1" Column="34" TopLine="1"/>
+      </Position14>
+      <Position15>
+        <Filename Value="rtreader.pas"/>
+        <Caret Line="2574" Column="13" TopLine="2533"/>
+      </Position15>
+      <Position16>
+        <Filename Value="rtreader.pas"/>
+        <Caret Line="1404" Column="1" TopLine="1385"/>
+      </Position16>
+      <Position17>
+        <Filename Value="rtreader.pas"/>
+        <Caret Line="1507" Column="21" TopLine="1478"/>
+      </Position17>
+      <Position18>
+        <Filename Value="rtreader.pas"/>
+        <Caret Line="1890" Column="21" TopLine="1871"/>
+      </Position18>
+      <Position19>
+        <Filename Value="game.pas"/>
+        <Caret Line="120" Column="37" TopLine="90"/>
+      </Position19>
+      <Position20>
+        <Filename Value="game.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
+      </Position20>
+      <Position21>
+        <Filename Value="game.pas"/>
+        <Caret Line="43" Column="16" TopLine="15"/>
+      </Position21>
+      <Position22>
+        <Filename Value="rtreader.pas"/>
+        <Caret Line="1881" Column="21" TopLine="1871"/>
+      </Position22>
+      <Position23>
+        <Filename Value="rtreader.pas"/>
+        <Caret Line="2025" Column="1" TopLine="2078"/>
+      </Position23>
+      <Position24>
+        <Filename Value="rtreader.pas"/>
+        <Caret Line="2622" Column="9" TopLine="2701"/>
+      </Position24>
+      <Position25>
+        <Filename Value="game.pas"/>
+        <Caret Line="482" Column="5" TopLine="490"/>
+      </Position25>
+      <Position26>
+        <Filename Value="game.pas"/>
+        <Caret Line="473" Column="7" TopLine="456"/>
+      </Position26>
+      <Position27>
+        <Filename Value="game.pas"/>
+        <Caret Line="459" Column="20" TopLine="457"/>
+      </Position27>
+      <Position28>
+        <Filename Value="rtreader.pas"/>
+        <Caret Line="2676" Column="9" TopLine="2660"/>
+      </Position28>
+      <Position29>
+        <Filename Value="rtreader.pas"/>
+        <Caret Line="2622" Column="56" TopLine="2605"/>
+      </Position29>
+      <Position30>
+        <Filename Value="rtreader.pas"/>
+        <Caret Line="2676" Column="17" TopLine="2659"/>
       </Position30>
     </JumpHistory>
   </ProjectSession>

@@ -1483,7 +1483,7 @@ begin
 
   if (LeftInt = -999) OR (RightInt = -999) then
   begin
-    Result := false; // TODO What does LORD2 do with strings used in LESS
+    Result := false;
   end else
   begin
     Result := (LeftInt < RightInt);
@@ -1504,7 +1504,7 @@ begin
 
   if (LeftInt = -999) OR (RightInt = -999) then
   begin
-    Result := false; // TODO What does LORD2 do with strings used in MORE
+    Result := false;
   end else
   begin
     Result := (LeftInt > RightInt);
@@ -1885,7 +1885,11 @@ begin
   RequiredVersion := StrToInt(ATokens[2]);
   if (RequiredVersion > FVersion) then
   begin
-    // TODO What does LORD2 do here?
+    DoorWriteLn;
+    DoorWriteLn('  File requested version ' + IntToStr(RequiredVersion) + ', we only support ' + IntToStr(FVersion));
+    DoorWriteLn('  I''ll continue to run, but unexpected results may occur');
+    DoorWriteLn;
+    DoorWrite('`k');
   end;
 end;
 
@@ -2014,14 +2018,12 @@ begin
     begin
       VisibleCount += 1;
       LastVisibleLength := Length(SethStrip(Option.Text));
-      Option.Visible := true; // TODO Might have to reference via
-      Option.VisibleIndex := VisibleCount; // TODO Might have to reference via TRTChoiceOption(FInCHOICEOptions.Items[I])
+      Option.Visible := true;
+      Option.VisibleIndex := VisibleCount;
     end else
     begin
-      Option.Visible := false; // TODO Might have to reference via TRTChoiceOption(FInCHOICEOptions.Items[I])
+      Option.Visible := false;
     end;
-
-    //FInCHOICEOptions.Items[I] := Option;
   end;
 
   // Ensure `V01 specified a valid/visible selection
@@ -2619,7 +2621,7 @@ begin
       if (Pos('&', TextUpper) > 0) then
       begin
         // Handle "ampersand" codes
-        //TODO AText := StringReplace(AText, '&realname', DropInfo.Alias, [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&realname', DoorDropInfo.Alias, [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&date', FormatDateTime('yyyy/mm/dd', Now), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&nicedate', FormatDateTime('h:nn', Now) + ' on ' + FormatDateTime('yyyy/mm/dd', Now), [rfReplaceAll, rfIgnoreCase]);
         if (Game.Player.ArmourNumber = 0) then
@@ -2673,7 +2675,7 @@ begin
         // Handle "Seth" codes
         AText := StringReplace(AText, '`N', Game.Player.name, [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '`E', Game.ENEMY, [rfReplaceAll, rfIgnoreCase]);
-        if (true) then // TODO if (DropInfo.Emulation = etANSI) then
+        if (DoorDropInfo.Emulation = etANSI) then
         begin
           AText := StringReplace(AText, '`G', '3', [rfReplaceAll, rfIgnoreCase]);
         end else

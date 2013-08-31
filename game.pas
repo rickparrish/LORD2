@@ -470,7 +470,7 @@ var
 begin
   if (LoadDataFiles) then
   begin
-    //TODO Player.RealName := DropInfo.Alias;
+    Player.RealName := DoorDropInfo.Alias;
 
     RTReader.Execute('RULES.REF', 'RULES');
 
@@ -479,7 +479,7 @@ begin
       RTReader.Execute('MAINT.REF', 'MAINT');
     end;
 
-    //TODO PlayerNum := LoadPlayerByRealName(DropInfo.RealName, Player);
+    PlayerNum := LoadPlayerByRealName(DoorDropInfo.RealName, Player);
     if (PlayerNum = -1) then
     begin
       if (TotalAccounts < 200) then

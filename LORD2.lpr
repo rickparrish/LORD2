@@ -9,7 +9,7 @@ uses
   Classes, SysUtils, CustApp,
   { you can add units after this }
   Game, RTChoiceOption, RTGlobal, RTReader, RTRefLabel, RTRefFile, RTRefSection, StringUtils, Struct,
-  Ansi, Comm, Door;
+  Ansi, Comm, Door, DropFiles;
 
 type
 
@@ -28,18 +28,28 @@ type
 procedure TLORD2.DoRun;
 begin
   { add your program here }
-  DoorStartUp;
-  DoorSession.SethWrite := true;
-  DoorClrScr;
+  try
+    DoorStartUp;
+    DoorSession.SethWrite := true;
+    DoorClrScr;
 
-  // Start the game
-  Game.Start;
+    // Start the game
+    Game.Start;
 
-  // stop program loop
-  if (DoorLocal) then
+    // stop program loop
+    if (DoorLocal) then
+    begin
+      //TODO FastWrite(PadRight('Hit a key to quit', ' ', 80), 1, 25, 31);
+      DoorReadKey;
+    end;
+  except on E: Exception do
   begin
-    //TODO FastWrite(PadRight('Hit a key to quit', ' ', 80), 1, 25, 31);
-    DoorReadKey;
+    if (DoorLocal) then
+    begin
+      WriteLn('Exception: ' + E.ToString);
+      ReadLn;
+    end;
+  end;
   end;
 
   Terminate;

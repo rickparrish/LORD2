@@ -5,12 +5,16 @@ unit RTGlobal;
 interface
 
 uses
-  contnrs, RTRefFile, RTRefSection, RTRefLabel, Classes, SysUtils;
+  RTRefLabel, RTRefFile, RTRefSection,
+  Classes, contnrs, SysUtils;
 
 var
   RefFiles: TFPHashObjectList;
 
 implementation
+
+uses
+  Game;
 
 procedure LoadRefFile(AFileName: String); forward;
 
@@ -97,10 +101,10 @@ var
 begin
   RefFiles := TFPHashObjectList.Create();
 
-  if (FindFirst('*.REF', faAnyFile, SR) = 0) then
+  if (FindFirst(Game.GetSafeAbsolutePath('*.REF'), faAnyFile, SR) = 0) then
   begin
     repeat
-      LoadRefFile(SR.Name);
+      LoadRefFile(Game.GetSafeAbsolutePath(SR.Name));
     until (FindNext(SR) <> 0);
   end;
 end.

@@ -1,3 +1,4 @@
+// TODO With no local I/O on unix things depending on WhereX and WhereY will fail
 unit Door;
 
 {$mode objfpc}
@@ -5,7 +6,7 @@ unit Door;
 interface
 
 uses
-  Ansi, Comm, StringUtils,
+  Ansi, Comm, DropFiles, StringUtils,
   Classes, Crt, DateUtils, StrUtils, SysUtils;
 
 const
@@ -86,6 +87,8 @@ var
   DoorMOREPrompts: TDoorMOREPrompts;
   DoorSession: TDoorSession;
 
+  DoorOnLocalLogin: Procedure;
+
 procedure DoorClrScr;
 procedure DoorCursorDown(ACount: Byte);
 procedure DoorCursorLeft(ACount: Byte);
@@ -111,6 +114,23 @@ procedure DoorWriteLn;
 procedure DoorWriteLn(AText: String);
 
 implementation
+
+{
+  Default action to take when /L is used on the command-line
+}
+procedure DefaultOnLocalLogin;
+var
+  S: String;
+begin
+  DoorClrScr;
+  DoorWriteLn;
+  DoorWriteLn('  LOCAL LOGIN');
+  DoorWriteLn;
+  DoorWrite('  Enter your name : ');
+  S := DoorInput('SYSOP', DOOR_INPUT_CHARS_ALPHA + ' ', #0, 40, 40, 31);
+  DoorDropInfo.RealName := S;
+  DoorDropInfo.Alias := S;
+end;
 
 {
   Clears the entire screen and puts the cursor at (1, 1)
@@ -474,14 +494,18 @@ begin
     end;
   end;
 
+  {$IFDEF UNIX}
+  if Not(Local) then DoorSession.LocalIO := false;
+  {$ENDIF}
+
   if (Local) then
   begin
     DoorDropInfo.Node := Node;
-    (*TODO if Assigned(DoorOnLocalLogin) then
+    if Assigned(DoorOnLocalLogin) then
     begin
-      mOnLocalLogin;
-      mClrScr;
-    end;*)
+      DoorOnLocalLogin;
+      DoorClrScr;
+    end;
   end else
   if (Wildcat) then
   begin
@@ -505,26 +529,29 @@ begin
   begin
     if (FileExists(DropFile)) and (AnsiContainsText(DropFile, 'DOOR32.SYS')) then
     begin
-      //TODO ReadDoor32(DropFile)
+      ReadDoor32(DropFile);
     end else
     if (FileExists(DropFile)) and (AnsiContainsText(DropFile, 'DOOR.SYS')) then
     begin
-      //TODO ReadDoorSys(DropFile)
+      ReadDoorSys(DropFile);
     end else
     if (FileExists(DropFile)) and (AnsiContainsText(DropFile, 'DORINFO')) then
     begin
-      //TODO ReadDorinfo(DropFile)
+      ReadDorinfo(DropFile);
     end else
     if (FileExists(DropFile)) and (AnsiContainsText(DropFile, 'INFO.')) then
     begin
-      //TODO ReadInfo(DropFile)
+      ReadLordInfo(DropFile);
     end else
     begin
-      ClrScr;
-      WriteLn;
-      WriteLn('  Drop File Not Found');
-      WriteLn;
-      Delay(2500);
+      if (DoorSession.LocalIO) then
+      begin
+        ClrScr;
+        WriteLn;
+        WriteLn('  Drop File Not Found');
+        WriteLn;
+        Delay(2500);
+      end;
       Halt;
     end;
   end else
@@ -536,11 +563,14 @@ begin
   begin
     if Not(DoorOpenComm) then
     begin
-      ClrScr;
-      WriteLn;
-      WriteLn('  No Carrier Detected');
-      WriteLn;
-      Delay(1500);
+      if (DoorSession.LocalIO) then
+      begin
+        ClrScr;
+        WriteLn;
+        WriteLn('  No Carrier Detected');
+        WriteLn;
+        Delay(1500);
+      end;
       Halt;
     end;
 
@@ -587,7 +617,6 @@ var
   BackTick2: String;
   BackTick3: String;
   BeforeBackTick: String;
-  NumWritten: LongInt;
 begin
   if (Pos('|', AText) > 0) then AText := PipeToAnsi(AText);
 
@@ -845,7 +874,7 @@ begin
     end;
   end else
   begin
-    AnsiWrite(AText);
+    if (DoorSession.LocalIO) then AnsiWrite(AText);
     if Not(DoorLocal) then CommWrite(AText);
   end;
 end;
@@ -880,6 +909,8 @@ begin
   mOnTimeUp := @OnTimeUp;
   mOnTimeUpWarning := nil;
   mOnUsage := @OnUsage;*)
+
+  DoorOnLocalLogin := @DefaultOnLocalLogin;
 
   with DoorDropInfo do
   begin

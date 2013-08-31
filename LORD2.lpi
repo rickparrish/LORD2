@@ -32,7 +32,7 @@
         <FormatVersion Value="1"/>
       </local>
     </RunParams>
-    <Units Count="13">
+    <Units Count="14">
       <Unit0>
         <Filename Value="LORD2.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -98,6 +98,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="Comm.pass"/>
       </Unit12>
+      <Unit13>
+        <Filename Value="rmdoor\dropfiles.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="DropFiles"/>
+      </Unit13>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

@@ -6,15 +6,16 @@ interface
 
 uses
   {$IFDEF UNIX}
-  BaseUnix, Sockets,
+  BaseUnix,
   {$ENDIF}
   {$IFDEF WINDOWS}
-  Windows, Winsock,
+  Winsock,
   {$ENDIF}
-  Classes, SysUtils;
+  Classes, Sockets, SysUtils;
 
 function CommCarrier: Boolean;
 function CommCharAvail: Boolean;
+procedure CommClose(ADisconnect: Boolean);
 procedure CommOpen(ACommNumber: LongInt);
 function CommReadChar: Char;
 procedure CommWrite(AText: String);
@@ -40,6 +41,17 @@ begin
   Result := Length(FBuffer) > 0;
 end;
 
+procedure CommClose(ADisconnect: Boolean);
+begin
+  if (ADisconnect) then fpShutdown(FCommNumber, 2);
+  {$IFDEF UNIX}
+  fpClose(FCommNumber);
+  {$ENDIF}
+  {$IFDEF WINDOWS}
+  CloseSocket(FCommNumber);
+  {$ENDIF}
+end;
+
 procedure CommOpen(ACommNumber: LongInt);
 var
   Arg: Integer;
@@ -55,9 +67,6 @@ begin
   fpFcntl(FCommNumber, F_SETFL, Arg);
   {$ENDIF}
   {$IFDEF WIN32}
-  // Init winsock
-  WSAStartup($0101, WSAData);
-
   // Set blocking mode
   Arg := 0;
   IOCtlSocket(FCommNumber, FIONBIO, Arg);
@@ -84,7 +93,7 @@ begin
   fpSend(FCommNumber, @AText[1], Length(AText), 0);
   {$ENDIF}
   {$IFDEF WINDOWS}
-  Send(FCommNumber, @AText[1], Length(AText), 0);
+  fpSend(FCommNumber, @AText[1], Length(AText), 0);
   {$ENDIF}
 end;
 
@@ -95,8 +104,6 @@ var
   ReadArray: Array[1..255] of Char;
   FDSet: TFDSet;
   Timeout: TTimeVal;
-  {$IFDEF WIN32}
-  {$ENDIF}
 begin
   Timeout.tv_sec := 0;
   Timeout.tv_usec := 0;
@@ -109,7 +116,7 @@ begin
   {$IFDEF WIN32}
   FD_ZERO(FDSet);
   FD_SET(FCommNumber, FDSet);
-  CanRead := (Select(00, @FDSet, nil, nil, @Timeout) > 0);
+  CanRead := (Select(0, @FDSet, nil, nil, @Timeout) > 0);
   {$ENDIF}
 
   if (CanRead) then
@@ -118,7 +125,7 @@ begin
     NumRead := fpRecv(FCommNumber, @ReadArray, SizeOf(ReadArray), 0);
     {$ENDIF}
     {$IFDEF WINDOWS}
-    NumRead := Recv(FCommNumber, @ReadArray, SizeOf(ReadArray), 0);
+    NumRead := fpRecv(FCommNumber, @ReadArray, SizeOf(ReadArray), 0);
     {$ENDIF}
     if (NumRead = -1) then
     begin

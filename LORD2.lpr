@@ -29,27 +29,31 @@ procedure TLORD2.DoRun;
 begin
   { add your program here }
   try
-    DoorStartUp;
-    DoorSession.SethWrite := true;
-    DoorClrScr;
+    try
+      DoorStartUp;
+      DoorSession.SethWrite := true;
+      DoorClrScr;
 
-    // Start the game
-    Game.Start;
+      // Start the game
+      Game.Start;
 
-    // stop program loop
-    if (DoorLocal) then
+      // stop program loop
+      if (DoorLocal) then
+      begin
+        //TODO FastWrite(PadRight('Hit a key to quit', ' ', 80), 1, 25, 31);
+        DoorReadKey;
+      end;
+    except on E: Exception do
     begin
-      //TODO FastWrite(PadRight('Hit a key to quit', ' ', 80), 1, 25, 31);
-      DoorReadKey;
+      if (DoorLocal) then
+      begin
+        WriteLn('Exception: ' + E.ToString);
+        ReadLn;
+      end;
     end;
-  except on E: Exception do
-  begin
-    if (DoorLocal) then
-    begin
-      WriteLn('Exception: ' + E.ToString);
-      ReadLn;
     end;
-  end;
+  finally
+    DoorShutDown;
   end;
 
   Terminate;

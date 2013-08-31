@@ -89,6 +89,7 @@ var
 
   DoorOnLocalLogin: Procedure;
 
+procedure DoorClose(ADisconnect: Boolean);
 procedure DoorClrScr;
 procedure DoorCursorDown(ACount: Byte);
 procedure DoorCursorLeft(ACount: Byte);
@@ -105,6 +106,7 @@ function DoorLocal: Boolean;
 function DoorOpenComm: Boolean;
 function DoorReadKey: Char;
 function DoorSecondsLeft: LongInt;
+procedure DoorShutDown;
 procedure DoorStartUp;
 procedure DoorTextAttr(AAttr: Byte);
 procedure DoorTextBackground(AColour: Byte);
@@ -130,6 +132,11 @@ begin
   S := DoorInput('SYSOP', DOOR_INPUT_CHARS_ALPHA + ' ', #0, 40, 40, 31);
   DoorDropInfo.RealName := S;
   DoorDropInfo.Alias := S;
+end;
+
+procedure DoorClose(ADisconnect: Boolean);
+begin
+  if Not(DoorLocal) then CommClose(ADisconnect);
 end;
 
 {
@@ -432,6 +439,11 @@ begin
      Result := DoorDropInfo.MaxSeconds - SecondsBetween(Now, DoorSession.TimeOn);
 end;
 
+procedure DoorShutDown;
+begin
+  DoorClose(false);
+end;
+
 {
   This is the first call your door should make before making any other call
   to procedures in this unit.  It will parse the command line and take
@@ -495,7 +507,7 @@ begin
   end;
 
   {$IFDEF UNIX}
-  if Not(Local) then DoorSession.LocalIO := false;
+  //TODO if Not(Local) then DoorSession.LocalIO := false;
   {$ENDIF}
 
   if (Local) then

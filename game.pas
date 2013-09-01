@@ -1,6 +1,6 @@
 unit Game;
 
-{$mode objfpc}
+{$mode objfpc}{$h+}
 
 interface
 

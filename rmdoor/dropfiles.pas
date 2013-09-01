@@ -1,6 +1,6 @@
 unit DropFiles;
 
-{$mode objfpc}
+{$mode objfpc}{$h+}
 
 interface
 

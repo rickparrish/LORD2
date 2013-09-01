@@ -1,6 +1,6 @@
 program LORD2;
 
-{$mode objfpc}
+{$mode objfpc}{$h+}
 
 uses
   {$IFDEF UNIX}{$IFDEF UseCThreads}

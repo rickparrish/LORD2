@@ -1,6 +1,6 @@
 unit Struct;
 
-{$mode objfpc}
+{$mode objfpc}{$h+}
 
 interface
 

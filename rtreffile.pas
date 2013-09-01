@@ -1,6 +1,6 @@
 unit RTRefFile;
 
-{$mode objfpc}
+{$mode objfpc}{$h+}
 
 interface
 

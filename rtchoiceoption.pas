@@ -1,6 +1,6 @@
 unit RTChoiceOption;
 
-{$mode objfpc}
+{$mode objfpc}{$h+}
 
 interface
 

@@ -1,6 +1,6 @@
 unit Comm;
 
-{$mode objfpc}
+{$mode objfpc}{$h+}
 
 interface
 
@@ -27,6 +27,7 @@ var
   FCarrier: Boolean = true;
   FCommNumber: Integer = -1;
 
+procedure CommWriteRaw(AText: String); forward;
 procedure ReceiveData; forward;
 
 function CommCarrier: Boolean;
@@ -62,6 +63,7 @@ begin
   FCommNumber := ACommNumber;
 
   {$IFDEF UNIX}
+  // Set blocking mode
   Arg := fpFcntl(FCommNumber, F_GETFL);
   Arg := Arg AND NOT(O_NONBLOCK);
   fpFcntl(FCommNumber, F_SETFL, Arg);
@@ -73,6 +75,8 @@ begin
   {$ENDIF}
 
   // TODO For socket communications, send will binary and will echo
+  CommWriteRaw(#255#251#0); // Will binary
+  CommWriteRaw(#255#251#1); // Will echo
 end;
 
 function CommReadChar: Char;
@@ -89,12 +93,14 @@ end;
 
 procedure CommWrite(AText: String);
 begin
-  {$IFDEF UNIX}
+  // TODO Probably a better way to do this, works for now
+  // TODO Also, only for Telnet mode
+  CommWriteRaw(StringReplace(AText, #255, #255#255, [rfReplaceAll]));
+end;
+
+procedure CommWriteRaw(AText: String);
+begin
   fpSend(FCommNumber, @AText[1], Length(AText), 0);
-  {$ENDIF}
-  {$IFDEF WINDOWS}
-  fpSend(FCommNumber, @AText[1], Length(AText), 0);
-  {$ENDIF}
 end;
 
 procedure ReceiveData;
@@ -139,6 +145,11 @@ begin
     begin
       FBuffer := ReadArray;
       SetLength(FBuffer, NumRead);
+
+      // TODO Probably a better way to do this, works for now
+      FBuffer := StringReplace(FBuffer, #13#10, #13, [rfReplaceAll]);
+      FBuffer := StringReplace(FBuffer, #13#0, #13, [rfReplaceAll]);
+      FBuffer := StringReplace(FBuffer, #10, #13, [rfReplaceAll]);
     end;
   end;
 end;

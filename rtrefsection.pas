@@ -1,6 +1,6 @@
 unit RTRefSection;
 
-{$mode objfpc}
+{$mode objfpc}{$h+}
 
 interface
 

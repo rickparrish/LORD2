@@ -1,6 +1,6 @@
 unit RTRefLabel;
 
-{$mode objfpc}
+{$mode objfpc}{$h+}
 
 interface
 

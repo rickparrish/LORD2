@@ -1,6 +1,6 @@
 unit RTGlobal;
 
-{$mode objfpc}
+{$mode objfpc}{$h+}
 
 interface
 

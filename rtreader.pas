@@ -1,6 +1,6 @@
 unit RTReader;
 
-{$mode objfpc}
+{$mode objfpc}{$h+}
 
 interface
 
@@ -1104,7 +1104,7 @@ begin
     if (Ch = #13) then
     begin
       // Assign first option when enter is hit
-      AssignVariable(ATokens[3], ATokens[4][0]);
+      AssignVariable(ATokens[3], ATokens[4][1]);
     end else
     if (Pos(Ch, UpperCase(ATokens[4])) > 0) then
     begin

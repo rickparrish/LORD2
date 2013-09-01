@@ -1044,6 +1044,7 @@ begin
       This adds a message to the saybar que.  This will ensure that the message is
       displayed at it's proper time instead of immediately. *)
   LogTODO(ATokens);
+  // TODO Quebar items only last 1 second or so
 end;
 
 procedure TRTReader.CommandDO_RANDOM(ATokens: TTokens);
@@ -2160,7 +2161,7 @@ begin
   SpacesLeft := Max(0, (76 - StrippedLength) div 2);
   SpacesRight := Max(0, 76 - StrippedLength - SpacesLeft);
   DoorWrite(PadRight('', SpacesLeft) + TranslateVariables(AText) + PadRight('', SpacesRight));
-  // TODO say bar should be removed after 3 seconds or so
+  // TODO say bar should be removed after 5 seconds or so
 
   // Restore
   DoorCursorRestore;

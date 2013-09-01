@@ -1,4 +1,3 @@
-// TODO With no local I/O on unix things depending on WhereX and WhereY will fail
 unit Door;
 
 {$mode objfpc}{$h+}
@@ -75,7 +74,6 @@ type
     DoIdleCheck: Boolean; { Check for idle timeout? }
     Events: Boolean;      { Run Events in mKeyPressed function }
     EventsTime: LongInt;  { MSecToday of last Events run }
-    LocalIO: Boolean;     { Whether to enable local i/o }
     MaxIdle: LongInt;     { Max idle before kick (in seconds) }
     SethWrite: Boolean;   { Whether to interpret ` codes }
     TimeOn: TDateTime;    { SecToday program was started }
@@ -395,24 +393,21 @@ begin
     while Not(DoorKeyPressed) do Sleep(1);
 
     // Check for local keypress
-    if (DoorSession.LocalIO) then
+    if (KeyPressed) then
     begin
-      if (KeyPressed) then
+      Ch := ReadKey;
+      if (Ch = #0) then
       begin
         Ch := ReadKey;
-        if (Ch = #0) then
-        begin
-          Ch := ReadKey;
-          //TODOif Not(DoorLocal) and Assigned(mOnSysopKey) and Not(mOnSysopKey(Ch)) then
-          //TODObegin
-            DoorLastKey.Extended := True;
-            DoorLastKey.Location := lkLocal;
-          //TODOend;
-        end else
-        begin
-          DoorLastKey.Extended := False;
+        //TODOif Not(DoorLocal) and Assigned(mOnSysopKey) and Not(mOnSysopKey(Ch)) then
+        //TODObegin
+          DoorLastKey.Extended := True;
           DoorLastKey.Location := lkLocal;
-        end;
+        //TODOend;
+      end else
+      begin
+        DoorLastKey.Extended := False;
+        DoorLastKey.Location := lkLocal;
       end;
     end;
 
@@ -556,14 +551,11 @@ begin
       ReadLordInfo(DropFile);
     end else
     begin
-      if (DoorSession.LocalIO) then
-      begin
-        ClrScr;
-        WriteLn;
-        WriteLn('  Drop File Not Found');
-        WriteLn;
-        Delay(2500);
-      end;
+      ClrScr;
+      WriteLn;
+      WriteLn('  Drop File Not Found');
+      WriteLn;
+      Delay(2500);
       Halt;
     end;
   end else
@@ -575,14 +567,11 @@ begin
   begin
     if Not(DoorOpenComm) then
     begin
-      if (DoorSession.LocalIO) then
-      begin
-        ClrScr;
-        WriteLn;
-        WriteLn('  No Carrier Detected');
-        WriteLn;
-        Delay(1500);
-      end;
+      ClrScr;
+      WriteLn;
+      WriteLn('  No Carrier Detected');
+      WriteLn;
+      Delay(1500);
       Halt;
     end;
 
@@ -592,7 +581,7 @@ begin
     DoorSession.TimeOn := Now;
 
     DoorClrScr;
-    if (DoorSession.LocalIO) then Window(1, 1, 80, 24);
+    {$IFNDEF UNIX}Window(1, 1, 80, 24);{$ENDIF}
   end;
 end;
 
@@ -886,7 +875,7 @@ begin
     end;
   end else
   begin
-    if (DoorSession.LocalIO) then AnsiWrite(AText);
+    AnsiWrite(AText);
     if Not(DoorLocal) then CommWrite(AText);
   end;
 end;
@@ -960,7 +949,6 @@ begin
        DoIdleCheck := True;
        Events := False;
        EventsTime := 0;
-       LocalIO := true;
        MaxIdle := 300;
        SethWrite := false;
        TimeOn := 0;

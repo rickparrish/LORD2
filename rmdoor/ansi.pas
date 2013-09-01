@@ -1,4 +1,3 @@
-// TODO With no local I/O on unix things depending on WhereX and WhereY will fail
 unit Ansi;
 
 {$mode objfpc}{$h+}

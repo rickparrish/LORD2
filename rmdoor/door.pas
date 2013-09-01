@@ -771,7 +771,7 @@ begin
             end;
             '`k':
             begin
-                DoorWrite('  `2<`0MORE`2>');
+                DoorWrite('`r0  `2<`0MORE`2>');
                 DoorReadKey;
                 DoorWrite(#8#8#8#8#8#8#8#8 + '        ' + #8#8#8#8#8#8#8#8);
                 Delete(AText, 1, 2);

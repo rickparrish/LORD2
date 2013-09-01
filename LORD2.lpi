@@ -96,7 +96,6 @@
       <Unit12>
         <Filename Value="rmdoor\comm.pass.pas"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="Comm.pass"/>
       </Unit12>
       <Unit13>
         <Filename Value="rmdoor\dropfiles.pas"/>

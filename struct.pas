@@ -144,7 +144,7 @@ type
     V: array[1..40] of longint; {used by `v}
     S: array[1..10] of string[80]; {used by `s}
     Time: longint; {year+month+day?.. not sure can't remember}
-    ShowOnMap: array[1..1600] of byte; {show up on the players auto 'map'?}
+    HideOnMap: array[1..1600] of byte; {show up on the players auto 'map'?}
     Extra: array[1..396] of char; {extra for me}
   end;
 

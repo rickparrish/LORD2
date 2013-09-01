@@ -1554,7 +1554,7 @@ begin
       (* @KEY
           Does a [MORE] prompt, centered on current line.
           NOTE: Actually indents two lines, not centered *)
-      DoorWrite(TranslateVariables('  `2<`0MORE`2>'));
+      DoorWrite(TranslateVariables('`r0  `2<`0MORE`2>'));
       DoorReadKey;
       DoorWrite('\b\b\b\b\b\b\b\b        \b\b\b\b\b\b\b\b');
   end else
@@ -1563,7 +1563,7 @@ begin
       (* @KEY BOTTOM
           This does <MORE> prompt at user text window. *)
       DoorGotoXY(35, 24);
-      DoorWrite(TranslateVariables('`2<`0MORE`2>'));
+      DoorWrite(TranslateVariables('`r0`2<`0MORE`2>'));
       DoorReadKey;
       DoorWrite('\b\b\b\b\b\b      \b\b\b\b\b\b');
   end else
@@ -1578,7 +1578,7 @@ begin
       (* @KEY TOP
           This does <MORE> prompt at game text window. *)
       DoorGotoXY(40, 15);
-      DoorWrite(TranslateVariables('`2<`0MORE`2>'));
+      DoorWrite(TranslateVariables('`r0`2<`0MORE`2>'));
       DoorReadKey;
       DoorWrite('\b\b\b\b\b\b      \b\b\b\b\b\b');
   end else
@@ -1697,6 +1697,12 @@ begin
 end;
 
 procedure TRTReader.CommandOVERHEADMAP(ATokens: TTokens);
+var
+  BG: Integer;
+  I: Integer;
+  NewBG: Integer;
+  ToSend: String;
+  X, Y: Integer;
 begin
   (* @OVERHEADMAP
       This command displays the visible portion of the map as defined in the world
@@ -1705,7 +1711,40 @@ begin
       is your responsibility.  If you wish to mark the map you must do this in
       help.ref under the @#M routine.  Be sure to include a legend so people have
       some reference concerning what the marks mean. *)
-  LogTODO(ATokens);
+  // Draw the map
+  DoorTextAttr(7);
+  DoorClrScr;
+
+  for Y := 1 to 20 do
+  begin
+    BG := 1;
+    ToSend := AnsiTextBackground(1);
+
+    for X := 1 to 80 do
+    begin
+      I := X + ((Y - 1) * 80);
+      if (WorldDat.MapDatIndex[I] <> 0) AND (WorldDat.HideOnMap[I] = 0) then
+      begin
+        NewBG := 2;
+      end else
+      begin
+        NewBG := 1;
+      end;
+
+      if (BG <> NewBG) then
+      begin
+        ToSend += AnsiTextBackground(NewBG);
+        BG := NewBG;
+      end;
+
+      ToSend += ' ';
+    end;
+
+    DoorGotoXY(1, Y);
+    DoorWrite(ToSend);
+  end;
+
+  DoorTextAttr(7);
 end;
 
 procedure TRTReader.CommandPAUSEOFF(ATokens: TTokens);

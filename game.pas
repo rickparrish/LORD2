@@ -93,10 +93,10 @@ begin
         FG := MI.ForeColour;
       end;
 
-      GotoXY(1, Y);
       ToSend := ToSend + MI.Ch;
     end;
 
+    DoorGotoXY(1, Y);
     DoorWrite(ToSend);
   end;
 end;
@@ -339,6 +339,7 @@ end;
 function LoadWorldDat: Boolean;
 var
   F: File of WorldDatRecord;
+  I: Integer;
 begin
   if Not(FileExists(WorldDatFileName)) then
   begin
@@ -384,9 +385,9 @@ begin
   // Check for movement to new screen
   if (x = 0) then
   begin
-    Player.LastMap := Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
     Player.Map -= 1;
     Player.X := 80;
+    if (WorldDat.HideOnMap[Player.Map] = 0) then Player.LastMap := Player.Map;
 
     LoadMap(Player.Map);
     DrawMap;
@@ -394,9 +395,9 @@ begin
   end else
   if (x = 81) then
   begin
-    Player.LastMap := Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
     Player.Map += 1;
     Player.X := 1;
+    if (WorldDat.HideOnMap[Player.Map] = 0) then Player.LastMap := Player.Map;
 
     LoadMap(Player.Map);
     DrawMap;
@@ -404,9 +405,9 @@ begin
   end else
   if (y = 0) then
   begin
-    Player.LastMap := Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
     Player.Map -= 80;
     Player.Y := 20;
+    if (WorldDat.HideOnMap[Player.Map] = 0) then Player.LastMap := Player.Map;
 
     LoadMap(Player.Map);
     DrawMap;
@@ -414,9 +415,9 @@ begin
   end else
   if (y = 21) then
   begin
-    Player.LastMap := Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
     Player.Map += 80;
     Player.Y := 1;
+    if (WorldDat.HideOnMap[Player.Map] = 0) then Player.LastMap := Player.Map;
 
     LoadMap(Player.Map);
     DrawMap;
@@ -447,10 +448,10 @@ begin
     begin
       if (CurrentMap.HotSpots[I].WarpToMap > 0) AND (CurrentMap.HotSpots[I].WarpToX > 0) AND (CurrentMap.HotSpots[I].WarpToY > 0) then
       begin
-        Player.LastMap := Player.Map; // TODO Only if map was visible, according to 3rdparty.doc
         Player.Map := CurrentMap.HotSpots[I].WarpToMap;
         Player.X := CurrentMap.HotSpots[I].WarpToX;
         Player.Y := CurrentMap.HotSpots[I].WarpToY;
+        if (WorldDat.HideOnMap[Player.Map] = 0) then Player.LastMap := Player.Map;
 
         LoadMap(Player.Map);
         DrawMap;
@@ -506,6 +507,7 @@ begin
           '4': MovePlayer(-1, 0);
           '6': MovePlayer(1, 0);
           '2': MovePlayer(0, 1);
+          'M': RTReader.Execute('HELP', 'MAP');
         end;
       until (Ch = 'Q');
     end;

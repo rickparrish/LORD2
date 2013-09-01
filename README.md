@@ -14,6 +14,7 @@ Compiled and tested with:
  - FreePascal 2.6.2 (GO32V2)
  - fpc -B -Furmdoor -FEbin\i386-go32v2 LORD2.lpr
  - Tested with GameSrv
+ - (FOSSIL I/O code from <a href="http://www.elebbs.com">EleCOM</a>)
 
 - Ubuntu Server 13.04 (64bit):
  - FreePascal 2.6.0 (64bit)

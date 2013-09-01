@@ -138,9 +138,11 @@ end;
 
 procedure CommWrite(AText: String);
 begin
-  // TODO Probably a better way to do this, works for now
-  // TODO Also, only for Telnet mode
-  AText := StringReplace(AText, #255, #255#255, [rfReplaceAll]);
+  {$IFDEF COMM_SOCKET}
+    // TODO Probably a better way to do this, works for now
+    // TODO Also, only for Telnet mode
+    AText := StringReplace(AText, #255, #255#255, [rfReplaceAll]);
+  {$ENDIF}
   CommWriteBlock(AText[1], Length(AText));
 end;
 

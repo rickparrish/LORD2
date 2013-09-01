@@ -501,10 +501,6 @@ begin
     end;
   end;
 
-  {$IFDEF UNIX}
-  //TODO if Not(Local) then DoorSession.LocalIO := false;
-  {$ENDIF}
-
   if (Local) then
   begin
     DoorDropInfo.Node := Node;

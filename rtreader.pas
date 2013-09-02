@@ -849,17 +849,22 @@ end;
 
 procedure TRTReader.CommandDO_FRONTPAD(ATokens: TTokens);
 var
-  StringLength: Integer;
   RequestedLength: Integer;
+  StrippedStringLength: Integer;
+  TranslatedStringLength: Integer;
 begin
   (* @DO FRONTPAD <string variable> <length>
       This adds spaces to the front of the string until the string is as long as
       <length>. *)
-  StringLength := Length(SethStrip(TranslateVariables(ATokens[3])));
-  RequestedLength := StrToInt(TranslateVariables(ATokens[4]));
-  if (StringLength < RequestedLength) then
+  RequestedLength := StrToInt(ATokens[4]);
+  StrippedStringLength := Length(SethStrip(TranslateVariables(ATokens[3])));
+  TranslatedStringLength := Length(TranslateVariables(ATokens[3]));
+  if (StrippedStringLength < RequestedLength) then
   begin
-      AssignVariable(ATokens[3], PadLeft(TranslateVariables(ATokens[3]), RequestedLength));
+    // NB: We add (TranslatedStringLength - StrippedStringLength) because colour codes will be in the translated
+    //     string length but not the stripped string length, and that will reduce the amount of padding added,
+    //     so adding this difference accounts for that
+    AssignVariable(ATokens[3], PadLeft(TranslateVariables(ATokens[3]), RequestedLength + (TranslatedStringLength - StrippedStringLength)));
   end;
 end;
 
@@ -1025,15 +1030,20 @@ end;
 procedure TRTReader.CommandDO_PAD(ATokens: TTokens);
 var
   RequestedLength: Integer;
-  StringLength: Integer;
+  StrippedStringLength: Integer;
+  TranslatedStringLength: Integer;
 begin
   (* @DO PAD <string variable> <length>
       This adds spaces to the end of the string until string is as long as <length>. *)
-  StringLength := Length(SethStrip(TranslateVariables(ATokens[3])));
   RequestedLength := StrToInt(ATokens[4]);
-  if (StringLength < RequestedLength) then
+  StrippedStringLength := Length(SethStrip(TranslateVariables(ATokens[3])));
+  TranslatedStringLength := Length(TranslateVariables(ATokens[3]));
+  if (StrippedStringLength < RequestedLength) then
   begin
-    AssignVariable(ATokens[3], PadRight(TranslateVariables(ATokens[3]), StrToInt(ATokens[4])));
+    // NB: We add (TranslatedStringLength - StrippedStringLength) because colour codes will be in the translated
+    //     string length but not the stripped string length, and that will reduce the amount of padding added,
+    //     so adding this difference accounts for that
+    AssignVariable(ATokens[3], PadRight(TranslateVariables(ATokens[3]), RequestedLength + (TranslatedStringLength - StrippedStringLength)));
   end;
 end;
 

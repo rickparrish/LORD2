@@ -15,6 +15,8 @@ begin
       DoorSession.SethWrite := true;
       DoorClrScr;
 
+      // TODO RUN MAINT IN MAINT.REF IF /MAINT IS PASSED
+
       // Start the game
       Game.Start;
     except

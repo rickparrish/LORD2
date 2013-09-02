@@ -2637,6 +2637,7 @@ begin
     'BANK': AText := IntToStr(Game.Player.bank);
     'DEAD': AText := IntToStr(Game.Player.dead);
     'ENEMY': AText := Game.ENEMY;
+    'GOLD': AText := IntToStr(Game.Player.Money);
     'LOCAL':
     begin
       if (DoorLocal) then
@@ -2662,8 +2663,8 @@ begin
       begin
         // Handle "ampersand" codes
         AText := StringReplace(AText, '&realname', DoorDropInfo.Alias, [rfReplaceAll, rfIgnoreCase]);
-        AText := StringReplace(AText, '&date', FormatDateTime('yyyy/mm/dd', Now), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&nicedate', FormatDateTime('h:nn', Now) + ' on ' + FormatDateTime('yyyy/mm/dd', Now), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&date', FormatDateTime('yyyy/mm/dd', Now), [rfReplaceAll, rfIgnoreCase]);
         if (Game.Player.ArmourNumber = 0) then
         begin
           AText := StringReplace(AText, 's&armour', '', [rfReplaceAll, rfIgnoreCase]);
@@ -2703,8 +2704,8 @@ begin
         AText := StringReplace(AText, '&lasty', IntToStr(Game.LastY), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&map', IntToStr(Game.Player.map), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&lmap', IntToStr(Game.Player.LastMap), [rfReplaceAll, rfIgnoreCase]);
-        AText := StringReplace(AText, '&time', IntToStr(Game.Time), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&timeleft', IntToStr(DoorSecondsLeft div 60), [rfReplaceAll, rfIgnoreCase]);
+        AText := StringReplace(AText, '&time', IntToStr(Game.Time), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&sex', IntToStr(Game.Player.SexMale), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&playernum', IntToStr(Game.PlayerNum), [rfReplaceAll, rfIgnoreCase]);
         AText := StringReplace(AText, '&totalaccounts', IntToStr(Game.TotalAccounts), [rfReplaceAll, rfIgnoreCase]);

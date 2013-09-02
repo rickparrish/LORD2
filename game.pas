@@ -102,12 +102,10 @@ begin
 end;
 
 function GetSafeAbsolutePath(AFileName: String): String;
-var
-  S: AnsiString;
 begin
-  S := AFileName;
-  DoDirSeparators(S); // Ensure \ and / are used appropriately
-  Result := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + S;
+  AFileName := StringReplace(AFileName, '`*', IntToStr(DoorDropInfo.Node), [rfReplaceAll, rfIgnoreCase]);
+  DoDirSeparators(AFileName); // Ensure \ and / are used appropriately
+  Result := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + AFileName;
 end;
 
 function LoadDataFiles: Boolean;
@@ -339,13 +337,7 @@ end;
 function LoadWorldDat: Boolean;
 var
   F: File of WorldDatRecord;
-  I: Integer;
 begin
-  if Not(FileExists(WorldDatFileName)) then
-  begin
-    // TODO Generate the file
-  end;
-
   // TODO Retry if IOError
   Assign(F, WorldDatFileName);
   {$I-}Reset(F);{$I+}
@@ -501,15 +493,36 @@ begin
       Update;
 
       repeat
+        (*TODO W  Write mail to another player
+          H  Interact with another player.  The player pressing this key must be on the
+             same map square as the player they are trying to interact with.
+          B  Show the log of messages.
+          F  Show the last three messages.
+          Q  Quit the game.  Confirmation will be requested.*)
         Ch := UpCase(DoorReadKey);
         case Ch of
           '8': MovePlayer(0, -1);
           '4': MovePlayer(-1, 0);
           '6': MovePlayer(1, 0);
           '2': MovePlayer(0, 1);
+          'L': RTReader.Execute('HELP', 'LISTPLAYERS');
           'M': RTReader.Execute('HELP', 'MAP');
+          'P': RTReader.Execute('HELP', 'WHOISON');
+          'T': RTReader.Execute('HELP', 'TALK');
+          'V': begin
+                 RTReader.Execute('GAMETXT', 'STATS');
+                 DoorWriteLn('TODO Show inventory');
+                 DoorWrite('Hit a key to continue');
+                 DoorReadKey;
+                 RTReader.Execute('GAMETXT', 'CLOSESTATS');
+               end;
+          'Y': RTReader.Execute('HELP', 'YELL');
+          'Z': RTReader.Execute('HELP', 'Z');
+          '?': RTReader.Execute('HELP', 'HELP');
         end;
       until (Ch = 'Q');
+
+      RTReader.Execute('GAMETXT', 'ENDGAME');
     end;
 
     RTGlobal.RefFiles.Clear;

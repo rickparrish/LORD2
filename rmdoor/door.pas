@@ -45,17 +45,17 @@ type
     Registered: Boolean;            {---D-} {Is LORD Registered?}
   end;
 
-  TLastKeyType = (lkNone, lkLocal, lkRemote);
+  TDoorLastKeyType = (lkNone, lkLocal, lkRemote);
 
   {
     Information about the last key pressed is stored in this record.
     This should be considered read-only.
   }
   TDoorLastKey = Record
-    Ch: Char;               { Character of last key }
-    Extended: Boolean;      { Was character preceded by #0 }
-    Location: TLastKeyType; { Location of last key }
-    Time: TDateTime;        { SecToday of last key }
+    Ch: Char;                   { Character of last key }
+    Extended: Boolean;          { Was character preceded by #0 }
+    Location: TDoorLastKeyType; { Location of last key }
+    Time: TDateTime;            { SecToday of last key }
   end;
 
   {
@@ -122,11 +122,16 @@ procedure DefaultOnLocalLogin;
 var
   S: String;
 begin
+  DoorTextAttr(7);
   DoorClrScr;
   DoorWriteLn;
-  DoorWriteLn('  LOCAL LOGIN');
   DoorWriteLn;
-  DoorWrite('  Enter your name : ');
+  DoorWriteLn('  |1F  LOCAL LOGIN - FOR NODE ' + IntToStr(DoorDropInfo.Node) + '|07');
+  DoorWriteLn;
+  DoorWriteLn;
+  DoorWriteLn('  |09Run ' + ExtractFileName(ParamStr(0)) + ' /? for command-line usage help|07');
+  DoorWriteLn;
+  DoorWrite('  |0AName or handle |0F:|07 ');
   S := DoorInput('SYSOP', DOOR_INPUT_CHARS_ALPHA + ' ', #0, 40, 40, 31);
   DoorDropInfo.RealName := S;
   DoorDropInfo.Alias := S;
@@ -476,6 +481,7 @@ begin
         Ch := UpCase(S[2]);
         Delete(S, 1, 2);
         Case UpCase(Ch) of
+          '?': Local := False;
           'D': begin
                  Local := False;
                  DropFile := S;
@@ -557,7 +563,11 @@ begin
   end else
   begin
     //TODO if Assigned(DoorOnUsage) then DoorOnUsage;
+    Halt;
   end;
+
+  DoorLastKey.Time := Now;
+  DoorSession.TimeOn := Now;
 
   if Not(DoorLocal) then
   begin
@@ -571,10 +581,8 @@ begin
       Halt;
     end;
 
-    DoorLastKey.Time := Now;
     DoorSession.Events := True;
     DoorSession.EventsTime := 0;
-    DoorSession.TimeOn := Now;
 
     DoorClrScr;
     {$IFNDEF UNIX}Window(1, 1, 80, 24);{$ENDIF}

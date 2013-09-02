@@ -7,7 +7,7 @@ interface
 uses
   RTGlobal, RTReader, Struct,
   Ansi, Door, StringUtils,
-  Crt, DateUtils, SysUtils;
+  Crt, DateUtils, StrUtils, SysUtils;
 
 var
   CurrentMap: MapDatRecord;
@@ -508,6 +508,28 @@ begin
           'L': RTReader.Execute('HELP', 'LISTPLAYERS');
           'M': RTReader.Execute('HELP', 'MAP');
           'P': RTReader.Execute('HELP', 'WHOISON');
+          'Q': begin
+                 // Confirm exit
+                 DoorGotoXY(1, 23);
+                 DoorWrite('`r0`2  Are you sure you want to quit back to the BBS? [`%Y`2] : ');
+
+                 repeat
+                   // Repeat until we have a valid selection
+                   Ch := UpCase(DoorReadKey);
+                 until (Ch in ['Y', 'N', #13]);
+
+                 // Translate selection into either #0 to abort quit, or Q to confirm quit
+                 if (Ch = 'N') then
+                 begin
+                   Ch := #0;
+                   GotoXY(1, 23);
+                   DoorWrite(PadRight('', 79));
+                   DoorGotoXY(Player.X, Player.Y);
+                 end else
+                 begin
+                   Ch := 'Q';
+                 end;
+               end;
           'T': RTReader.Execute('HELP', 'TALK');
           'V': begin
                  RTReader.Execute('GAMETXT', 'STATS');
@@ -523,6 +545,7 @@ begin
       until (Ch = 'Q');
 
       RTReader.Execute('GAMETXT', 'ENDGAME');
+      Sleep(2500);
     end;
 
     RTGlobal.RefFiles.Clear;

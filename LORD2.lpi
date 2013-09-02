@@ -32,7 +32,7 @@
         <FormatVersion Value="1"/>
       </local>
     </RunParams>
-    <Units Count="14">
+    <Units Count="15">
       <Unit0>
         <Filename Value="LORD2.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -102,6 +102,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="DropFiles"/>
       </Unit13>
+      <Unit14>
+        <Filename Value="rmdoor\videoutils.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="VideoUtils"/>
+      </Unit14>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

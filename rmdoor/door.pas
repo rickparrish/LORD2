@@ -5,7 +5,7 @@ unit Door;
 interface
 
 uses
-  Ansi, Comm, DropFiles, StringUtils,
+  Ansi, Comm, DropFiles, StringUtils, VideoUtils,
   Classes, Crt, DateUtils, StrUtils, SysUtils;
 
 const
@@ -71,22 +71,38 @@ type
     Information about the current session is stored in this record.
   }
   TDoorSession = Record
-    DoIdleCheck: Boolean; { Check for idle timeout? }
-    Events: Boolean;      { Run Events in mKeyPressed function }
-    EventsTime: LongInt;  { MSecToday of last Events run }
-    MaxIdle: LongInt;     { Max idle before kick (in seconds) }
-    SethWrite: Boolean;   { Whether to interpret ` codes }
-    TimeOn: TDateTime;    { SecToday program was started }
+    DoIdleCheck: Boolean;  { Check for idle timeout? }
+    Events: Boolean;       { Run Events in mKeyPressed function }
+    EventsTime: TDateTime; { MSecToday of last Events run }
+    MaxIdle: LongInt;      { Max idle before kick (in seconds) }
+    SethWrite: Boolean;    { Whether to interpret ` codes }
+    TimeOn: TDateTime;     { SecToday program was started }
   end;
 
 var
   DoorDropInfo: TDoorDropInfo;
   DoorLastKey: TDoorLastKey;
   DoorMOREPrompts: TDoorMOREPrompts;
+  DoorProgramNameAndVersion: String;
   DoorSession: TDoorSession;
 
+  {
+    Event variables that may be called at various times throughout
+    the programs execution.  Assign them to your own procedures to
+    give your program a more unique look
+  }
+  DoorOnCLP: Procedure(AKey: Char; AValue: String);
+  DoorOnHangup: Procedure;
   DoorOnLocalLogin: Procedure;
+  DoorOnStatusBar: Procedure;
+  DoorOnSysopKey: Function(AKey: Char): Boolean;
+  DoorOnTimeOut: Procedure;
+  DoorOnTimeOutWarning: Procedure(AMinutes: Byte);
+  DoorOnTimeUp: Procedure;
+  DoorOnTimeUpWarning: Procedure(AMinutes: Byte);
+  DoorOnUsage: Procedure;
 
+function DoorCarrier: Boolean;
 procedure DoorClose(ADisconnect: Boolean);
 procedure DoorClrScr;
 procedure DoorCursorDown(ACount: Byte);
@@ -103,17 +119,38 @@ function DoorKeyPressed: Boolean;
 function DoorLocal: Boolean;
 function DoorOpenComm: Boolean;
 function DoorReadKey: Char;
+function DoorSecondsIdle: LongInt;
 function DoorSecondsLeft: LongInt;
 procedure DoorShutDown;
 procedure DoorStartUp;
 procedure DoorTextAttr(AAttr: Byte);
 procedure DoorTextBackground(AColour: Byte);
 procedure DoorTextColour(AColour: Byte);
+procedure DoorTextColourAndBlink(AColour: Byte; ABlink: Boolean);
 procedure DoorWrite(AText: String);
 procedure DoorWriteLn;
 procedure DoorWriteLn(AText: String);
 
 implementation
+
+var
+  OldExitProc: Pointer;
+
+procedure DoorDoEvents; forward;
+procedure NewExitProc; forward;
+
+{
+  Default action to take when user drops carrier
+}
+procedure DefaultOnHangup;
+begin
+  TextAttr := 15;
+  ClrScr;
+  WriteLn;
+  WriteLn('   Caller Dropped Carrier.  Returning To BBS...');
+  Delay(2500);
+  Halt;
+end;
 
 {
   Default action to take when /L is used on the command-line
@@ -135,6 +172,80 @@ begin
   S := DoorInput('SYSOP', DOOR_INPUT_CHARS_ALPHA + ' ', #0, 40, 40, 31);
   DoorDropInfo.RealName := S;
   DoorDropInfo.Alias := S;
+end;
+
+{
+  Default status bar displays
+}
+procedure DefaultOnStatusBar;
+begin
+  FastWrite(#254 + '                           ' + #254 + '                   ' + #254 + '             ' + #254 + '                ' + #254, 1, 25, 30);
+  FastWrite(PadRight(DoorDropInfo.RealName, 22), 3, 25, 31);
+  FastWrite(DoorProgramNameAndVersion, 31, 25, 31);
+  FastWrite(PadRight('Idle: ' + SecToMS(SecondsBetween(Now, DoorLastKey.Time)), 11), 51, 25, 31);
+  FastWrite('Left: ' + SecToHMS(DoorSecondsLeft), 65, 25, 31);
+end;
+
+{
+  Default action to take when the user idles too long
+}
+procedure DefaultOnTimeOut;
+begin
+  DoorTextAttr(15);
+  DoorClrScr;
+  DoorWriteLn;
+  DoorWriteLn('  Idle Time Limit Exceeded.  Returning To BBS...');
+  Delay(2500);
+  Halt;
+end;
+
+{
+  Default action to take when the user runs out of time
+}
+procedure DefaultOnTimeUp;
+begin
+  DoorTextAttr(15);
+  DoorClrScr;
+  DoorWriteLn;
+  DoorWriteLn('  Your Time Has Expired.  Returning To BBS...');
+  Delay(2500);
+  Halt;
+end;
+
+{
+  Default command-line help screen
+}
+procedure DefaultOnUsage;
+begin
+  ClrScr;
+  WriteLn;
+  WriteLn(' USAGE: ' + ExtractFileName(ParamStr(0)) + ' <PARAMETERS>');
+  WriteLn;
+  WriteLn(' Load settings from a dropfile (DOOR32.SYS, DOOR.SYS, DORINFO*.DEF or INFO.*)');
+  WriteLn('  -D         PATH\FILENAME OF DROPFILE');
+  WriteLn(' Example: ' + ExtractFileName(ParamStr(0)) + ' -DC:\BBS\NODE1\DOOR32.SYS');
+  WriteLn;
+  WriteLn(' Pass settings on command-line');
+  WriteLn('  -N         NODE NUMBER (REQUIRED)');
+  WriteLn('  -H         COM PORT OR SOCKET HANDLE (REQUIRED)');
+  WriteLn('  -T         -H PARAMETER IS A SOCKET HANDLE NOT A COM PORT NUMBER');
+  //TODO WriteLn('  -W         WINSERVER DOOR32 MODE');
+  WriteLn(' Example: ' + ExtractFileName(ParamStr(0)) + ' -N1 -H4');
+  WriteLn(' Example: ' + ExtractFileName(ParamStr(0)) + ' -N1 -H1000 -T');
+  WriteLn;
+  WriteLn(' Run in local mode');
+  WriteLn('  -L         LOCAL MODE');
+  WriteLn(' Example: ' + ExtractFileName(ParamStr(0)) + ' -L');
+  WriteLn;
+  Halt;
+end;
+
+{
+  Returns TRUE unless the user has dropped carrier
+}
+function DoorCarrier: Boolean;
+begin
+  Result := DoorLocal OR CommCarrier;
 end;
 
 procedure DoorClose(ADisconnect: Boolean);
@@ -196,6 +307,39 @@ end;
 procedure DoorCursorSave;
 begin
   DoorWrite(AnsiCursorSave);
+end;
+
+{
+  DoorKeyPressed calls this procedure every time it is run.  This is where
+  a lot of the "behind the scenes" stuff happens, such as determining how
+  much time the user has left, if theyve dropped carrier, and updating the
+  status bar.
+  It is not recommended that you mess with anything in this procedure
+}
+procedure DoorDoEvents;
+begin
+  if (DoorSession.Events) and (SecondsBetween(Now, DoorSession.EventsTime) >= 1) then
+  begin
+    {Check For Hangup}
+    if Not(DoorCarrier) and Assigned(DoorOnHangup) then DoorOnHangup;
+
+    {Check For Idle Timeout}
+    if (DoorSession.DoIdleCheck) and (DoorSecondsIdle > DoorSession.MaxIdle) and Assigned(DoorOnTimeOut) then DoorOnTimeOut;
+
+    {Check For Idle Timeout Warning}
+    if (DoorSession.DoIdleCheck) and ((DoorSession.MaxIdle - DoorSecondsIdle) mod 60 = 1) and ((DoorSession.MaxIdle - DoorSecondsIdle) div 60 <= 5) and (Assigned(DoorOnTimeOutWarning)) then DoorOnTimeOutWarning((DoorSession.MaxIdle - DoorSecondsIdle) div 60);
+
+    {Check For Time Up}
+    if (DoorSecondsLeft < 1) and Assigned(DoorOnTimeUp) then DoorOnTimeUp;
+
+    {Check For Time Up Warning}
+    if (DoorSecondsLeft mod 60 = 1) and (DoorSecondsLeft div 60 <= 5) and Assigned(DoorOnTimeUpWarning) then DoorOnTimeUpWarning(DoorSecondsLeft div 60);
+
+    {Update Status Bar}
+    if Assigned(DoorOnStatusBar) then DoorOnStatusBar;
+
+    DoorSession.EventsTime := Now;
+  end;
 end;
 
 {
@@ -327,7 +471,7 @@ end;
 }
 function DoorKeyPressed: Boolean;
 begin
-  //TODO DoorDoEvents;
+  DoorDoEvents;
   Result := KeyPressed;
   if Not(DoorLocal) then Result := Result OR CommCharAvail;
 end;
@@ -404,11 +548,11 @@ begin
       if (Ch = #0) then
       begin
         Ch := ReadKey;
-        //TODOif Not(DoorLocal) and Assigned(mOnSysopKey) and Not(mOnSysopKey(Ch)) then
-        //TODObegin
+        if Not(DoorLocal) AND (Not(Assigned(DoorOnSysopKey)) OR (Not(DoorOnSysopKey(Ch)))) then
+        begin
           DoorLastKey.Extended := True;
           DoorLastKey.Location := lkLocal;
-        //TODOend;
+        end;
       end else
       begin
         DoorLastKey.Extended := False;
@@ -429,6 +573,14 @@ begin
   DoorLastKey.Time := Now;
 
   Result := Ch;
+end;
+
+{
+  Returns the number of seconds the user has been idle
+}
+function DoorSecondsIdle: LongInt;
+begin
+     Result := SecondsBetween(Now, DoorLastKey.Time);
 end;
 
 {
@@ -501,7 +653,7 @@ begin
                  Wildcat := True;
                end;
           {$ENDIF}
-          //TODO else if Assigned(mOnCLP) then DoorOnCLP(Ch, S);
+          else if Assigned(DoorOnCLP) then DoorOnCLP(Ch, S);
         end;
       end;
     end;
@@ -562,7 +714,7 @@ begin
     end;
   end else
   begin
-    //TODO if Assigned(DoorOnUsage) then DoorOnUsage;
+    if Assigned(DoorOnUsage) then DoorOnUsage;
     Halt;
   end;
 
@@ -577,10 +729,15 @@ begin
       WriteLn;
       WriteLn('  No Carrier Detected');
       WriteLn;
-      Delay(1500);
+      Delay(2500);
       Halt;
     end;
 
+    // Setup exit proc, which ensures the comm is closed properly
+    OldExitProc := ExitProc;
+    ExitProc := @NewExitProc;
+
+    // Indicate we want events to happen (timeout and timeup check, status bar, etc)
     DoorSession.Events := True;
     DoorSession.EventsTime := 0;
 
@@ -599,7 +756,7 @@ begin
 end;
 
 {
-  Change the current text colour to AColour
+  Change the current text background to AColour
 }
 procedure DoorTextBackground(AColour: Byte);
 begin
@@ -607,11 +764,20 @@ begin
 end;
 
 {
-  Change the current text background to AColour
+  Change the current text colour to AColour
 }
 procedure DoorTextColour(AColour: Byte);
 begin
   DoorWrite(AnsiTextColour(AColour));
+end;
+
+{
+  Change the current text colour to AColour and turn blink on/off
+}
+procedure DoorTextColourAndBlink(AColour: Byte; ABlink: Boolean);
+begin
+  DoorWrite(AnsiTextColour(AColour));
+  DoorWrite(AnsiBlink(ABlink));
 end;
 
 {
@@ -652,228 +818,75 @@ begin
       begin
         if (Length(AText) = 1) then
         begin
+          // Only single `, so clear the string
           AText := '';
         end else
         begin
+          // At least 2 characters, so run with it
           BackTick2 := Copy(AText, 1, 2);
 
           case BackTick2 of
-            '``':
-            begin
-              DoorWrite('`');
-              Delete(AText, 1, 2);
-            end;
-            '`1':
-            begin
-                DoorTextColour(Blue);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`2':
-            begin
-                DoorTextColour(Green);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`3':
-            begin
-                DoorTextColour(Cyan);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`4':
-            begin
-                DoorTextColour(Red);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`5':
-            begin
-                DoorTextColour(Magenta);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`6':
-            begin
-                DoorTextColour(Brown);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`7':
-            begin
-                DoorTextColour(LightGray);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`8':
-            begin
-                DoorTextColour(DarkGray);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`9':
-            begin
-                DoorTextColour(LightBlue);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`0':
-            begin
-                DoorTextColour(LightGreen);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`!':
-            begin
-                DoorTextColour(LightCyan);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`@':
-            begin
-                DoorTextColour(LightRed);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`#':
-            begin
-                DoorTextColour(LightMagenta);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`$':
-            begin
-                DoorTextColour(Yellow);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`%':
-            begin
-                DoorTextColour(White);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`*':
-            begin
-                DoorTextColour(Black);
-                // TODO Disable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`b':
-            begin
-                DoorTextColour(Red);
-                // TODO enable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`c':
-            begin
-                DoorTextAttr(7);
-                DoorClrScr;
-                DoorWrite(#13#10#13#10);
-                Delete(AText, 1, 2);
-            end;
-            '`d':
-            begin
-                DoorWrite(#8);
-                Delete(AText, 1, 2);
-            end;
-            '`k':
-            begin
-                DoorWrite('`r0  `2<`0MORE`2>');
-                DoorReadKey;
-                DoorWrite(#8#8#8#8#8#8#8#8 + '        ' + #8#8#8#8#8#8#8#8);
-                Delete(AText, 1, 2);
-            end;
-            '`l':
-            begin
-                Delay(500);
-                Delete(AText, 1, 2);
-            end;
-            '`w':
-            begin
-                Delay(100);
-                Delete(AText, 1, 2);
-            end;
-            '`x':
-            begin
-                DoorWrite(' ');
-                Delete(AText, 1, 2);
-            end;
-            '`y':
-            begin
-                DoorTextColour(Yellow);
-                // TODO enable blinking
-                Delete(AText, 1, 2);
-            end;
-            '`\':
-            begin
-                DoorWrite(#13#10);
-                Delete(AText, 1, 2);
-            end;
-            '`|':
-            begin
-              DoorWrite('|`w`d\`w`d-`w`d/`w`d|`w`d\`w`d-`w`d/`w`d|`w`d `d');
-              Delete(AText, 1, 2);
-            end;
+            '`1': DoorTextColourAndBlink(Blue, false);
+            '`2': DoorTextColourAndBlink(Green, false);
+            '`3': DoorTextColourAndBlink(Cyan, false);
+            '`4': DoorTextColourAndBlink(Red, false);
+            '`5': DoorTextColourAndBlink(Magenta, false);
+            '`6': DoorTextColourAndBlink(Brown, false);
+            '`7': DoorTextColourAndBlink(LightGray, false);
+            '`8': DoorTextColourAndBlink(DarkGray, false);
+            '`9': DoorTextColourAndBlink(LightBlue, false);
+            '`0': DoorTextColourAndBlink(LightGreen, false);
+            '`!': DoorTextColourAndBlink(LightCyan, false);
+            '`@': DoorTextColourAndBlink(LightRed, false);
+            '`#': DoorTextColourAndBlink(LightMagenta, false);
+            '`$': DoorTextColourAndBlink(Yellow, false);
+            '`%': DoorTextColourAndBlink(White, false);
+            '`*': DoorTextColourAndBlink(Black, false);
+            '`b': DoorTextColourAndBlink(Red, true);
+            '`c': begin
+                    DoorTextAttr(7);
+                    DoorClrScr;
+                    DoorWrite(#13#10#13#10);
+                end;
+            '`d': DoorWrite(#8);
+            '`k': begin
+                    DoorWrite('`r0  `2<`0MORE`2>');
+                    DoorReadKey;
+                    DoorWrite(#8#8#8#8#8#8#8#8 + '        ' + #8#8#8#8#8#8#8#8);
+                end;
+            '`l': Delay(500);
+            '`w': Delay(100);
+            '`x': DoorWrite(' ');
+            '`y': DoorTextColourAndBlink(Yellow, true);
+            '`\': DoorWrite(#13#10);
+            '`|': DoorWrite('|`w`d\`w`d-`w`d/`w`d|`w`d\`w`d-`w`d/`w`d|`w`d `d');
             else
             begin
               if (Length(AText) >= 3) then
               begin
                 BackTick3 := Copy(AText, 1, 3);
-              end else
-              begin
-                BackTick3 := '';
-              end;
+                if (Pos('`r', BackTick3) = 1) then
+                begin
+                  case BackTick3 of
+                    '`r0': DoorTextBackground(Black);
+                    '`r1': DoorTextBackground(Blue);
+                    '`r2': DoorTextBackground(Green);
+                    '`r3': DoorTextBackground(Cyan);
+                    '`r4': DoorTextBackground(Red);
+                    '`r5': DoorTextBackground(Magenta);
+                    '`r6': DoorTextBackground(Brown);
+                    '`r7': DoorTextBackground(LightGray);
+                  end;
 
-              case BackTick3 of
-                '`r0':
-                begin
-                    DoorTextBackground(Black);
-                    Delete(AText, 1, 3);
-                end;
-                '`r1':
-                begin
-                    DoorTextBackground(Blue);
-                    Delete(AText, 1, 3);
-                end;
-                '`r2':
-                begin
-                    DoorTextBackground(Green);
-                    Delete(AText, 1, 3);
-                end;
-                '`r3':
-                begin
-                    DoorTextBackground(Cyan);
-                    Delete(AText, 1, 3);
-                end;
-                '`r4':
-                begin
-                    DoorTextBackground(Red);
-                    Delete(AText, 1, 3);
-                end;
-                '`r5':
-                begin
-                    DoorTextBackground(Magenta);
-                    Delete(AText, 1, 3);
-                end;
-                '`r6':
-                begin
-                    DoorTextBackground(Brown);
-                    Delete(AText, 1, 3);
-                end;
-                '`r7':
-                begin
-                    DoorTextBackground(LightGray);
-                    Delete(AText, 1, 3);
-                end;
-                else
-                begin
-                  // No match, so delete ` and next char
-                  Delete(AText, 1, 2);
+                  // Delete 1 char from beginning of string since `r is a sequence with 3 characters (and 2 more get deleted below)
+                  Delete(AText, 1, 1);
                 end;
               end;
             end;
           end;
+
+          // Delete 2 characters to remove the handled sequence from the string
+          Delete(AText, 1, 2);
         end;
       end;
     end;
@@ -900,22 +913,31 @@ begin
   DoorWrite(AText + #13#10);
 end;
 
+{
+  Custom exit proc to ensure mShutdown is called
+}
+procedure NewExitProc;
 begin
-  //TODO  OldExitProc := ExitProc;
-  //TODO  ExitProc := @NewExitProc;
+     ExitProc := OldExitProc;
 
-(*TODO  mOnCLP := nil;
-  mOnHangup := @OnHangup;
-  mOnLocalLogin := @OnLocalLogin;
-  mOnStatusBar := @OnStatusBar;
-  mOnSysopKey := nil;
-  mOnTimeOut := @OnTimeOut;
-  mOnTimeOutWarning := nil;
-  mOnTimeUp := @OnTimeUp;
-  mOnTimeUpWarning := nil;
-  mOnUsage := @OnUsage;*)
+     DoorTextAttr(7);
+     DoorCursorDown(255);
+     DoorCursorLeft(255);
 
+     if Not(DoorLocal) then DoorClose(false);
+end;
+
+begin
+  DoorOnCLP := nil;
+  DoorOnHangup := @DefaultOnHangup;
   DoorOnLocalLogin := @DefaultOnLocalLogin;
+  DoorOnStatusBar := @DefaultOnStatusBar;
+  DoorOnSysopKey := nil;
+  DoorOnTimeOut := @DefaultOnTimeOut;
+  DoorOnTimeOutWarning := nil;
+  DoorOnTimeUp := @DefaultOnTimeUp;
+  DoorOnTimeUpWarning := nil;
+  DoorOnUsage := @DefaultOnUsage;
 
   with DoorDropInfo do
   begin
@@ -947,6 +969,8 @@ begin
     ANSI := ' |0A<|02MORE|0A>';
     ANSITextLength := 7;
   end;
+
+  DoorProgramNameAndVersion := 'RMDoor v13.09.02';
 
   with DoorSession do
   begin

@@ -12,6 +12,10 @@ type
   TTokens = Array of String;
 
 function PipeToAnsi(AText: String): String;
+function SecToDHMS(ASec: LongInt): String;
+function SecToHM(ASec: LongInt): String;
+function SecToHMS(ASec: LongInt): String;
+function SecToMS(ASec: LongInt): String;
 function SethStrip(AText: String): String;
 function StrToTok(AText: String; ADelim: Char): TTokens;
 function TokToStr(ATokens: TTokens; ADelim: Char): String;
@@ -56,6 +60,67 @@ begin
          S := AText;
 
      Result := S;
+end;
+
+{
+  Returns a number of seconds formatted as:
+  1d 1h 1m 1s
+  0 values are not returned, so 3601 becomes
+  1h 1s
+}
+function SecToDHMS(ASec: LongInt): String;
+var
+  D, H, M, S: Integer;
+begin
+  D := ASec div 86400;
+  ASec := ASec mod 86400;
+  H := ASec div 3600;
+  ASec := ASec mod 3600;
+  M := ASec div 60;
+  S := ASec mod 60;
+  Result := IntToStr(D) + 'd ' + IntToStr(H) + 'h ' + IntToStr(M) + 'm ' + IntToStr(S) + 's';
+end;
+
+{
+  Returns a number of seconds formatted as:
+  HH:MM
+}
+function SecToHM(ASec: LongInt): String;
+var
+  H, M: Integer;
+begin
+  H := ASec div 3600;
+  ASec := ASec mod 3600;
+  M := ASec div 60;
+  Result := AddChar('0', IntToStr(H), 2) + ':' + AddChar('0', IntToStr(M), 2);
+end;
+
+{
+  Returns a number of seconds formatted as:
+  HH:MM:SS
+}
+function SecToHMS(ASec: LongInt): String;
+var
+  H, M, S: Integer;
+begin
+  H := ASec div 3600;
+  ASec := ASec mod 3600;
+  M := ASec div 60;
+  S := ASec mod 60;
+  Result := AddChar('0', IntToStr(H), 2) + ':' + AddChar('0', IntToStr(M), 2) + ':' + AddChar('0', IntToStr(S), 2);
+end;
+
+{
+  Returns a number of seconds formatted as:
+  MM:SS
+}
+function SecToMS(ASec: LongInt): String;
+var
+  M, S: Integer;
+begin
+  M := ASec div 60;
+  S := ASec mod 60;
+  Result := AddChar('0', IntToStr(M), 2) + ':' + AddChar('0', IntToStr(S), 2);
 end;
 
 function SethStrip(AText: String): String;

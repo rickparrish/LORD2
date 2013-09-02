@@ -10,7 +10,7 @@ uses
 const
   AnsiColours: Array[0..7] of Integer = (0, 4, 2, 6, 1, 5, 3, 7);
 
-
+function AnsiBlink(ABlink: Boolean): String;
 function AnsiClrScr: String;
 function AnsiCursorDown(ACount: Byte): String;
 function AnsiCursorLeft(ACount: Byte): String;
@@ -46,6 +46,17 @@ procedure AddAnsiParam(AValue: Integer);
 begin
   SetLength(AnsiParams, Length(AnsiParams) + 1);
   AnsiParams[High(AnsiParams)] := AValue;
+end;
+
+function AnsiBlink(ABlink: Boolean): String;
+begin
+  if (ABlink) then
+  begin
+    Result := #27 + '[5m';
+  end else
+  begin
+    Result := #27 + '[0m' + AnsiTextBackground(TextAttr div 16) + AnsiTextColour(TextAttr mod 16);
+  end;
 end;
 
 function AnsiClrScr: String;

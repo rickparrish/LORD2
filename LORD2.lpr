@@ -3,8 +3,8 @@ program LORD2;
 {$mode objfpc}{$h+}
 
 uses
-  Game, RTChoiceOption, RTGlobal, RTReader, RTRefLabel, RTRefFile, RTRefSection, StringUtils, Struct,
-  Ansi, Comm, Door, DropFiles,
+  Game,
+  Door,
   SysUtils;
 
 begin

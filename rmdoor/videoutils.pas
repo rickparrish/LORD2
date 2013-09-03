@@ -47,7 +47,7 @@ var
     I: Integer;
   {$ENDIF}
   {$IFDEF UNIX}
-    FullWin: Boolean;
+    NeedWindow: Boolean;
     SavedAttr: Integer;
     SavedWindMinX: Integer;
     SavedWindMinY: Integer;
@@ -63,6 +63,12 @@ var
     WriteRegion: TSmallRect;
   {$ENDIF}
 begin
+  // Validate parameters
+  if ((AX < 1) OR (AX > 80) OR (AY < 1) OR (AY > 25)) then Exit;
+
+  // Trim to fit within 80 columns
+  if (Length(ALine) > (80 - AX + 1)) then ALine := Copy(ALine, 1, 80 - AX + 1);
+
   {$IFDEF GO32V2}
     for I := 1 to Length(ALine) do
     begin
@@ -72,7 +78,7 @@ begin
   {$ENDIF}
   {$IFDEF UNIX}
     // Save
-    FullWin := (WindMinX=1) AND (WindMinY=1) AND (WindMaxX=ScreenWidth) AND (WindMaxY=ScreenHeight);
+    NeedWindow := ((WindMinX > 1) OR (WindMinY > 1) OR (WindMaxX < 80) OR (WindmaxY < 25));
     SavedAttr := TextAttr;
     SavedWindMinX := WindMinX;
     SavedWindMinY := WindMinY;
@@ -81,31 +87,19 @@ begin
     SavedXY := WhereX + (WhereY SHL 8);
 
     // Update
-    if Not(FullWin) then Window(1, 1, 80, 25); // TODO Assumes 80x25
+    if (NeedWindow) then Window(1, 1, 80, 25);
     GotoXY(AX, AY);
     TextAttr := AAttr;
 
+    // Trim to fit within 79 columns if on line 25
+    if ((AY = 25) AND (Length(ALine) > (79 - AX + 1))) then ALine := Copy(ALine, 1, 79 - AX + 1);
+
     // Output
-    if (AY = 25) then
-    begin
-      // Only write up to the 79th column if on line 25
-      if (Length(ALine) > (79 - AX + 1)) then
-      begin
-        ALine := Copy(ALine, 1, 79 - AX + 1);
-      end;
-    end else
-    begin
-      // Only write up to the 80th column if on any other line than 25
-      if (Length(ALine) > (80 - AX + 1)) then
-      begin
-        ALine := Copy(ALine, 1, 80 - AX + 1);
-      end;
-    end;
     Write(ALine);
 
     // Restore
     TextAttr := SavedAttr;
-    if Not(FullWin) then Window(SavedWindMinX, SavedWindMinY, SavedWindMaxX, SavedWindMaxY);
+    if (NeedWindow) then Window(SavedWindMinX, SavedWindMinY, SavedWindMaxX, SavedWindMaxY);
     GotoXY(SavedXY AND $00FF, (SavedXY AND $FF00) SHR 8);
   {$ENDIF}
   {$IFDEF WINDOWS}
@@ -137,6 +131,13 @@ function GetAttrAt(AX, AY: Byte): Byte;
     NumRead: Cardinal;
 {$ENDIF}
 begin
+  // Validate parameters
+  if ((AX < 1) OR (AX > 80) OR (AY < 1) OR (AY > 25)) then
+  begin
+    Result := 7;
+    Exit;
+  end;
+
   {$IFDEF GO32V2}
     Result := Screen[AY, AX].Attr;
   {$ENDIF}
@@ -162,6 +163,13 @@ function GetCharAt(AX, AY: Byte): Char;
     NumRead: Cardinal;
 {$ENDIF}
 begin
+  // Validate parameters
+  if ((AX < 1) OR (AX > 80) OR (AY < 1) OR (AY > 25)) then
+  begin
+    Result := ' ';
+    Exit;
+  end;
+
   {$IFDEF GO32V2}
     Result := Screen[AY, AX].Ch;
   {$ENDIF}
@@ -188,7 +196,7 @@ end;
 procedure SetAttrAt(AAttr, AX, AY: Byte);
 {$IFDEF UNIX}
   var
-    FullWin: Boolean;
+    NeedWindow: Boolean;
     SavedAttr: Integer;
     SavedWindMinX: Integer;
     SavedWindMinY: Integer;
@@ -202,12 +210,15 @@ procedure SetAttrAt(AAttr, AX, AY: Byte);
     NumWritten: Cardinal;
 {$ENDIF}
 begin
+  // Validate parameters
+  if ((AX < 1) OR (AX > 80) OR (AY < 1) OR (AY > 25)) then Exit;
+
   {$IFDEF GO32V2}
     Screen[AY, AX].Attr := AAttr;
   {$ENDIF}
   {$IFDEF UNIX}
     // Save
-    FullWin := (WindMinX=1) AND (WindMinY=1) AND (WindMaxX=ScreenWidth) AND (WindMaxY=ScreenHeight);
+    NeedWindow := ((WindMinX > 1) OR (WindMinY > 1) OR (WindMaxX < 80) OR (WindmaxY < 25));
     SavedAttr := TextAttr;
     SavedWindMinX := WindMinX;
     SavedWindMinY := WindMinY;
@@ -216,7 +227,7 @@ begin
     SavedXY := WhereX + (WhereY SHL 8);
 
     // Update
-    if Not(FullWin) then Window(1, 1, 80, 25); // TODO Assumes 80x25
+    if (NeedWindow) then Window(1, 1, 80, 25);
     GotoXY(AX, AY);
     TextAttr := AAttr;
 
@@ -225,7 +236,7 @@ begin
 
     // Restore
     TextAttr := SavedAttr;
-    if Not(FullWin) then Window(SavedWindMinX, SavedWindMinY, SavedWindMaxX, SavedWindMaxY);
+    if (NeedWindow) then Window(SavedWindMinX, SavedWindMinY, SavedWindMaxX, SavedWindMaxY);
     GotoXY(SavedXY AND $00FF, (SavedXY AND $FF00) SHR 8);
   {$ENDIF}
   {$IFDEF WINDOWS}
@@ -241,7 +252,7 @@ end;
 procedure SetCharAt(ACh: Char; AX, AY: Byte);
 {$IFDEF UNIX}
   var
-    FullWin: Boolean;
+    NeedWindow: Boolean;
     SavedAttr: Integer;
     SavedWindMinX: Integer;
     SavedWindMinY: Integer;
@@ -255,12 +266,15 @@ procedure SetCharAt(ACh: Char; AX, AY: Byte);
     NumWritten: Cardinal;
 {$ENDIF}
 begin
+  // Validate parameters
+  if ((AX < 1) OR (AX > 80) OR (AY < 1) OR (AY > 25)) then Exit;
+
   {$IFDEF GO32V2}
     Screen[AY, AX].Ch := ACh;
   {$ENDIF}
   {$IFDEF UNIX}
     // Save
-    FullWin := (WindMinX=1) AND (WindMinY=1) AND (WindMaxX=ScreenWidth) AND (WindMaxY=ScreenHeight);
+    NeedWindow := ((WindMinX > 1) OR (WindMinY > 1) OR (WindMaxX < 80) OR (WindmaxY < 25));
     SavedAttr := TextAttr;
     SavedWindMinX := WindMinX;
     SavedWindMinY := WindMinY;
@@ -269,7 +283,7 @@ begin
     SavedXY := WhereX + (WhereY SHL 8);
 
     // Update
-    if Not(FullWin) then Window(1, 1, 80, 25); // TODO Assumes 80x25
+    if (NeedWindow) then Window(1, 1, 80, 25);
     GotoXY(AX, AY);
     TextAttr := GetAttrAt(AX, AY);
 
@@ -278,7 +292,7 @@ begin
 
     // Restore
     TextAttr := SavedAttr;
-    if Not(FullWin) then Window(SavedWindMinX, SavedWindMinY, SavedWindMaxX, SavedWindMaxY);
+    if (NeedWindow) then Window(SavedWindMinX, SavedWindMinY, SavedWindMaxX, SavedWindMaxY);
     GotoXY(SavedXY AND $00FF, (SavedXY AND $FF00) SHR 8);
   {$ENDIF}
   {$IFDEF WINDOWS}

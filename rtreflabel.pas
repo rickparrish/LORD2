@@ -5,7 +5,7 @@ unit RTRefLabel;
 interface
 
 uses
-  contnrs, Classes;
+  Classes;
 
 type
   TRTRefLabel = class

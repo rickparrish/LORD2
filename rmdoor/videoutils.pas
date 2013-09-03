@@ -1,3 +1,4 @@
+//todo implement unix
 unit VideoUtils;
 
 {$mode objfpc}{$H+}
@@ -17,6 +18,18 @@ procedure SetCharAt(ACh: Char; AX, AY: Byte);
 
 implementation
 
+{$IFDEF GO32V2}
+  type
+    TCell = Record
+      Ch: Char;
+      Attr: Byte;
+    end;
+
+    TScreen = Array[1..25, 1..80] of TCell;
+
+  var
+    Screen: TScreen absolute $B800:0000;
+{$ENDIF}
 {$IFDEF WINDOWS}
   var
     StdOut: THandle;
@@ -26,15 +39,22 @@ implementation
   Write ALine at the screen coordinates AX, AY with text attribute AAttr
 }
 procedure FastWrite(ALine: String; AX, AY, AAttr: Byte);
-{$IFDEF WINDOWS}
-  var
-    I: Integer;
+var
+  I: Integer;
+  {$IFDEF WINDOWS}
     Buffer: Array[0..255] of TCharInfo;
     BufferCoord: TCoord;
     BufferSize: TCoord;
     WriteRegion: TSmallRect;
-{$ENDIF}
+  {$ENDIF}
 begin
+  {$IFDEF GO32V2}
+    for I := 1 to Length(ALine) do
+    begin
+      Screen[AY, AX + (I - 1)].Ch := ALine[I];
+      Screen[AY, AX + (I - 1)].Attr := AAttr;
+    end;
+  {$ENDIF}
   {$IFDEF WINDOWS}
     for I := 0 to Length(ALine) - 1 do
     begin
@@ -64,11 +84,14 @@ function GetAttrAt(AX, AY: Byte): Byte;
     NumRead: Cardinal;
 {$ENDIF}
 begin
+  {$IFDEF GO32V2}
+    Result := Screen[AY, AX].Attr;
+  {$ENDIF}
   {$IFDEF WINDOWS}
     Coord.X := AX - 1;
     Coord.Y := AY - 1;
     ReadConsoleOutputAttribute(StdOut, @Attr, 1, Coord, NumRead);
-    GetAttrAt := Attr;
+    Result := Attr;
   {$ENDIF}
 end;
 
@@ -83,16 +106,19 @@ function GetCharAt(AX, AY: Byte): Char;
     NumRead: Cardinal;
 {$ENDIF}
 begin
+  {$IFDEF GO32V2}
+    Result := Screen[AY, AX].Ch;
+  {$ENDIF}
   {$IFDEF WINDOWS}
     Coord.X := AX - 1;
     Coord.Y := AY - 1;
     ReadConsoleOutputCharacter(StdOut, @Ch, 1, Coord, NumRead);
     if (NumRead = 0) then
     begin
-      GetCharAt := #32
+      Result := #32
     end else
     begin
-      GetCharAt := Ch;
+      Result := Ch;
     end;
   {$ENDIF}
 end;
@@ -107,6 +133,9 @@ procedure SetAttrAt(AAttr, AX, AY: Byte);
     NumWritten: Cardinal;
 {$ENDIF}
 begin
+  {$IFDEF GO32V2}
+    Screen[AY, AX].Attr := AAttr;
+  {$ENDIF}
   {$IFDEF WINDOWS}
     WriteCoord.X := AX - 1;
     WriteCoord.Y := AY - 1;
@@ -124,6 +153,9 @@ procedure SetCharAt(ACh: Char; AX, AY: Byte);
     NumWritten: Cardinal;
 {$ENDIF}
 begin
+  {$IFDEF GO32V2}
+    Screen[AY, AX].Ch := ACh;
+  {$ENDIF}
   {$IFDEF WINDOWS}
     WriteCoord.X := AX - 1;
     WriteCoord.Y := AY - 1;

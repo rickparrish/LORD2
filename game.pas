@@ -544,6 +544,7 @@ begin
         end;
       until (Ch = 'Q');
 
+      // TODO Clear status bar and disable events so its not redrawn
       RTReader.Execute('GAMETXT', 'ENDGAME');
       Sleep(2500);
     end;

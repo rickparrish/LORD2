@@ -289,8 +289,6 @@ begin
       @READSTRING, @DO COPYTONAME, set appropriate variables including the player's
       X and Y coordinates and map block number before issuing this command.  Failure
       to do this can result in a corrupted TRADER.DAT file. *)
-  // TODO a race condition could cause these two inserts to be out of sync
-
   // TODO Retry if IOError
   Assign(FTraderDat, TraderDatFileName);
   {$I-}Reset(FTraderDat);{$I+}
@@ -305,7 +303,7 @@ begin
   UTR.X := Game.Player.X;
   UTR.Y := Game.Player.Y;
   UTR.Map := Game.Player.Map;
-  UTR.OnNow := 0;
+  UTR.OnNow := 1;
   UTR.Busy := 0;
   UTR.Battle := 0;
   // TODO Retry if IOError
@@ -313,7 +311,7 @@ begin
   {$I-}Reset(FUpdateTmp);{$I+}
   if (IOResult = 0) then
   begin
-    Seek(FUpdateTmp, FileSize(FUpdateTmp));
+    Seek(FUpdateTmp, Game.PlayerNum);
     Write(FUpdateTmp, UTR);
   end;
   Close(FUpdateTmp);

@@ -1,10 +1,13 @@
-//todo implement unix
 unit VideoUtils;
 
 {$mode objfpc}{$H+}
 
 interface
 
+{$IFDEF UNIX}
+  uses
+    Crt;
+{$ENDIF}
 {$IFDEF WINDOWS}
   uses
     Windows;
@@ -40,11 +43,23 @@ implementation
 }
 procedure FastWrite(ALine: String; AX, AY, AAttr: Byte);
 var
-  I: Integer;
+  {$IFDEF GO32V2}
+    I: Integer;
+  {$ENDIF}
+  {$IFDEF UNIX}
+    FullWin: Boolean;
+    SavedAttr: Integer;
+    SavedWindMinX: Integer;
+    SavedWindMinY: Integer;
+    SavedWindMaxX: Integer;
+    SavedWindMaxY: Integer;
+    SavedXY: Integer;
+  {$ENDIF}
   {$IFDEF WINDOWS}
     Buffer: Array[0..255] of TCharInfo;
     BufferCoord: TCoord;
     BufferSize: TCoord;
+    I: Integer;
     WriteRegion: TSmallRect;
   {$ENDIF}
 begin
@@ -54,6 +69,44 @@ begin
       Screen[AY, AX + (I - 1)].Ch := ALine[I];
       Screen[AY, AX + (I - 1)].Attr := AAttr;
     end;
+  {$ENDIF}
+  {$IFDEF UNIX}
+    // Save
+    FullWin := (WindMinX=1) AND (WindMinY=1) AND (WindMaxX=ScreenWidth) AND (WindMaxY=ScreenHeight);
+    SavedAttr := TextAttr;
+    SavedWindMinX := WindMinX;
+    SavedWindMinY := WindMinY;
+    SavedWindMaxX := WindMaxX;
+    SavedWindMaxY := WindMaxY;
+    SavedXY := WhereX + (WhereY SHL 8);
+
+    // Update
+    if Not(FullWin) then Window(1, 1, 80, 25); // TODO Assumes 80x25
+    GotoXY(AX, AY);
+    TextAttr := AAttr;
+
+    // Output
+    if (AY = 25) then
+    begin
+      // Only write up to the 79th column if on line 25
+      if (Length(ALine) > (79 - AX + 1)) then
+      begin
+        ALine := Copy(ALine, 1, 79 - AX + 1);
+      end;
+    end else
+    begin
+      // Only write up to the 80th column if on any other line than 25
+      if (Length(ALine) > (80 - AX + 1)) then
+      begin
+        ALine := Copy(ALine, 1, 80 - AX + 1);
+      end;
+    end;
+    Write(ALine);
+
+    // Restore
+    TextAttr := SavedAttr;
+    if Not(FullWin) then Window(SavedWindMinX, SavedWindMinY, SavedWindMaxX, SavedWindMaxY);
+    GotoXY(SavedXY AND $00FF, (SavedXY AND $FF00) SHR 8);
   {$ENDIF}
   {$IFDEF WINDOWS}
     for I := 0 to Length(ALine) - 1 do
@@ -87,6 +140,9 @@ begin
   {$IFDEF GO32V2}
     Result := Screen[AY, AX].Attr;
   {$ENDIF}
+  {$IFDEF UNIX}
+  Result := ConsoleBuf^[((AY - 1) * ScreenWidth) + (AX - 1)].attr;
+  {$ENDIF}
   {$IFDEF WINDOWS}
     Coord.X := AX - 1;
     Coord.Y := AY - 1;
@@ -109,6 +165,9 @@ begin
   {$IFDEF GO32V2}
     Result := Screen[AY, AX].Ch;
   {$ENDIF}
+  {$IFDEF UNIX}
+    Result := ConsoleBuf^[((AY - 1) * ScreenWidth) + (AX - 1)].ch;
+  {$ENDIF}
   {$IFDEF WINDOWS}
     Coord.X := AX - 1;
     Coord.Y := AY - 1;
@@ -127,6 +186,16 @@ end;
   Set the text attribute at screen coordinate AX, AY to AAttr
 }
 procedure SetAttrAt(AAttr, AX, AY: Byte);
+{$IFDEF UNIX}
+  var
+    FullWin: Boolean;
+    SavedAttr: Integer;
+    SavedWindMinX: Integer;
+    SavedWindMinY: Integer;
+    SavedWindMaxX: Integer;
+    SavedWindMaxY: Integer;
+    SavedXY: Integer;
+{$ENDIF}
 {$IFDEF WINDOWS}
   var
     WriteCoord: TCoord;
@@ -135,6 +204,29 @@ procedure SetAttrAt(AAttr, AX, AY: Byte);
 begin
   {$IFDEF GO32V2}
     Screen[AY, AX].Attr := AAttr;
+  {$ENDIF}
+  {$IFDEF UNIX}
+    // Save
+    FullWin := (WindMinX=1) AND (WindMinY=1) AND (WindMaxX=ScreenWidth) AND (WindMaxY=ScreenHeight);
+    SavedAttr := TextAttr;
+    SavedWindMinX := WindMinX;
+    SavedWindMinY := WindMinY;
+    SavedWindMaxX := WindMaxX;
+    SavedWindMaxY := WindMaxY;
+    SavedXY := WhereX + (WhereY SHL 8);
+
+    // Update
+    if Not(FullWin) then Window(1, 1, 80, 25); // TODO Assumes 80x25
+    GotoXY(AX, AY);
+    TextAttr := AAttr;
+
+    // Output
+    Write(GetCharAt(AX, AY));
+
+    // Restore
+    TextAttr := SavedAttr;
+    if Not(FullWin) then Window(SavedWindMinX, SavedWindMinY, SavedWindMaxX, SavedWindMaxY);
+    GotoXY(SavedXY AND $00FF, (SavedXY AND $FF00) SHR 8);
   {$ENDIF}
   {$IFDEF WINDOWS}
     WriteCoord.X := AX - 1;
@@ -147,6 +239,16 @@ end;
   Set the character at screen coordinate AX, AY to ACH
 }
 procedure SetCharAt(ACh: Char; AX, AY: Byte);
+{$IFDEF UNIX}
+  var
+    FullWin: Boolean;
+    SavedAttr: Integer;
+    SavedWindMinX: Integer;
+    SavedWindMinY: Integer;
+    SavedWindMaxX: Integer;
+    SavedWindMaxY: Integer;
+    SavedXY: Integer;
+{$ENDIF}
 {$IFDEF WINDOWS}
   var
     WriteCoord: TCoord;
@@ -155,6 +257,29 @@ procedure SetCharAt(ACh: Char; AX, AY: Byte);
 begin
   {$IFDEF GO32V2}
     Screen[AY, AX].Ch := ACh;
+  {$ENDIF}
+  {$IFDEF UNIX}
+    // Save
+    FullWin := (WindMinX=1) AND (WindMinY=1) AND (WindMaxX=ScreenWidth) AND (WindMaxY=ScreenHeight);
+    SavedAttr := TextAttr;
+    SavedWindMinX := WindMinX;
+    SavedWindMinY := WindMinY;
+    SavedWindMaxX := WindMaxX;
+    SavedWindMaxY := WindMaxY;
+    SavedXY := WhereX + (WhereY SHL 8);
+
+    // Update
+    if Not(FullWin) then Window(1, 1, 80, 25); // TODO Assumes 80x25
+    GotoXY(AX, AY);
+    TextAttr := GetAttrAt(AX, AY);
+
+    // Output
+    Write(ACh);
+
+    // Restore
+    TextAttr := SavedAttr;
+    if Not(FullWin) then Window(SavedWindMinX, SavedWindMinY, SavedWindMaxX, SavedWindMaxY);
+    GotoXY(SavedXY AND $00FF, (SavedXY AND $FF00) SHR 8);
   {$ENDIF}
   {$IFDEF WINDOWS}
     WriteCoord.X := AX - 1;

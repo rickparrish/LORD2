@@ -742,7 +742,7 @@ begin
     DoorSession.EventsTime := 0;
 
     DoorClrScr;
-    {$IFNDEF UNIX}Window(1, 1, 80, 24);{$ENDIF}
+    Window(1, 1, 80, 24);
   end;
 end;
 

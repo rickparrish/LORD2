@@ -124,47 +124,43 @@ begin
 end;
 
 function SethStrip(AText: String): String;
+var
+  I: Integer;
+  S: String;
 begin
-  while (Pos('`', AText) > 0) do
+  I := 0;
+  S := '';
+
+  while (I < Length(AText)) do
   begin
-    AText := StringReplace(AText, '`1', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`2', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`3', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`4', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`5', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`6', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`7', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`8', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`9', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`0', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`!', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`@', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`#', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`$', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`%', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`*', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`b', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`c', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`d', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`k', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`l', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`w', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`x', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`\', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`|', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`.', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`r0', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`r1', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`r2', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`r3', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`r4', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`r5', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`r6', '', [rfIgnoreCase, rfReplaceAll]);
-    AText := StringReplace(AText, '`r7', '', [rfIgnoreCase, rfReplaceAll]);
-    // TODO ANY OTHER ` AND THE NEXT CHARACTER SHOULD ALSO BE REMOVED
+    I += 1;
+
+    if (AText[I] = '`') then
+    begin
+      // It's a "seth" code, so we need to do something about that
+      if (I = Length(AText)) then
+      begin
+        // End of string, nothing to do
+      end else
+      begin
+        // A least one character after the `
+        if (AText[I + 1] = 'r') then
+        begin
+          // It's `r#, which requires three characters to be deleted
+          I += 3;
+        end else
+        begin
+          // Any other combo just requires two characters to be deleted
+          I += 2;
+        end;
+      end;
+    end else
+    begin
+      S += AText[I];
+    end;
   end;
 
-  Result := AText;
+  Result := S;
 end;
 
 function StrToTok(AText: String; ADelim: Char): TTokens;

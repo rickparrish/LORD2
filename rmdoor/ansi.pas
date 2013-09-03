@@ -253,7 +253,7 @@ begin
                // n = 7 enables auto line wrap when writing to last column of screen (which is on by default so we ignore the sequence)
            case AnsiParams[1] of
              7: ; // Ignore
-             25: ; // TODO Show the cursor
+             25: cursoron;
            end;
          end;
     'J': begin // CSI n J - Clears part of the screen. If n is zero (or missing), clear from cursor to end of screen. If n is one, clear from cursor to beginning of the screen. If n is two, clear entire screen (and moves cursor to upper left on MS-DOS ANSI.SYS).
@@ -278,7 +278,7 @@ begin
                // n = 7 disables auto line wrap when writing to last column of screen (we dont support this)
            case AnsiParams[1] of
              7: ; // Ignore
-             25: ; // TODO Hide the cursor
+             25: cursoroff;
            end;
          end;
     'M': begin // CSI n M - Delete n lines, pulling the lines below the deleted lines up

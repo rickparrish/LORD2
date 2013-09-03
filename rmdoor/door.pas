@@ -489,7 +489,7 @@ end;
   mStartUp calls this, so you should never have to directly
 }
 function DoorOpenComm: Boolean;
-{$IFDEF WIN32_TODO}
+{$IFDEF WIN32_TODO_WINSERVER}
 var
   WC5User: TWC5User;
 {$ENDIF}
@@ -502,7 +502,7 @@ begin
     CommOpen(DoorDropInfo.ComNum);
     DoorOpenComm := CommCarrier;
 
-    {$IFDEF WIN32_TODO}
+    {$IFDEF WIN32_TODO_WINSERVER}
     if (DropInfo.ComType = 3) then
     begin
          if (InitWC5) then

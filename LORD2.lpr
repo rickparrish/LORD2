@@ -22,14 +22,12 @@ begin
     except
       on E: Exception do
       begin
+        // TODO Log to file as well as to screen that an abnormal exit occurred
         // TODO Log to file instead of screen
-        if (DoorLocal) then
-        begin
-          WriteLn;
-          WriteLn('Exception: ' + E.ToString);
-          Write('Hit a key to quit');
-          ReadLn;
-        end;
+        DoorWriteLn;
+        DoorWriteLn('`4`b**`% ERROR : `2' + E.Message + ' `4`b**`2');
+        DoorWrite('Hit a key to quit');
+        DoorReadKey;
       end;
     end;
   finally

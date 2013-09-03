@@ -441,7 +441,6 @@ begin
       CommandCLEAR(StrToTok('@CLEAR PICTURE', ' '));
       CommandCLEAR(StrToTok('@CLEAR TEXT', ' '));
       CommandCLEAR(StrToTok('@CLEAR NAME', ' '));
-      // TODO And redraws the screen
     end;
     'NAME':
     begin
@@ -2274,7 +2273,7 @@ function TRTReader.Execute(AFileName: String; ASectionName: String; ALabelName: 
 begin
   if (RTGlobal.RefFiles.FindIndexOf(AFileName) = -1) then
   begin
-    DoorWriteLn('`4`b**`b `%ERROR : `2File `0' + AFileName + ' `2not found. `4`b**`b`2');
+    DoorWriteLn('`4`b**`% ERROR : `2File `0' + AFileName + ' `2not found. `4`b**`2');
     DoorReadKey;
   end else
   begin
@@ -2282,7 +2281,7 @@ begin
 
     if (FCurrentFile.Sections.FindIndexOf(ASectionName) = -1) then
     begin
-      DoorWriteLn('`4`b**`b `%ERROR : Section `0' + ASectionName + ' `2not found in `0' + AFileName + ' `4`b**`b`2');
+      DoorWriteLn('`4`b**`% ERROR : Section `0' + ASectionName + ' `2not found in `0' + AFileName + ' `4`b**`2');
       DoorReadKey;
     end else
     begin
@@ -2292,7 +2291,7 @@ begin
       begin
         if (FCurrentSection.Labels.FindIndexOf(ALabelName) = -1) then
         begin
-          DoorWriteLn('`4`b**`b `%ERROR : Label `0' + ASectionName + ' `2not found in `0' + AFileName + ' `4`b**`b`2');
+          DoorWriteLn('`4`b**`% ERROR : Label `0' + ASectionName + ' `2not found in `0' + AFileName + ' `4`b**`2');
           DoorReadKey;
         end else
         begin

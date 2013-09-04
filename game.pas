@@ -370,9 +370,12 @@ end;
 procedure MovePlayer(AXOffset, AYOffset: Integer);
 var
   i, x, y: Integer;
+  Moved, Special: Boolean;
 begin
   x := Player.x + AXOffset;
   y := Player.y + AYOffset;
+  Moved := false;
+  Special := false;
 
   // Check for movement to new screen
   if (x = 0) then
@@ -430,6 +433,8 @@ begin
       Player.X := x;
       Player.Y := y;
       Update;
+
+      Moved := true;
     end;
   end;
 
@@ -438,6 +443,8 @@ begin
   begin
     if (CurrentMap.HotSpots[I].HotSpotX = x) AND (CurrentMap.HotSpots[I].HotSpotY = y) then
     begin
+      Special := true;
+
       if (CurrentMap.HotSpots[I].WarpToMap > 0) AND (CurrentMap.HotSpots[I].WarpToX > 0) AND (CurrentMap.HotSpots[I].WarpToY > 0) then
       begin
         Player.Map := CurrentMap.HotSpots[I].WarpToMap;
@@ -453,6 +460,15 @@ begin
       begin
         RTReader.Execute(CurrentMap.HotSpots[I].RefFile, CurrentMap.HotSpots[I].RefSection);
       end;
+    end;
+  end;
+
+  // Check if need to run random event
+  if (Moved AND NOT(Special) AND (CurrentMap.BattleOdds > 0) AND (CurrentMap.RefFile <> '') AND (CurrentMap.RefSection <> '')) then
+  begin
+    if (Random(CurrentMap.BattleOdds) = 0) then
+    begin
+      RTReader.Execute(CurrentMap.RefFile, CurrentMap.RefSection);
     end;
   end;
 end;

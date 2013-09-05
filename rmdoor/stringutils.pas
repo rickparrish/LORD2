@@ -128,19 +128,18 @@ var
   I: Integer;
   S: String;
 begin
-  I := 0;
+  I := 1;
   S := '';
 
-  while (I < Length(AText)) do
+  while (I <= Length(AText)) do
   begin
-    I += 1;
-
     if (AText[I] = '`') then
     begin
       // It's a "seth" code, so we need to do something about that
       if (I = Length(AText)) then
       begin
         // End of string, nothing to do
+        I += 1;
       end else
       begin
         // A least one character after the `
@@ -157,6 +156,7 @@ begin
     end else
     begin
       S += AText[I];
+      I += 1;
     end;
   end;
 

@@ -15,12 +15,13 @@ type
     MonsterName: String;
     SightingText: String;
     PowerKillText: String;
-    Sex: Integer; // 1 is male, 2 is female, 3 is it
+    HimHerIt: String;
     Weapons: Array of FIGHT_WEAPON;
     Defense: Integer;
     Experience: Integer;
     Gold: Integer;
     HitPoints: Integer;
+    HitPointsMax: Integer;
     RefFileVictory: String;
     RefSectionVictory: String;
     RefFileDefeat: String;

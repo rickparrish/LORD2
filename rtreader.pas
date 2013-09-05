@@ -2172,7 +2172,12 @@ end;
 
 procedure TRTReader.EndFIGHT;
 var
+  Action: Char;
+  ExitLoop: Boolean;
   FightRec: FightRecord;
+  I: Integer;
+
+  procedure UpdateHitPointLine; forward;
 
   procedure AddWeapon(AText: String);
   var
@@ -2188,11 +2193,158 @@ var
     end;
   end;
 
+  procedure AttackByMonster;
+  begin
+    // TODO Pick random weapon
+    // TODO Pick hit amount based on weapon strength
+    I := Random(2);
+    if (I = 0) then
+    begin
+      (*
+        You laugh as Chihuahua misses and strikes the ground.
+        You dodge Chihuahua's attack easily.
+        Chihuahua misses as you jump to one side!
+        Your armour absorbs Chihuahua's blow!
+      *)
+      // Display miss message
+      DoorGotoXY(3, 23);
+      DoorWrite('`2You laugh as `0' + FightRec.MonsterName + '`2 misses and strikes the ground.');
+    end else
+    begin
+      // Display hit message
+      DoorGotoXY(3, 23);
+      DoorWrite('`0' + FightRec.MonsterName + '`2 ' + FightRec.Weapons[0].Text + '`2 for `4' + IntToStr(I) + '`2 damage.'); // TODO Weapons[0]
+
+      // Reduce player hit points
+      Game.Player.P[2] -= I;
+      if (Game.Player.P[2] < 0) then Game.Player.P[2] := 0;
+      UpdateHitPointLine;
+
+      // Check for player death
+      if (Game.Player.P[2] <= 0) then
+      begin
+        // Defeat!
+        if (FightRec.RefFileDefeat <> '') AND (FightRec.RefSectionDefeat <> '') then
+        begin
+          RTReader.Execute(FightRec.RefFileDefeat, FightRec.RefSectionDefeat);
+        end;
+
+        ExitLoop := true;
+      end;
+    end;
+  end;
+
+  procedure AttackByPlayer;
+  begin
+    // TODO Pick hit amount based on weapon strength
+    I := Random(2);
+    if (I = 0) then
+    begin
+      // Display miss message
+      DoorGotoXY(3, 22);
+      DoorWrite('`4You completely miss!');
+    end else
+    begin
+      // TODO Display random? hit message
+      // TODO How does SUPER STRIKE work?
+      // `2You `%SUPER STRIKE for `06 damage!
+      // You slap Wild Boar a good one for 3 damage!
+      // You kick Wild Boar hard as you can for 3 damage!
+      // You trip Angry Hen for 3 damage!
+      DoorGotoXY(3, 22);
+      DoorWrite('`2You trip `0' + FightRec.MonsterName + '`2 for `4' + IntToStr(I) + '`2 damage!');
+
+      // Reduce monster hit points
+      FightRec.HitPoints -= I;
+      if (FightRec.HitPoints < 0) then FightRec.HitPoints := 0;
+      UpdateHitPointLine;
+
+      // Check for monster death
+      if (FightRec.HitPoints <= 0) then
+      begin
+        // Victory!
+        DoorGotoXY(3, 23);
+        DoorWrite('`0You killed ' + FightRec.HimHerIt + '!');
+        DoorGotoXY(3, 24);
+        DoorWrite('`2You find `$$' + IntToStr(FightRec.Gold) + '`2 and gain `%' + IntToStr(FightRec.Experience) + '`2 in this battle.`k');
+
+        // Rewards
+        Game.Player.P[1] += FightRec.Experience; // TODO Why do we have P[1] and Experience?
+        Game.Player.Experience += FightRec.Experience; // TODO Why do we have P[1] and Experience?
+        Game.Player.Money += FightRec.Gold;
+
+        if (FightRec.RefFileVictory <> '') AND (FightRec.RefSectionVictory <> '') then
+        begin
+          RTReader.Execute(FightRec.RefFileVictory, FightRec.RefSectionVictory);
+        end;
+
+        ExitLoop := true;
+      end;
+    end;
+  end;
+
+  function ChooseToAttackOrRun(ADefault: Char): Char;
+  var
+    Ch: Char;
+  begin
+    Result := ADefault;
+
+    repeat
+      DoorGotoXY(3, 24);
+
+      if (Result = 'A') then
+      begin
+        // Highlight attack option
+        DoorWrite('`%`r1Attack`r0  Run for it');
+      end else
+      begin
+        // Highlight run option
+        DoorWrite('`%`r0Attack  `r1Run for it');
+      end;
+
+      Ch := DoorReadKey;
+      if (Ch in ['4', '6']) then
+      begin
+        if (Result = 'A') then
+        begin
+          // Switch to run option
+          Result := 'R';
+        end else
+        begin
+          // Switch to attack option
+          Result := 'A';
+        end;
+      end;
+    until (Ch = #13);
+  end;
+
+  procedure UpdateHitPointLine;
+  begin
+    DoorGotoXY(3, 21);
+    DoorTextAttr(2 + (1 SHL 4));
+    DoorWrite(PadRight('', 76));
+    DoorGotoXY(3, 21);
+    DoorWrite('Your hitpoints: (`0' + IntToStr(Game.Player.P[2]) + '`2/`0' + IntToStr(Game.Player.P[3]) + '`2)');
+    DoorGotoXY(35, 21);
+    if (FightRec.HitPoints <= 0) then
+    begin
+      DoorWrite('`0' + FightRec.MonsterName + '''s`2`r1 hitpoints: `bDead`2`r0');
+    end else
+    begin
+      DoorWrite('`0' + FightRec.MonsterName + '''s`2`r1 hitpoints: (`0' + IntToStr(FightRec.HitPoints) + '`2/`0' + IntToStr(FightRec.HitPointsMax) + '`2)`r0');
+    end;
+  end;
+
 begin
   FightRec.MonsterName := Trim(TranslateVariables(FInFIGHTLines[0]));
   FightRec.SightingText := Trim(TranslateVariables(FInFIGHTLines[1]));
   FightRec.PowerKillText := Trim(TranslateVariables(FInFIGHTLines[2]));
-  FightRec.Sex := StrToInt(TranslateVariables(FInFIGHTLines[3]));
+  case StrToInt(TranslateVariables(FInFIGHTLines[3])) of
+    1: FightRec.HimHerIt := 'him';
+    2: FightRec.HimHerIt := 'her';
+    3: FightRec.HimHerIt := 'it';
+    else FightRec.HimHerIt := 'it';
+  end;
   AddWeapon(FInFIGHTLines[4]);
   AddWeapon(FInFIGHTLines[5]);
   AddWeapon(FInFIGHTLines[6]);
@@ -2202,6 +2354,7 @@ begin
   FightRec.Experience := StrToInt(TranslateVariables(FInFIGHTLines[10]));
   FightRec.Gold := StrToInt(TranslateVariables(FInFIGHTLines[11]));
   FightRec.HitPoints := StrToInt(TranslateVariables(FInFIGHTLines[12]));
+  FightRec.HitPointsMax := FightRec.HitPoints;
   if (UpperCase(Trim(FInFIGHTLines[13])) = 'NONE|NONE') then
   begin
     FightRec.RefFileVictory := '';
@@ -2230,7 +2383,56 @@ begin
     FightRec.RefSectionRun := ExtractDelimited(2, FInFIGHTLines[15], ['|']);
   end;
 
-  LogTODO(nil);
+  Game.ENEMY := FightRec.MonsterName;
+
+  // Setup "action" area
+  DoorTextAttr(2);
+  CommandCLEARBLOCK(StrToTok('@CLEARBLOCK 21 24', ' '));
+  UpdateHitPointLine;
+
+  // Write "sighting" text
+  DoorTextAttr(2);
+  DoorGotoXY(3, 22);
+  DoorWrite(FightRec.SightingText);
+
+  Action := 'A';
+  ExitLoop := false;
+  repeat
+    Action := ChooseToAttackOrRun(Action);
+
+    CommandCLEARBLOCK(StrToTok('@CLEARBLOCK 22 24', ' '));
+    DoorGotoXY(3, 22);
+
+    if (Action = 'A') then
+    begin
+      AttackByPlayer;
+      if Not(ExitLoop) then AttackByMonster;
+    end else
+    if (Action = 'R') then
+    begin
+      I := Random(100) + 1;
+      if (I <= 17) then
+      begin
+        // 17% chance of failing to run (testing 100 attempts resulted in 17 failures with original L2.EXE)
+        DoorGotoXY(3, 22);
+        DoorWrite('`0' + FightRec.MonsterName + '`4`r0 blocks your path!');
+        AttackByMonster;
+      end else
+      begin
+        // Run!
+        if (FightRec.RefFileRun <> '') AND (FightRec.RefSectionRun <> '') then
+        begin
+          RTReader.Execute(FightRec.RefFileRun, FightRec.RefSectionRun);
+        end;
+
+        ExitLoop := true;
+      end;
+    end;
+  until ExitLoop;
+
+  // Clear "action" area
+  DoorTextAttr(2);
+  CommandCLEARBLOCK(StrToTok('@CLEARBLOCK 21 24', ' '));
 end;
 
 procedure TRTReader.EndREADFILE;

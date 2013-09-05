@@ -5,6 +5,31 @@ unit Struct;
 interface
 
 type
+  FIGHT_WEAPON = packed record
+    Text: String;
+    Strength: Integer;
+  end;
+
+type
+  FightRecord = packed record
+    MonsterName: String;
+    SightingText: String;
+    PowerKillText: String;
+    Sex: Integer; // 1 is male, 2 is female, 3 is it
+    Weapons: Array of FIGHT_WEAPON;
+    Defense: Integer;
+    Experience: Integer;
+    Gold: Integer;
+    HitPoints: Integer;
+    RefFileVictory: String;
+    RefSectionVictory: String;
+    RefFileDefeat: String;
+    RefSectionDefeat: String;
+    RefFileRun: String;
+    RefSectionRun: String;
+  end;
+
+type
   // The format for the new *.IDF files.
   IdfRecord = packed record {format of the @data commands when saved}
     LastUsed: longint; {used for the @datanewday feature, this is how it tells

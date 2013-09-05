@@ -49,6 +49,7 @@ implementation
 var
   FLastTotalAccounts: TDateTime = 0;
   FTotalAccounts: Integer = 0;
+  OldExitProc: Pointer;
 
 function LoadItemsDat: Boolean; forward;
 function LoadMapDat: Boolean; forward;
@@ -56,6 +57,7 @@ function LoadSTimeDat: Boolean; forward;
 function LoadTimeDat: Boolean; forward;
 function LoadWorldDat: Boolean; forward;
 procedure MovePlayer(AXOffset, AYOffset: Integer); forward;
+procedure NewExitProc; forward;
 
 procedure DrawMap;
 var
@@ -473,6 +475,16 @@ begin
   end;
 end;
 
+{
+  Custom exit proc to ensure player is saved
+}
+procedure NewExitProc;
+begin
+  ExitProc := OldExitProc;
+
+  // TODO Save the player record to file
+end;
+
 procedure Start;
 var
   Ch: Char;
@@ -503,6 +515,10 @@ begin
     if (PlayerNum <> -1) then
     begin
       RTReader.Execute('GAMETXT.REF', 'STARTGAME');
+
+      // Setup exit proc, which ensures the player is saved properly if a HALT is performed
+      OldExitProc := ExitProc;
+      ExitProc := @NewExitProc;
 
       LoadMap(Player.Map);
       DrawMap;

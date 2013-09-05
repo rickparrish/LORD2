@@ -26,7 +26,8 @@ type
     FInCLOSESCRIPT: Boolean;
     FInDO_ADDLOG: Boolean;
     FInDO_WRITE: Boolean;
-    FInHALT: Integer;
+    FInFIGHT: Boolean;
+    FInFIGHTLines: TStringList;
     FInIFFalse: Integer;
     FInREADFILE: String;
     FInREADFILELines: TStringList;
@@ -149,11 +150,12 @@ type
     procedure CommandWRITEFILE(ATokens: TTokens);
 
     procedure EndCHOICE;
+    procedure EndFIGHT;
     procedure EndREADFILE;
     procedure EndSAYBAR(AText: String);
     procedure EndSHOWSCROLL;
 
-    function Execute(AFileName: String; ASectionName: String; ALabelName: String): Integer;
+    procedure Execute(AFileName: String; ASectionName: String; ALabelName: String);
 
     procedure LogTODO(ATokens: TTokens);
 
@@ -166,8 +168,8 @@ type
     destructor Destroy; override;
   end;
 
-function Execute(AFileName: String; ASectionName: String): Integer;
-function Execute(AFileName: String; ASectionName: String; ALabelName: String): Integer;
+procedure Execute(AFileName: String; ASectionName: String);
+procedure Execute(AFileName: String; ASectionName: String; ALabelName: String);
 
 implementation
 
@@ -231,12 +233,12 @@ begin
   end;
 end;
 
-function Execute(AFileName: String; ASectionName: String): Integer;
+procedure Execute(AFileName: String; ASectionName: String);
 begin
-  Result := Execute(AFileName, ASectionName, '');
+  Execute(AFileName, ASectionName, '');
 end;
 
-function Execute(AFileName: String; ASectionName: String; ALabelName: String): Integer;
+procedure Execute(AFileName: String; ASectionName: String; ALabelName: String);
 var
   RTR: TRTReader;
 begin
@@ -245,7 +247,7 @@ begin
   ALabelName := UpperCase(Trim(ALabelName));
 
   RTR := TRTReader.Create();
-  Result := RTR.Execute(AFileName, ASectionName, ALabelName);
+  RTR.Execute(AFileName, ASectionName, ALabelName);
   RTR.Free;
 end;
 
@@ -259,7 +261,8 @@ begin
   FInCLOSESCRIPT := false;
   FInDO_ADDLOG := false;
   FInDO_WRITE := false;
-  FInHALT := -1;
+  FInFIGHT := false;
+  FInFIGHTLines := TStringList.Create;
   FInIFFalse := 999;
   FInREADFILE := '';
   FInREADFILELines := TStringList.Create;
@@ -888,7 +891,7 @@ var
 begin
   (* @DO GOTO <header or label>
       Passes control of the script to the header or label specified. *)
-  LabelName := UpperCase(Trim(ATokens[3]));
+  LabelName := UpperCase(Trim(TranslateVariables(ATokens[3])));
 
   if (FCurrentSection.Labels.FindIndexOf(LabelName) <> -1) then
   begin
@@ -898,7 +901,7 @@ begin
   if (FCurrentFile.Sections.FindIndexOf(LabelName) <> -1) then
   begin
     // HEADER goto
-    FInHALT := RTReader.Execute(FCurrentFile.Name, LabelName);
+    RTReader.Execute(FCurrentFile.Name, LabelName);
     FInCLOSESCRIPT := true; // Don't want to resume this ref
   end else
   begin
@@ -908,7 +911,7 @@ begin
       if (RefSection.Labels.FindIndexOf(LabelName) <> -1) then
       begin
         // LABEL goto within a different section
-        FInHALT := RTReader.Execute(FCurrentFile.Name, RefSection.Name, LabelName);
+        RTReader.Execute(FCurrentFile.Name, RefSection.Name, LabelName);
         FInCLOSESCRIPT := true; // Don't want to resume this ref
       end;
     end;
@@ -1380,7 +1383,8 @@ begin
         You might also have a hotspot defined that calls a routine that will be a
         fight.  Make sure you DON'T clear the screen.  It won't hurt anything if you
         do, but it won't look very good. *)
-  LogTODO(ATokens);
+  FInFIGHT := true;
+  FInFIGHTLines.Clear;
 end;
 
 procedure TRTReader.CommandGRAPHICS(ATokens: TTokens);
@@ -1397,10 +1401,10 @@ begin
       This command closes the door and returns the specified error level. *)
   if (High(ATokens) = 1) then
   begin
-    FInHALT := 0;
+    Halt;
   end else
   begin
-    FInHALT := StrToInt(ATokens[2]);
+    Halt(StrToInt(ATokens[2]));
   end;
 end;
 
@@ -1815,10 +1819,10 @@ begin
       the first procedure that ran @ROUTINE. *)
   if (High(ATokens) < 4) then
   begin
-    FInHALT := RTReader.Execute(FCurrentFile.Name, TranslateVariables(ATokens[2]));
+    RTReader.Execute(FCurrentFile.Name, TranslateVariables(ATokens[2]));
   end else
   begin
-    FInHALT := RTReader.Execute(TranslateVariables(ATokens[4]), TranslateVariables(ATokens[2]));
+    RTReader.Execute(TranslateVariables(ATokens[4]), TranslateVariables(ATokens[2]));
   end;
 end;
 
@@ -1826,7 +1830,7 @@ procedure TRTReader.CommandRUN(ATokens: TTokens);
 begin
   (* @RUN <Header or label name> IN <Filename of .REF file>
       Same thing as ROUTINE, but doesn't come back to the original .REF. *)
-  FInHALT := RTReader.Execute(TranslateVariables(ATokens[4]), TranslateVariables(ATokens[2]));
+  RTReader.Execute(TranslateVariables(ATokens[4]), TranslateVariables(ATokens[2]));
   FInCLOSESCRIPT := true; // Don't want to resume this ref
 end;
 
@@ -2166,6 +2170,69 @@ begin
   Game.RESPONSE := IntToStr(SelectedIndex);
 end;
 
+procedure TRTReader.EndFIGHT;
+var
+  FightRec: FightRecord;
+
+  procedure AddWeapon(AText: String);
+  var
+    Weapon: FIGHT_WEAPON;
+  begin
+    if (UpperCase(Trim(AText)) <> 'NONE|NONE') then
+    begin
+      Weapon.Text := TranslateVariables(ExtractDelimited(1, AText, ['|']));
+      Weapon.Strength := StrToInt(ExtractDelimited(2, AText, ['|']));
+
+      SetLength(FightRec.Weapons, Length(FightRec.Weapons) + 1);
+      FightRec.Weapons[High(FightRec.Weapons)] := Weapon;
+    end;
+  end;
+
+begin
+  FightRec.MonsterName := Trim(TranslateVariables(FInFIGHTLines[0]));
+  FightRec.SightingText := Trim(TranslateVariables(FInFIGHTLines[1]));
+  FightRec.PowerKillText := Trim(TranslateVariables(FInFIGHTLines[2]));
+  FightRec.Sex := StrToInt(TranslateVariables(FInFIGHTLines[3]));
+  AddWeapon(FInFIGHTLines[4]);
+  AddWeapon(FInFIGHTLines[5]);
+  AddWeapon(FInFIGHTLines[6]);
+  AddWeapon(FInFIGHTLines[7]);
+  AddWeapon(FInFIGHTLines[8]);
+  FightRec.Defense := StrToInt(TranslateVariables(FInFIGHTLines[9]));
+  FightRec.Experience := StrToInt(TranslateVariables(FInFIGHTLines[10]));
+  FightRec.Gold := StrToInt(TranslateVariables(FInFIGHTLines[11]));
+  FightRec.HitPoints := StrToInt(TranslateVariables(FInFIGHTLines[12]));
+  if (UpperCase(Trim(FInFIGHTLines[13])) = 'NONE|NONE') then
+  begin
+    FightRec.RefFileVictory := '';
+    FightRec.RefSectionVictory := '';
+  end else
+  begin
+    FightRec.RefFileVictory := ExtractDelimited(1, FInFIGHTLines[13], ['|']);
+    FightRec.RefSectionVictory := ExtractDelimited(2, FInFIGHTLines[13], ['|']);
+  end;
+  if (UpperCase(Trim(FInFIGHTLines[14])) = 'NONE|NONE') then
+  begin
+    FightRec.RefFileDefeat := '';
+    FightRec.RefSectionDefeat := '';
+  end else
+  begin
+    FightRec.RefFileDefeat := ExtractDelimited(1, FInFIGHTLines[14], ['|']);
+    FightRec.RefSectionDefeat := ExtractDelimited(2, FInFIGHTLines[14], ['|']);
+  end;
+  if (UpperCase(Trim(FInFIGHTLines[15])) = 'NONE|NONE') then
+  begin
+    FightRec.RefFileRun := '';
+    FightRec.RefSectionRun := '';
+  end else
+  begin
+    FightRec.RefFileRun := ExtractDelimited(1, FInFIGHTLines[15], ['|']);
+    FightRec.RefSectionRun := ExtractDelimited(2, FInFIGHTLines[15], ['|']);
+  end;
+
+  LogTODO(nil);
+end;
+
 procedure TRTReader.EndREADFILE;
 var
   I: Integer;
@@ -2269,7 +2336,7 @@ begin
   until (Ch = 'Q');
 end;
 
-function TRTReader.Execute(AFileName: String; ASectionName: String; ALabelName: String): Integer;
+procedure TRTReader.Execute(AFileName: String; ASectionName: String; ALabelName: String);
 begin
   if (RTGlobal.RefFiles.FindIndexOf(AFileName) = -1) then
   begin
@@ -2303,8 +2370,6 @@ begin
       ParseScript(FCurrentSection.Script);
     end;
   end;
-
-  Result := FInHALT;
 end;
 
 procedure TRTReader.LogTODO(ATokens: TTokens);
@@ -2511,10 +2576,6 @@ begin
     begin
       Exit;
     end else
-    if (FInHALT <> -1) then
-    begin
-      Exit;
-    end else
     if (FInIFFalse < 999) then
     begin
       if (Pos('@', LineTrimmed) = 1) then
@@ -2580,6 +2641,18 @@ begin
         begin
           DoorWrite(TranslateVariables(Line));
           FInDO_WRITE := false;
+        end else
+        if (FInFIGHT) then
+        begin
+          if ((LineTrimmed <> '') AND NOT(AnsiStartsText(';', LineTrimmed))) then
+          begin
+            FInFIGHTLines.Add(Line);
+            if (FInFIGHTLines.Count = 16) then
+            begin
+              EndFIGHT;
+              FInFIGHT := false;
+            end;
+          end;
         end else
         if (FInREADFILE <> '') then
         begin

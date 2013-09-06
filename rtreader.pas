@@ -6,7 +6,7 @@ interface
 
 uses
   RTChoiceOption, RTGlobal, RTRefLabel, RTRefFile, RTRefSection, Struct,
-  Ansi, Door, StringUtils,
+  Ansi, Door, StringUtils, VideoUtils,
   Classes, contnrs, Crt, Math, StrUtils, SysUtils;
 
 const
@@ -1195,7 +1195,7 @@ begin
     (* @DO STATBAR
         This draws the statbar. *)
     // Identified as @STATBAR not @DO STATBAR in the docs
-  LogTODO(ATokens); // Unused
+  LogTODO(ATokens);
 end;
 
 procedure TRTReader.CommandDO_STRIP(ATokens: TTokens);
@@ -2213,6 +2213,7 @@ var
         You dodge Chihuahua's attack easily.
         Chihuahua misses as you jump to one side!
         Your armour absorbs Chihuahua's blow!
+        You are forced to grin as Armored Hedge Hog's puny strike bounces off you.
       *)
       // Display miss message
       DoorGotoXY(3, 23);
@@ -2246,27 +2247,48 @@ var
   var
     AttackPower: Integer;
     HitAmount: Integer;
+    SuperStrike: Boolean;
   begin
     // Determine hit amount (copied from RTSoft LORD FAQ, may not be accurate for LORD2)
     AttackPower := Game.Player.P[4];
     if (Game.Player.WeaponNumber > 0) then AttackPower += ItemsDat.Item[Game.Player.WeaponNumber].Strength;
     HitAmount := (AttackPower div 2) + Random(AttackPower div 2) - FightRec.Defense;
 
+    // 8% chance of super strike (testing 100 attacks resulted in 8 super strikes with original L2.EXE)
+    SuperStrike := false;
+    I := Random(100) + 1;
+    if (I <= 8) then
+    begin
+      SuperStrike := true;
+      HitAmount *= 2; // TODO Unknown if this is correct
+    end;
+
+    // Check for miss or hit
     if (HitAmount <= 0) then
     begin
       // Display miss message
       DoorGotoXY(3, 22);
-      DoorWrite('`4You completely miss!');
+      if (SuperStrike) then
+      begin
+        DoorWrite('`2Your `%SUPER STRIKE`2 misses!');
+      end else
+      begin
+        DoorWrite('`4You completely miss!');
+      end;
     end else
     begin
-      // TODO Display random? hit message
-      // TODO How does SUPER STRIKE work?
-      // `2You `%SUPER STRIKE for `06 damage!
-      // You slap Wild Boar a good one for 3 damage!
-      // You kick Wild Boar hard as you can for 3 damage!
-      // You trip Angry Hen for 3 damage!
       DoorGotoXY(3, 22);
-      DoorWrite('`2You trip `0' + FightRec.MonsterName + '`2 for `4' + IntToStr(HitAmount) + '`2 damage!');
+      if (SuperStrike) then
+      begin
+        DoorWrite('`2You `%SUPER STRIKE`2 for `0' + IntToStr(HitAmount) + '`2 damage!');
+      end else
+      begin
+        // TODO Display random? hit message
+        // You slap Wild Boar a good one for 3 damage!
+        // You kick Wild Boar hard as you can for 3 damage!
+        // You trip Angry Hen for 3 damage!
+        DoorWrite('`2You trip `0' + FightRec.MonsterName + '`2 for `4' + IntToStr(HitAmount) + '`2 damage!');
+      end;
 
       // Reduce monster hit points
       FightRec.HitPoints -= HitAmount;
@@ -2430,6 +2452,7 @@ begin
         // 17% chance of failing to run (testing 100 attempts resulted in 17 failures with original L2.EXE)
         DoorGotoXY(3, 22);
         DoorWrite('`0' + FightRec.MonsterName + '`4`r0 blocks your path!');
+        Sleep(1000);
         AttackByMonster;
       end else
       begin
@@ -2592,9 +2615,9 @@ procedure TRTReader.LogTODO(ATokens: TTokens);
 begin
   if (DoorLocal) then
   begin
-    (*TODOFastWrite(mStrings.PadRight('TODO: ' + TokToStr(ATokens, ' '), ' ', 80), 1, 25, 31);
+    FastWrite(PadRight('TODO: ' + TokToStr(ATokens, ' '), 80), 1, 25, 31);
     DoorReadKey;
-    FastWrite(mStrings.PadRight('', ' ', 80), 1, 25, 7);*)
+    FastWrite(PadRight('', 80), 1, 25, 7);
   end;
 end;
 

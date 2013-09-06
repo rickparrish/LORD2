@@ -2194,11 +2194,19 @@ var
   end;
 
   procedure AttackByMonster;
+  var
+    HitAmount: Integer;
+    Weapon: FIGHT_WEAPON;
   begin
-    // TODO Pick random weapon
-    // TODO Pick hit amount based on weapon strength
-    I := Random(2);
-    if (I = 0) then
+    // Pick random monster weapon
+    Weapon := FightRec.Weapons[Random(Length(FightRec.Weapons))];
+
+    // Determine hit amount (copied from RTSoft LORD FAQ, may not be accurate for LORD2)
+    HitAmount := (Weapon.Strength div 2) + Random(Weapon.Strength div 2) - Game.Player.P[5];
+    if (Game.Player.ArmourNumber > 0) then HitAmount -= ItemsDat.Item[Game.Player.ArmourNumber].Defence;
+
+    // Check for miss or hit
+    if (HitAmount <= 0) then
     begin
       (*
         You laugh as Chihuahua misses and strikes the ground.
@@ -2213,10 +2221,10 @@ var
     begin
       // Display hit message
       DoorGotoXY(3, 23);
-      DoorWrite('`0' + FightRec.MonsterName + '`2 ' + FightRec.Weapons[0].Text + '`2 for `4' + IntToStr(I) + '`2 damage.'); // TODO Weapons[0]
+      DoorWrite('`0' + FightRec.MonsterName + '`2 ' + Weapon.Text + '`2 for `4' + IntToStr(HitAmount) + '`2 damage.');
 
       // Reduce player hit points
-      Game.Player.P[2] -= I;
+      Game.Player.P[2] -= HitAmount;
       if (Game.Player.P[2] < 0) then Game.Player.P[2] := 0;
       UpdateHitPointLine;
 
@@ -2235,10 +2243,16 @@ var
   end;
 
   procedure AttackByPlayer;
+  var
+    AttackPower: Integer;
+    HitAmount: Integer;
   begin
-    // TODO Pick hit amount based on weapon strength
-    I := Random(2);
-    if (I = 0) then
+    // Determine hit amount (copied from RTSoft LORD FAQ, may not be accurate for LORD2)
+    AttackPower := Game.Player.P[4];
+    if (Game.Player.WeaponNumber > 0) then AttackPower += ItemsDat.Item[Game.Player.WeaponNumber].Strength;
+    HitAmount := (AttackPower div 2) + Random(AttackPower div 2) - FightRec.Defense;
+
+    if (HitAmount <= 0) then
     begin
       // Display miss message
       DoorGotoXY(3, 22);
@@ -2252,10 +2266,10 @@ var
       // You kick Wild Boar hard as you can for 3 damage!
       // You trip Angry Hen for 3 damage!
       DoorGotoXY(3, 22);
-      DoorWrite('`2You trip `0' + FightRec.MonsterName + '`2 for `4' + IntToStr(I) + '`2 damage!');
+      DoorWrite('`2You trip `0' + FightRec.MonsterName + '`2 for `4' + IntToStr(HitAmount) + '`2 damage!');
 
       // Reduce monster hit points
-      FightRec.HitPoints -= I;
+      FightRec.HitPoints -= HitAmount;
       if (FightRec.HitPoints < 0) then FightRec.HitPoints := 0;
       UpdateHitPointLine;
 

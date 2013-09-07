@@ -2987,19 +2987,21 @@ begin
         if (Game.Player.ArmourNumber = 0) then
         begin
           AText := StringReplace(AText, 's&armour', '', [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&arm_num', '0', [rfReplaceAll, rfIgnoreCase]);
         end else
         begin
-          AText := StringReplace(AText, 's&armour', Game.ItemsDat.Item[Game.Player.ArmourNumber].name, [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&armour', Game.ItemsDat.Item[Game.Player.ArmourNumber].Name, [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&arm_num', IntToStr(Game.ItemsDat.Item[Game.Player.ArmourNumber].Defence), [rfReplaceAll, rfIgnoreCase]);
         end;
-        AText := StringReplace(AText, 's&arm_num', IntToStr(Game.Player.ArmourNumber), [rfReplaceAll, rfIgnoreCase]);
         if (Game.Player.WeaponNumber = 0) then
         begin
           AText := StringReplace(AText, 's&weapon', '', [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&wep_num', '0', [rfReplaceAll, rfIgnoreCase]);
         end else
         begin
-          AText := StringReplace(AText, 's&weapon', Game.ItemsDat.Item[Game.Player.WeaponNumber].name, [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&weapon', Game.ItemsDat.Item[Game.Player.WeaponNumber].Name, [rfReplaceAll, rfIgnoreCase]);
+          AText := StringReplace(AText, 's&wep_num', IntToStr(Game.ItemsDat.Item[Game.Player.WeaponNumber].Strength), [rfReplaceAll, rfIgnoreCase]);
         end;
-        AText := StringReplace(AText, 's&wep_num', IntToStr(Game.Player.WeaponNumber), [rfReplaceAll, rfIgnoreCase]);
         if (Game.Player.SexMale = 1) then
         begin
           AText := StringReplace(AText, 's&son', 'son', [rfReplaceAll, rfIgnoreCase]);

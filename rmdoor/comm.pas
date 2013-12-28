@@ -5,6 +5,9 @@ unit Comm;
 
 interface
 
+{$IFDEF GO32V2}
+  {$DEFINE COMM_FOSSIL}
+{$ENDIF}
 {$IFDEF UNIX}
   {$DEFINE COMM_SOCKET}
 {$ENDIF}
@@ -37,7 +40,7 @@ var
   FBuffer: String = '';
   FCarrier: Boolean = true;
   FCommNumber: Integer = -1;
-  {$IFDEF GO32V2}
+  {$IFDEF COMM_FOSSIL}
     Regs: Registers;
   {$ENDIF}
 
@@ -51,7 +54,7 @@ procedure ReceiveData; forward;
 
 function CommCarrier: Boolean;
 begin
-  {$IFDEF GO32V2}
+  {$IFDEF COMM_FOSSIL}
     Regs.AH := $03;
     Regs.DX := FCommNumber;
     Intr($14, Regs);
@@ -78,7 +81,7 @@ begin
       CloseSocket(FCommNumber);
     {$ENDIF}
   {$ENDIF}
-  {$IFDEF GO32V2}
+  {$IFDEF COMM_FOSSIL}
     if (ADisconnect) then
     begin
       Regs.AH := $05;
@@ -96,7 +99,7 @@ procedure CommOpen(ACommNumber: LongInt);
 begin
   FCommNumber := ACommNumber;
 
-  {$IFDEF GO32V2}
+  {$IFDEF COMM_FOSSIL}
     FCommNumber -= 1;
 
     Regs.AH := $04;
@@ -160,7 +163,7 @@ begin
   {$IFDEF COMM_SOCKET}
     fpSend(FCommNumber, @Block, BlockLen, 0);
   {$ENDIF}
-  {$IFDEF GO32V2}
+  {$IFDEF COMM_FOSSIL}
     DosAlloc(Selector, Segment, BlockLen);
 
     if Int31Error <> 0 then Exit;
@@ -241,7 +244,7 @@ begin
       end;
     end;
   {$ENDIF}
-  {$IFDEF GO32V2}
+  {$IFDEF COMM_FOSSIL}
     Regs.AH := $03;
     Regs.DX := FCommNumber;
     Intr($14, Regs);

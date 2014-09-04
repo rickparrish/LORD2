@@ -1669,7 +1669,7 @@ procedure TRTReader.CommandMOREMAP(ATokens: TTokens);
 begin
   (* @MOREMAP
       The line UNDER this will be the new <more> prompt.  30 characters maximum. *)
-  LogTODO(ATokens); // Unused
+  LogTODO(ATokens); // Used in CNW
 end;
 
 procedure TRTReader.CommandNAME(ATokens: TTokens);
@@ -1777,7 +1777,7 @@ procedure TRTReader.CommandPROGNAME(ATokens: TTokens);
 begin
   (* @PROGNAME
       The line UNDER this will be the status bar name of the game. *)
-  LogTODO(ATokens); // Unused
+  LogTODO(ATokens); // Used in CNW
 end;
 
 procedure TRTReader.CommandRANK(ATokens: TTokens);
@@ -1789,7 +1789,7 @@ begin
       if feasible.  This one works, but @LORDRANK uses a preset formatting
       procedure and is therefore quicker.  There may be occasion, however, if you
       write your own world to use this command rather than @LORDRANK. *)
-  LogTODO(ATokens); // Unused
+  LogTODO(ATokens); // Used in CNW
 end;
 
 procedure TRTReader.CommandREADFILE(ATokens: TTokens);
@@ -2637,17 +2637,17 @@ begin
     '@CHECKMAIL': CommandCHECKMAIL(ATokens);
     '@CHOICE': CommandCHOICE(ATokens);
     '@CHOOSEPLAYER': CommandCHOOSEPLAYER(ATokens);
-    '@CLEAR': CommandCLEAR(ATokens); // TODO Not used in L2102
+    '@CLEAR': CommandCLEAR(ATokens);
     '@CLEARBLOCK': CommandCLEARBLOCK(ATokens);
     '@CLOSESCRIPT': CommandCLOSESCRIPT(ATokens);
     '@CONVERT_FILE_TO_ANSI': CommandCONVERT_FILE_TO_ANSI(ATokens);
     '@CONVERT_FILE_TO_ASCII': CommandCONVERT_FILE_TO_ASCII(ATokens);
-    '@COPYFILE': CommandCOPYFILE(ATokens); // TODO Not used in L2102
+    '@COPYFILE': CommandCOPYFILE(ATokens);
     '@DATALOAD': CommandDATALOAD(ATokens);
     '@DATANEWDAY': CommandDATANEWDAY(ATokens);
     '@DATASAVE': CommandDATASAVE(ATokens);
-    '@DECLARE': CommandDECLARE(ATokens); // TODO Not used in L2102
-    '@DISPLAY': CommandDISPLAY(ATokens); // TODO Not used in L2102
+    '@DECLARE': CommandDECLARE(ATokens);
+    '@DISPLAY': CommandDISPLAY(ATokens);
     '@DISPLAYFILE': CommandDISPLAYFILE(ATokens);
     '@DO':
     begin
@@ -2709,7 +2709,7 @@ begin
     '@DRAWPART': CommandDRAWPART(ATokens);
     '@END': CommandEND(ATokens);
     '@FIGHT': CommandFIGHT(ATokens);
-    '@GRAPHICS': CommandGRAPHICS(ATokens); // TODO Not used in L2102
+    '@GRAPHICS': CommandGRAPHICS(ATokens);
     '@HALT': CommandHALT(ATokens);
     '@IF':
     begin
@@ -2722,10 +2722,10 @@ begin
         begin
           // Check for @IF <SOMETHING> <COMMAND> commands
           case UpperCase(ATokens[3]) of
-            'EQUALS': IFResult := CommandIF_IS(ATokens); // TODO Not used in L2102
+            'EQUALS': IFResult := CommandIF_IS(ATokens);
             'EXIST': IFResult := CommandIF_EXIST(ATokens);
             'EXISTS': IFResult := CommandIF_EXIST(ATokens);
-            'INSIDE': IFResult := CommandIF_INSIDE(ATokens); // TODO Not used in L2102
+            'INSIDE': IFResult := CommandIF_INSIDE(ATokens);
             'IS': IFResult := CommandIF_IS(ATokens);
             'LESS': IFResult := CommandIF_LESS(ATokens);
             'MORE': IFResult := CommandIF_MORE(ATokens);
@@ -2765,29 +2765,29 @@ begin
     '@KEY': CommandKEY(ATokens);
     '@LABEL': CommandLABEL(ATokens);
     '@LOADCURSOR': CommandLOADCURSOR(ATokens);
-    '@LOADGLOBALS': CommandLOADGLOBALS(ATokens); // TODO Not used in L2102
+    '@LOADGLOBALS': CommandLOADGLOBALS(ATokens);
     '@LOADMAP': CommandLOADMAP(ATokens);
-    '@LOADWORLD': CommandLOADWORLD(ATokens); // TODO Not used in L2102
+    '@LOADWORLD': CommandLOADWORLD(ATokens);
     '@LORDRANK': CommandLORDRANK(ATokens);
-    '@MOREMAP': CommandMOREMAP(ATokens); // TODO Not used in L2102
-    '@NAME': CommandNAME(ATokens); // TODO Not used in L2102
-    '@NOCHECK': CommandNOCHECK(ATokens); // TODO Not used in L2102
+    '@MOREMAP': CommandMOREMAP(ATokens);
+    '@NAME': CommandNAME(ATokens);
+    '@NOCHECK': CommandNOCHECK(ATokens);
     '@OFFMAP': CommandOFFMAP(ATokens);
     '@OVERHEADMAP': CommandOVERHEADMAP(ATokens);
     '@PAUSEOFF': CommandPAUSEOFF(ATokens);
     '@PAUSEON': CommandPAUSEON(ATokens);
-    '@PROGNAME': CommandPROGNAME(ATokens); // TODO Not used in L2102
-    '@RANK': CommandRANK(ATokens); // TODO Not used in L2102
+    '@PROGNAME': CommandPROGNAME(ATokens);
+    '@RANK': CommandRANK(ATokens);
     '@READFILE': CommandREADFILE(ATokens);
     '@ROUTINE': CommandROUTINE(ATokens);
     '@RUN': CommandRUN(ATokens);
     '@SAVECURSOR': CommandSAVECURSOR(ATokens);
     '@SAVEGLOBALS': CommandSAVEGLOBALS(ATokens);
-    '@SAVEWORLD': CommandSAVEWORLD(ATokens); // TODO Not used in L2102
-    '@SAY': CommandSAY(ATokens); // TODO Not used in L2102
+    '@SAVEWORLD': CommandSAVEWORLD(ATokens);
+    '@SAY': CommandSAY(ATokens);
     '@SELLMANAGER': CommandSELLMANAGER(ATokens);
     '@SHOW': CommandSHOW(ATokens);
-    '@SHOWLOCAL': CommandSHOWLOCAL(ATokens); // TODO Not used in L2102
+    '@SHOWLOCAL': CommandSHOWLOCAL(ATokens);
     '@UPDATE': CommandUPDATE(ATokens);
     '@UPDATE_UPDATE': CommandUPDATE_UPDATE(ATokens);
     '@VERSION': CommandVERSION(ATokens);

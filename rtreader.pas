@@ -1990,8 +1990,35 @@ begin
 end;
 
 procedure TRTReader.EndBUYMANAGER;
+var
+  Ch: Char;
+  I: Integer;
 begin
-  LogTODO(StrToTok('EndBUYMANAGER', ' '));
+  // Draw top and bottom lines
+  DoorCursorSave;
+  DoorWrite('`r5`%  Item To Buy                         Price                                     ');
+  DoorGotoXY(1, 24);
+  DoorWrite('                                                                               ');
+  DoorGotoX(1);
+  DoorWrite('  `$Q `2to quit, `$ENTER `2to buy item.        You have `$' + IntToStr(Game.Player.Money) + ' `2gold.');
+
+  // Draw items for sale
+  DoorTextAttr(7);
+  DoorCursorRestore;
+  DoorCursorDown(1);
+  for I := 0 to FInBUYMANAGEROptions.Count - 1 do
+  begin
+    DoorWriteLn('`2' + FInBUYMANAGEROptions[I]);
+  end;
+
+  // Get input
+  repeat
+    // TODO Handle arrow keys for lightbar
+    Ch := UpCase(DoorReadKey);
+  until (Ch in ['Q', #13]);
+
+  // TODO Erase buy manager
+  DoorCursorRestore;
 end;
 
 procedure TRTReader.EndCHOICE;

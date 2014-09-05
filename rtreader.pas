@@ -21,6 +21,8 @@ type
     FCurrentSection: TRTRefSection;
 
     FInBEGINCount: Integer;
+    FInBUYMANAGER: Boolean;
+    FInBUYMANAGEROptions: TStringList;
     FInCHOICE: Boolean;
     FInCHOICEOptions: TFPObjectList;
     FInCLOSESCRIPT: Boolean;
@@ -33,6 +35,8 @@ type
     FInREADFILELines: TStringList;
     FInSAY: Boolean;
     FInSAYBAR: Boolean;
+    FInSELLMANAGER: Boolean;
+    FInSELLMANAGEROptions: TStringList;
     FInSHOW: Boolean;
     FInSHOWLOCAL: Boolean;
     FInSHOWSCROLL: Boolean;
@@ -149,10 +153,12 @@ type
     procedure CommandWHOISON(ATokens: TTokens);
     procedure CommandWRITEFILE(ATokens: TTokens);
 
+    procedure EndBUYMANAGER;
     procedure EndCHOICE;
     procedure EndFIGHT;
     procedure EndREADFILE;
     procedure EndSAYBAR(AText: String);
+    procedure EndSELLMANAGER;
     procedure EndSHOWSCROLL;
 
     procedure Execute(AFileName: String; ASectionName: String; ALabelName: String);
@@ -256,6 +262,8 @@ begin
   inherited Create;
 
   FInBEGINCount := 0;
+  FInBUYMANAGER := false;
+  FInBUYMANAGEROptions := TStringList.Create;
   FInCHOICE := false;
   FInCHOICEOptions := TFPObjectList.Create;
   FInCLOSESCRIPT := false;
@@ -268,6 +276,8 @@ begin
   FInREADFILELines := TStringList.Create;
   FInSAY := false;
   FInSAYBAR := false;
+  FInSELLMANAGER := false;
+  FInSELLMANAGEROptions := TStringList.Create;
   FInSHOW := false;
   FInSHOWLOCAL := false;
   FInSHOWSCROLL := false;
@@ -294,7 +304,13 @@ begin
       to do this can result in a corrupted TRADER.DAT file. *)
   // TODO Retry if IOError
   Assign(FTraderDat, TraderDatFileName);
-  {$I-}Reset(FTraderDat);{$I+}
+  if (FileExists(TraderDatFileName)) then
+  begin
+    {$I-}Reset(FTraderDat);{$I+}
+  end else
+  begin
+    {$I-}ReWrite(FTraderDat);{$I+}
+  end;
   if (IOResult = 0) then
   begin
     Seek(FTraderDat, FileSize(FTraderDat));
@@ -311,7 +327,13 @@ begin
   UTR.Battle := 0;
   // TODO Retry if IOError
   Assign(FUpdateTmp, UpdateTmpFileName);
-  {$I-}Reset(FUpdateTmp);{$I+}
+  if (FileExists(UpdateTmpFileName)) then
+  begin
+    {$I-}Reset(FUpdateTmp);{$I+}
+  end else
+  begin
+    {$I-}ReWrite(FUpdateTmp);{$I+}
+  end;
   if (IOResult = 0) then
   begin
     Seek(FUpdateTmp, Game.PlayerNum);
@@ -360,7 +382,8 @@ begin
       <item number>
       <ect until next @ at beginning of string is hit>
       This command offers items for sale at the price set in items.dat *)
-  LogTODO(ATokens);
+  FInBUYMANAGEROptions.Clear;
+  FInBUYMANAGER := true;
 end;
 
 procedure TRTReader.CommandCHECKMAIL(ATokens: TTokens);
@@ -417,7 +440,7 @@ begin
       example, if `p20 was 600 and the user hit the selection:
       "Hey, I have more than 500", RESPONSE would be set to 5. *)
 
-  FInCHOICEOptions.Clear();
+  FInCHOICEOptions.Clear;
   FInCHOICE := true;
 end;
 
@@ -834,6 +857,7 @@ begin
   (* @DO DELETE <file name>
       This command deletes the file specified by <file name>.  The file name must be
       a valid DOS file name.  There can be no spaces. *)
+  // TODO Error handling
   FileName := Game.GetSafeAbsolutePath(ATokens[3]);
   if (FileExists(FileName)) then
   begin
@@ -1383,8 +1407,8 @@ begin
         You might also have a hotspot defined that calls a routine that will be a
         fight.  Make sure you DON'T clear the screen.  It won't hurt anything if you
         do, but it won't look very good. *)
-  FInFIGHT := true;
   FInFIGHTLines.Clear;
+  FInFIGHT := true;
 end;
 
 procedure TRTReader.CommandGRAPHICS(ATokens: TTokens);
@@ -1567,7 +1591,7 @@ begin
           NOTE: Actually indents two lines, not centered *)
       DoorWrite(TranslateVariables('`r0  `2<`0MORE`2>'));
       DoorReadKey;
-      DoorWrite('\b\b\b\b\b\b\b\b        \b\b\b\b\b\b\b\b');
+      DoorWrite(#8#8#8#8#8#8#8#8 + '        ' + #8#8#8#8#8#8#8#8);
   end else
   if (UpperCase(ATokens[2]) = 'BOTTOM') then
   begin
@@ -1576,7 +1600,7 @@ begin
       DoorGotoXY(35, 24);
       DoorWrite(TranslateVariables('`r0`2<`0MORE`2>'));
       DoorReadKey;
-      DoorWrite('\b\b\b\b\b\b      \b\b\b\b\b\b');
+      DoorWrite(#8#8#8#8#8#8 + '      ' + #8#8#8#8#8#8);
   end else
   if (UpperCase(ATokens[2]) = 'NODISPLAY') then
   begin
@@ -1591,7 +1615,7 @@ begin
       DoorGotoXY(40, 15);
       DoorWrite(TranslateVariables('`r0`2<`0MORE`2>'));
       DoorReadKey;
-      DoorWrite('\b\b\b\b\b\b      \b\b\b\b\b\b');
+      DoorWrite(#8#8#8#8#8#8 + '      ' + #8#8#8#8#8#8);
   end else
   begin
     LogTODO(ATokens);
@@ -1804,8 +1828,8 @@ begin
       NOTE:  @READFILE is a smart procedure - It will not run-time error or
       anything, even if you try to read past the end of the file. It simply won't
       change the variables if the file isn't long enough. *)
+  FInREADFILELines.Clear;
   FInREADFILE := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
-  FInREADFILELines.Clear();
 end;
 
 procedure TRTReader.CommandROUTINE(ATokens: TTokens);
@@ -1883,7 +1907,8 @@ begin
       The `c is included so that there will be two carriage returns issued.  This is
       important for cosmetic purposes only.  I have found that if the @sellmanager
       is issued at the top of the screen, the boxes don't dissapear as they should. *)
-  LogTODO(ATokens);
+  FInSELLMANAGEROptions.Clear;
+  FInSELLMANAGER := true;
 end;
 
 procedure TRTReader.CommandSHOW(ATokens: TTokens);
@@ -1893,7 +1918,7 @@ begin
     (* @SHOW SCROLL
         Same thing, but puts all the text in a nifty scroll window. (scroll window has
         commands line Next Screen, Previous Screen, Start, and End. *)
-    FInSHOWSCROLLLines.Clear();
+    FInSHOWSCROLLLines.Clear;
     FInSHOWSCROLL := true;
   end else
   begin
@@ -1962,6 +1987,11 @@ begin
       Note:  @WRITEFILE appends the lines if the file exists, otherwise it creates
       it.  File locking techniques are used. *)
   FInWRITEFILE := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
+end;
+
+procedure TRTReader.EndBUYMANAGER;
+begin
+  LogTODO(StrToTok('EndBUYMANAGER', ' '));
 end;
 
 procedure TRTReader.EndCHOICE;
@@ -2112,7 +2142,7 @@ begin
 
       Ch := DoorReadKey;
       case Ch of
-          '8', '4':
+          '8', '4', 'H', 'K':
           begin
               while (true) do
               begin
@@ -2126,7 +2156,7 @@ begin
                   if (TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).Visible) then break;
               end;
           end;
-          '6', '2':
+          '6', '2', 'M', 'P':
           begin
               while (true) do
               begin
@@ -2520,6 +2550,11 @@ begin
   DoorTextAttr(SavedTextAttr);
 end;
 
+procedure TRTReader.EndSELLMANAGER;
+begin
+  LogTODO(StrToTok('EndSELLMANAGER', ' '));
+end;
+
 procedure TRTReader.EndSHOWSCROLL;
 var
   Ch: Char;
@@ -2837,13 +2872,17 @@ begin
     begin
       if (Pos('@', LineTrimmed) = 1) then
       begin
+        if (FInBUYMANAGER) then EndBUYMANAGER;
         if (FInCHOICE) then EndCHOICE;
         if (FInREADFILE <> '') then EndREADFILE;
+        if (FInSELLMANAGER) then EndSELLMANAGER;
         if (FInSHOWSCROLL) then EndSHOWSCROLL;
+        FInBUYMANAGER := false;
         FInCHOICE := false;
         FInREADFILE := '';
         FInSAY := false;
         FInSAYBAR := false;
+        FInSELLMANAGER := false;
         FInSHOW := false;
         FInSHOWLOCAL := false;
         FInSHOWSCROLL := false;
@@ -2853,6 +2892,10 @@ begin
         ParseCommand(Tokens);
       end else
       begin
+        if (FInBUYMANAGER) then
+        begin
+          FInBUYMANAGEROptions.Add(Line);
+        end else
         if (FInCHOICE) then
         begin
           FInCHOICEOptions.Add(TRTChoiceOption.Create(Line));
@@ -2906,6 +2949,10 @@ begin
         begin
           EndSAYBAR(Line);
           FInSAYBAR := false;
+        end else
+        if (FInSELLMANAGER) then
+        begin
+          FInSELLMANAGEROptions.Add(Line);
         end else
         if (FInSHOW) then
         begin

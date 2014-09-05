@@ -532,47 +532,58 @@ begin
           F  Show the last three messages.
           Q  Quit the game.  Confirmation will be requested.*)
         Ch := UpCase(DoorReadKey);
-        case Ch of
-          '8': MovePlayer(0, -1);
-          '4': MovePlayer(-1, 0);
-          '6': MovePlayer(1, 0);
-          '2': MovePlayer(0, 1);
-          'L': RTReader.Execute('HELP', 'LISTPLAYERS');
-          'M': RTReader.Execute('HELP', 'MAP');
-          'P': RTReader.Execute('HELP', 'WHOISON');
-          'Q': begin
-                 // Confirm exit
-                 DoorGotoXY(1, 23);
-                 DoorWrite('`r0`2  Are you sure you want to quit back to the BBS? [`%Y`2] : ');
+        if (DoorLastKey.Extended) then
+        begin
+          case Ch of
+            'H': MovePlayer(0, -1);
+            'K': MovePlayer(-1, 0);
+            'M': MovePlayer(1, 0);
+            'P': MovePlayer(0, 1);
+          end;
+        end else
+        begin
+          case Ch of
+            '8': MovePlayer(0, -1);
+            '4': MovePlayer(-1, 0);
+            '6': MovePlayer(1, 0);
+            '2': MovePlayer(0, 1);
+            'L': RTReader.Execute('HELP', 'LISTPLAYERS');
+            'M': RTReader.Execute('HELP', 'MAP');
+            'P': RTReader.Execute('HELP', 'WHOISON');
+            'Q': begin
+                   // Confirm exit
+                   DoorGotoXY(1, 23);
+                   DoorWrite('`r0`2  Are you sure you want to quit back to the BBS? [`%Y`2] : ');
 
-                 repeat
-                   // Repeat until we have a valid selection
-                   Ch := UpCase(DoorReadKey);
-                 until (Ch in ['Y', 'N', #13]);
+                   repeat
+                     // Repeat until we have a valid selection
+                     Ch := UpCase(DoorReadKey);
+                   until (Ch in ['Y', 'N', #13]);
 
-                 // Translate selection into either #0 to abort quit, or Q to confirm quit
-                 if (Ch = 'N') then
-                 begin
-                   Ch := #0;
-                   GotoXY(1, 23);
-                   DoorWrite(PadRight('', 79));
-                   DoorGotoXY(Player.X, Player.Y);
-                 end else
-                 begin
-                   Ch := 'Q';
+                   // Translate selection into either #0 to abort quit, or Q to confirm quit
+                   if (Ch = 'N') then
+                   begin
+                     Ch := #0;
+                     GotoXY(1, 23);
+                     DoorWrite(PadRight('', 79));
+                     DoorGotoXY(Player.X, Player.Y);
+                   end else
+                   begin
+                     Ch := 'Q';
+                   end;
                  end;
-               end;
-          'T': RTReader.Execute('HELP', 'TALK');
-          'V': begin
-                 RTReader.Execute('GAMETXT', 'STATS');
-                 DoorWriteLn('TODO Show inventory');
-                 DoorWrite('Hit a key to continue');
-                 DoorReadKey;
-                 RTReader.Execute('GAMETXT', 'CLOSESTATS');
-               end;
-          'Y': RTReader.Execute('HELP', 'YELL');
-          'Z': RTReader.Execute('HELP', 'Z');
-          '?': RTReader.Execute('HELP', 'HELP');
+            'T': RTReader.Execute('HELP', 'TALK');
+            'V': begin
+                   RTReader.Execute('GAMETXT', 'STATS');
+                   DoorWriteLn('TODO Show inventory');
+                   DoorWrite('Hit a key to continue');
+                   DoorReadKey;
+                   RTReader.Execute('GAMETXT', 'CLOSESTATS');
+                 end;
+            'Y': RTReader.Execute('HELP', 'YELL');
+            'Z': RTReader.Execute('HELP', 'Z');
+            '?': RTReader.Execute('HELP', 'HELP');
+          end;
         end;
       until (Ch = 'Q');
 

@@ -40,6 +40,7 @@ function LoadPlayerByGameName(AGameName: String; var ARecord: TraderDatRecord): 
 function LoadPlayerByPlayerNumber(APlayerNumber: Integer; var ARecord: TraderDatRecord): Integer;
 function LoadPlayerByRealName(ARealName: String; var ARecord: TraderDatRecord): Integer;
 procedure MoveBack;
+procedure SavePlayer;
 procedure Start;
 function TotalAccounts: Integer;
 procedure Update;
@@ -485,6 +486,26 @@ begin
   // TODO Save the player record to file
 end;
 
+procedure SavePlayer;
+var
+  F: File of TraderDatRecord;
+  I: Integer;
+  Rec: TraderDatRecord;
+begin
+  if (PlayerNum <> -1) then
+  begin
+    // TODO Retry if IOError
+    Assign(F, TraderDatFileName);
+    {$I-}Reset(F);{$I+}
+    if (IOResult = 0) then
+    begin
+      Seek(F, PlayerNum - 1);
+      Write(F, Player);
+    end;
+    Close(F);
+  end;
+end;
+
 procedure Start;
 var
   Ch: Char;
@@ -575,6 +596,7 @@ begin
             'T': RTReader.Execute('HELP', 'TALK');
             'V': begin
                    RTReader.Execute('GAMETXT', 'STATS');
+                   DoorWriteLn; // TODO
                    DoorWriteLn('TODO Show inventory');
                    DoorWrite('Hit a key to continue');
                    DoorReadKey;

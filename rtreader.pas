@@ -1990,32 +1990,71 @@ begin
 end;
 
 procedure TRTReader.EndBUYMANAGER;
+
+  procedure DrawBottomLine;
+  begin
+    DoorGotoXY(1, 24);
+    DoorWrite('`r5                                                                               ');
+    DoorGotoX(1);
+    DoorWrite('  `$Q `2to quit, `$ENTER `2to buy item.        You have `$' + IntToStr(Game.Player.Money) + ' `2gold.`r0');
+  end;
+
 var
   Ch: Char;
   I: Integer;
+  Item: ItemsDatRecord;
+  ItemIndex: Integer;
+  SelectedIndex: Integer;
+  SelectedItem: ItemsDatRecord;
+  StrippedStringLength: Integer;
 begin
+  SelectedIndex := 0;
+
   // Draw top and bottom lines
   DoorCursorSave;
   DoorWrite('`r5`%  Item To Buy                         Price                                     ');
-  DoorGotoXY(1, 24);
-  DoorWrite('                                                                               ');
-  DoorGotoX(1);
-  DoorWrite('  `$Q `2to quit, `$ENTER `2to buy item.        You have `$' + IntToStr(Game.Player.Money) + ' `2gold.');
+  DrawBottomLine;
 
   // Draw items for sale
-  DoorTextAttr(7);
   DoorCursorRestore;
   DoorCursorDown(1);
   for I := 0 to FInBUYMANAGEROptions.Count - 1 do
   begin
-    DoorWriteLn('`2' + FInBUYMANAGEROptions[I]);
+    Item := Game.ItemsDat.Item[StrToInt(FInBUYMANAGEROptions[I])];
+    StrippedStringLength := Length(SethStrip(Item.Name));
+
+    DoorWrite('`2  ' + Item.Name + AddCharR(' ', '', 35 - StrippedStringLength));
+    DoorWrite('`2 $`$' + AddCharR(' ', IntToStr(Item.Value), 8));
+    DoorWriteLn('`2 ' + Item.Description);
   end;
 
   // Get input
   repeat
+    ItemIndex := StrToInt(FInBUYMANAGEROptions[SelectedIndex]);
+    SelectedItem := Game.ItemsDat.Item[ItemIndex];
+
     // TODO Handle arrow keys for lightbar
     Ch := UpCase(DoorReadKey);
-  until (Ch in ['Q', #13]);
+    case Ch of
+      #13:
+      begin
+        DoorGotoXY(1, 24);
+        DoorWrite('`r4                                                                               ');
+        DoorGotoX(1);
+        if (SelectedItem.Value > Game.Player.Money) then
+        begin
+          DoorWrite('`* ITEM NOT BOUGHT! `%You don''t have enough gold.  `2(`0press a key to continue`2)`r0');
+        end else
+        begin
+          Game.Player.Money -= SelectedItem.Value;
+          Game.Player.I[ItemIndex] += 1;
+          DoorWrite('`* ITEM BOUGHT! `%You now have ' + IntToStr(Game.Player.I[ItemIndex]) + ' of ''em.  `2(`0press a key to continue`2)`r0');
+        end;
+        DoorReadKey;
+        DrawBottomLine;
+      end;
+    end;
+  until (Ch = 'Q');
 
   // TODO Erase buy manager
   DoorCursorRestore;

@@ -1,3 +1,9 @@
 After creating a new character it said I'd been on already
 
 After creating first character it said The Daily Happenings for day 0
+
+BUYMANAGER
+  Armour is green A
+  Weapon is dark red W
+  1-time use is magenta 1
+  Gold has comma

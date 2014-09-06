@@ -2009,6 +2009,8 @@ var
   StrippedStringLength: Integer;
 begin
   SelectedIndex := 0;
+  ItemIndex := StrToInt(FInBUYMANAGEROptions[SelectedIndex]);
+  SelectedItem := Game.ItemsDat.Item[ItemIndex];
 
   // Draw top and bottom lines
   DoorCursorSave;
@@ -2023,16 +2025,16 @@ begin
     Item := Game.ItemsDat.Item[StrToInt(FInBUYMANAGEROptions[I])];
     StrippedStringLength := Length(SethStrip(Item.Name));
 
-    DoorWrite('`2  ' + Item.Name + AddCharR(' ', '', 35 - StrippedStringLength));
+    if (I = 0) then DoorWrite('`r1');
+    DoorWrite('`2  ' + Item.Name);
+    if (I = 0) then DoorWrite('`r0');
+    DoorWrite(AddCharR(' ', '', 35 - StrippedStringLength));
     DoorWrite('`2 $`$' + AddCharR(' ', IntToStr(Item.Value), 8));
     DoorWriteLn('`2 ' + Item.Description);
   end;
 
   // Get input
   repeat
-    ItemIndex := StrToInt(FInBUYMANAGEROptions[SelectedIndex]);
-    SelectedItem := Game.ItemsDat.Item[ItemIndex];
-
     // TODO Handle arrow keys for lightbar
     Ch := UpCase(DoorReadKey);
     case Ch of
@@ -2052,6 +2054,48 @@ begin
         end;
         DoorReadKey;
         DrawBottomLine;
+      end;
+
+      'H':
+      begin
+        if (SelectedIndex > 0) then
+        begin
+          // Erase old highlight
+          DoorCursorRestore;
+          DoorCursorDown(SelectedIndex + 1);
+          DoorWrite('`2  ' + SelectedItem.Name);
+
+          // Move up
+          SelectedIndex -= 1;
+          ItemIndex := StrToInt(FInBUYMANAGEROptions[SelectedIndex]);
+          SelectedItem := Game.ItemsDat.Item[ItemIndex];
+
+          // Draw new highlight
+          DoorCursorRestore;
+          DoorCursorDown(SelectedIndex + 1);
+          DoorWrite('`r1  ' + SelectedItem.Name + '`r0');
+        end;
+      end;
+
+      'P':
+      begin
+        if (SelectedIndex < (FInBUYMANAGEROptions.Count - 1)) then
+        begin
+          // Erase old highlight
+          DoorCursorRestore;
+          DoorCursorDown(SelectedIndex + 1);
+          DoorWrite('`2  ' + SelectedItem.Name);
+
+          // Move down
+          SelectedIndex += 1;
+          ItemIndex := StrToInt(FInBUYMANAGEROptions[SelectedIndex]);
+          SelectedItem := Game.ItemsDat.Item[ItemIndex];
+
+          // Draw new highlight
+          DoorCursorRestore;
+          DoorCursorDown(SelectedIndex + 1);
+          DoorWrite('`r1  ' + SelectedItem.Name + '`r0');
+        end;
       end;
     end;
   until (Ch = 'Q');

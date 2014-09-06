@@ -7,7 +7,7 @@ interface
 uses
   RTGlobal, RTReader, Struct,
   Ansi, Door, StringUtils,
-  Crt, DateUtils, StrUtils, SysUtils;
+  Classes, Crt, DateUtils, StrUtils, SysUtils;
 
 var
   CurrentMap: MapDatRecord;
@@ -44,6 +44,7 @@ procedure SavePlayer;
 procedure Start;
 function TotalAccounts: Integer;
 procedure Update;
+procedure ViewInventory;
 
 implementation
 
@@ -596,10 +597,7 @@ begin
             'T': RTReader.Execute('HELP', 'TALK');
             'V': begin
                    RTReader.Execute('GAMETXT', 'STATS');
-                   DoorWriteLn; // TODO
-                   DoorWriteLn('TODO Show inventory');
-                   DoorWrite('Hit a key to continue');
-                   DoorReadKey;
+                   ViewInventory;
                    RTReader.Execute('GAMETXT', 'CLOSESTATS');
                  end;
             'Y': RTReader.Execute('HELP', 'YELL');
@@ -656,6 +654,124 @@ begin
   DoorWrite(#02);
 
   // TODO Draw the other players
+end;
+
+procedure ViewInventory;
+var
+  Ch: Char;
+  I: Integer;
+  InventoryItems: TStringList;
+  Item: ItemsDatRecord;
+  ItemIndex: Integer;
+  SelectedIndex: Integer;
+  SelectedItem: ItemsDatRecord;
+  StrippedStringLength: Integer;
+begin
+  InventoryItems := TStringList.Create;
+  for I := 1 to 99 do
+  begin
+    if (Player.I[I] > 0) then InventoryItems.Add(IntToStr(I));
+  end;
+
+  SelectedIndex := 0;
+  ItemIndex := StrToInt(InventoryItems[SelectedIndex]);
+  SelectedItem := Game.ItemsDat.Item[ItemIndex];
+
+  DoorCursorSave;
+
+  // Draw items in inventory
+  DoorCursorDown(1);
+  for I := 0 to InventoryItems.Count - 1 do
+  begin
+    Item := Game.ItemsDat.Item[StrToInt(InventoryItems[I])];
+    StrippedStringLength := Length(SethStrip(Item.Name));
+
+    if (I = 0) then DoorWrite('`r1');
+    DoorWrite('`2  ' + Item.Name);
+    if (I = 0) then DoorWrite('`r0`2');
+    DoorWrite(AddCharR(' ', '', 35 - StrippedStringLength));
+    DoorWrite('`2 (`0' + IntToStr(Player.I[ItemIndex]) + '`2)' + AddCharR(' ', '', 7 - Length(IntToStr(Player.I[ItemIndex]))));
+    DoorWriteLn('`2 ' + Item.Description);
+  end;
+
+  // Get input
+  repeat
+    // TODO Handle arrow keys for lightbar
+    Ch := UpCase(DoorReadKey);
+    if (DoorLastKey.Extended) then
+    begin
+      case Ch of
+        'H':
+        begin
+          if (SelectedIndex > 0) then
+          begin
+            // Erase old highlight
+            DoorCursorRestore;
+            DoorCursorDown(SelectedIndex + 1);
+            DoorWrite('`2  ' + SelectedItem.Name + '`2');
+
+            // Move up
+            SelectedIndex -= 1;
+            ItemIndex := StrToInt(InventoryItems[SelectedIndex]);
+            SelectedItem := Game.ItemsDat.Item[ItemIndex];
+
+            // Draw new highlight
+            DoorCursorRestore;
+            DoorCursorDown(SelectedIndex + 1);
+            DoorWrite('`r1  ' + SelectedItem.Name + '`r0`2');
+          end;
+        end;
+
+        'P':
+        begin
+          if (SelectedIndex < (InventoryItems.Count - 1)) then
+          begin
+            // Erase old highlight
+            DoorCursorRestore;
+            DoorCursorDown(SelectedIndex + 1);
+            DoorWrite('`2  ' + SelectedItem.Name + '`2');
+
+            // Move down
+            SelectedIndex += 1;
+            ItemIndex := StrToInt(InventoryItems[SelectedIndex]);
+            SelectedItem := Game.ItemsDat.Item[ItemIndex];
+
+            // Draw new highlight
+            DoorCursorRestore;
+            DoorCursorDown(SelectedIndex + 1);
+            DoorWrite('`r1  ' + SelectedItem.Name + '`r0`2');
+          end;
+        end;
+      end;
+    end else
+    begin
+      case Ch of
+        #13:
+        begin
+          // TODO
+        end;
+
+        'D':
+        begin
+          // TODO Drop
+        end;
+
+        'N':
+        begin
+          // TODO Next page
+        end;
+
+        'P':
+        begin
+          // TODO Prev page
+        end;
+      end;
+    end;
+  until (Ch = 'Q');
+
+  // Exit inventory
+  DoorCursorRestore;
+  InventoryItems.Free;
 end;
 
 begin

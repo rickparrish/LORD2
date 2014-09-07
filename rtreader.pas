@@ -2114,16 +2114,17 @@ const
 var
   Ch: Char;
   I: Integer;
-  LastVisibleLength: Integer;
+//  LastVisibleLength: Integer;
   MakeVisible: Boolean;
-  Option: TRTChoiceOption;
+  Option: TRTChoiceOption; // TODO Potentially ditch RTCHoiceOption
+  OptionIndexes: TStringList;
   IfChar: Char;
-  OldSelectedIndex: Integer;
-  SelectedIndex: Integer;
-  Spaces: String;
+//  OldSelectedIndex: Integer;
+//  SelectedIndex: Integer;
+//  Spaces: String;
   Value: String;
   Variable: String;
-  VisibleCount: Integer;
+//  VisibleCount: Integer;
 begin
   (* @CHOICE
       <A choice>
@@ -2172,8 +2173,11 @@ begin
 
 
   // Determine which options are Visible and assign VisibleIndex
-  VisibleCount := 0;
-  LastVisibleLength := 0;
+//  VisibleCount := 0;
+//  LastVisibleLength := 0;
+
+  DoorLiteBarOptions.Clear;
+  OptionIndexes := TStringList.Create;
 
   for I := 0 to FInCHOICEOptions.Count - 1 do
   begin
@@ -2211,107 +2215,34 @@ begin
     // Determine if option is visible
     if (MakeVisible) then
     begin
-      VisibleCount += 1;
-      LastVisibleLength := Length(SethStrip(Option.Text));
-      Option.Visible := true;
-      Option.VisibleIndex := VisibleCount;
-    end else
-    begin
-      Option.Visible := false;
+      DoorLiteBarOptions.Add(TranslateVariables(Option.Text));
+      OptionIndexes.Add(IntToStr(I + 1)); // This will map the return value of DoorLiteBar to the index in the FInCHOICEOptions array
     end;
   end;
 
   // Ensure `V01 specified a valid/visible selection
-  SelectedIndex := StrToInt(TranslateVariables('`V01'));
-  if ((SelectedIndex < 1) OR (SelectedIndex > FInCHOICEOptions.Count)) then
+  DoorLiteBarIndex := StrToInt(TranslateVariables('`V01'));
+  if ((DoorLiteBarIndex < 1) OR (DoorLiteBarIndex > DoorLiteBarOptions.Count)) then
   begin
-    SelectedIndex := 1;
+    DoorLiteBarIndex := 1;
   end;
-  while Not(TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).Visible) do
-  begin
-    SelectedIndex += 1;
-  end;
+  DoorLiteBarIndex -= 1; // Turn 1 based to 0 based
+  while Not(DoorLiteBar) do DoorCursorRestore; // TODO Dumb, but avoids user hitting Q.  Maybe add parameter to disable Q
 
-  // Determine how many spaces to indent by (all lines should be indented same as first line)
-  Spaces := #13#10 + PadRight('', Crt.WhereX - 1);
+  // TODO Is `V01 the index of the visible elements, or all elements?
+  //      For example if `V01 is 3, and the first item is hidden, does the 3rd item in the list
+  //      or the 3rd visible item (which would be the 4th item in the list) get defaulted?
 
-  // Output options
-  DoorCursorSave;
-  DoorTextAttr(15);
-  for I := 0 to FInCHOICEOptions.Count - 1 do
-  begin
-    Option := TRTChoiceOption(FInCHOICEOptions.Items[I]);
-    if (Option.Visible) then
-    begin
-      if (Option.VisibleIndex > 1) then DoorWrite(Spaces);
-      if (I = (SelectedIndex - 1)) then DoorTextBackground(Crt.Blue);
-      DoorWrite(TranslateVariables(Option.Text));
-      if (I = (SelectedIndex - 1)) then DoorTextBackground(Crt.Black);
-    end;
-  end;
-
-  // Get response
-  repeat
-      OldSelectedIndex := SelectedIndex;
-
-      Ch := DoorReadKey;
-      case Ch of
-          '8', '4', 'H', 'K':
-          begin
-              while (true) do
-              begin
-                  // Go to previous item
-                  SelectedIndex -= 1;
-
-                  // Wrap to bottom if we were at the top item
-                  if (SelectedIndex < 1) then SelectedIndex := FInCHOICEOptions.Count;
-
-                  // Check if new selected item is visible (and break if so)
-                  if (TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).Visible) then break;
-              end;
-          end;
-          '6', '2', 'M', 'P':
-          begin
-              while (true) do
-              begin
-                  // Go to previous item
-                  SelectedIndex += 1;
-
-                  // Wrap to bottom if we were at the top item
-                  if (SelectedIndex > FInCHOICEOptions.Count) then SelectedIndex := 1;
-
-                  // Check if new selected item is visible (and break if so)
-                  if (TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).Visible) then break;
-              end;
-          end;
-      end;
-
-      if (OldSelectedIndex <> SelectedIndex) then
-      begin
-          // Store new selection
-          AssignVariable('`V01', IntToStr(SelectedIndex));
-
-          // Redraw old selection without blue highlight
-          DoorCursorRestore;
-          if (TRTChoiceOption(FInCHOICEOptions[OldSelectedIndex - 1]).VisibleIndex > 1) then DoorCursorDown(TRTChoiceOption(FInCHOICEOptions[OldSelectedIndex - 1]).VisibleIndex - 1);
-          DoorWrite(TranslateVariables(TRTChoiceOption(FInCHOICEOptions[OldSelectedIndex - 1]).Text));
-
-          // Draw new selection with blue highlight
-          DoorCursorRestore;
-          if (TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).VisibleIndex > 1) then DoorCursorDown(TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).VisibleIndex - 1);
-          DoorTextBackground(Crt.Blue);
-          DoorWrite(TranslateVariables(TRTChoiceOption(FInCHOICEOptions[SelectedIndex - 1]).Text));
-          DoorTextBackground(Crt.Black);
-      end;
-  until (Ch = #13);
+  // Update global variable responses
+  AssignVariable('`V01', OptionIndexes[DoorLiteBarIndex]);
+  Game.RESPONSE := OptionIndexes[DoorLiteBarIndex];
 
   // Move cursor below choice statement
   DoorCursorRestore;
-  DoorCursorDown(VisibleCount - 1);
-  DoorCursorRight(LastVisibleLength);
+  DoorCursorDown(DoorLiteBarOptions.Count - 1);
+  DoorCursorRight(Length(SethStrip(DoorLiteBarOptions[DoorLiteBarOptions.Count - 1])));
 
-  // Update global variable responses
-  Game.RESPONSE := IntToStr(SelectedIndex);
+  OptionIndexes.Free;
 end;
 
 procedure TRTReader.EndFIGHT;

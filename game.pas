@@ -490,8 +490,6 @@ end;
 procedure SavePlayer;
 var
   F: File of TraderDatRecord;
-  I: Integer;
-  Rec: TraderDatRecord;
 begin
   if (PlayerNum <> -1) then
   begin

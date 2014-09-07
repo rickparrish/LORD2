@@ -5,9 +5,9 @@ unit RTReader;
 interface
 
 uses
-  RTChoiceOption, RTGlobal, RTRefLabel, RTRefFile, RTRefSection, Struct,
+  RTGlobal, RTRefLabel, RTRefFile, RTRefSection, Struct,
   Ansi, Door, StringUtils, VideoUtils,
-  Classes, contnrs, Crt, Math, StrUtils, SysUtils;
+  Classes, Crt, Math, StrUtils, SysUtils;
 
 const
   FVersion: Integer = 99;
@@ -24,7 +24,7 @@ type
     FInBUYMANAGER: Boolean;
     FInBUYMANAGEROptions: TStringList;
     FInCHOICE: Boolean;
-    FInCHOICEOptions: TFPObjectList;
+    FInCHOICEOptions: TStringList;
     FInCLOSESCRIPT: Boolean;
     FInDO_ADDLOG: Boolean;
     FInDO_WRITE: Boolean;
@@ -265,7 +265,7 @@ begin
   FInBUYMANAGER := false;
   FInBUYMANAGEROptions := TStringList.Create;
   FInCHOICE := false;
-  FInCHOICEOptions := TFPObjectList.Create;
+  FInCHOICEOptions := TStringList.Create;
   FInCLOSESCRIPT := false;
   FInDO_ADDLOG := false;
   FInDO_WRITE := false;
@@ -1997,13 +1997,14 @@ procedure TRTReader.EndBUYMANAGER;
     DoorWrite('`r5                                                                               ');
     DoorGotoX(1);
     DoorWrite('  `$Q `2to quit, `$ENTER `2to buy item.        You have `$' + IntToStr(Game.Player.Money) + ' `2gold.`r0');
+    DoorCursorRestore;
   end;
 
 var
-  Ch: Char;
   I: Integer;
   Item: ItemsDatRecord;
   ItemIndex: Integer;
+  Option: String;
   SelectedIndex: Integer;
   SelectedItem: ItemsDatRecord;
   StrippedStringLength: Integer;
@@ -2016,115 +2017,60 @@ begin
   DoorCursorSave;
   DoorWrite('`r5`%  Item To Buy                         Price                                     ');
   DrawBottomLine;
-
-  // Draw items for sale
-  DoorCursorRestore;
   DoorCursorDown(1);
+
+  // Setup items for sale
+  DoorLiteBarOptions.Clear;
   for I := 0 to FInBUYMANAGEROptions.Count - 1 do
   begin
     Item := Game.ItemsDat.Item[StrToInt(FInBUYMANAGEROptions[I])];
     StrippedStringLength := Length(SethStrip(Item.Name));
 
-    if (I = 0) then DoorWrite('`r1');
-    DoorWrite('`2  ' + Item.Name);
-    if (I = 0) then DoorWrite('`r0`2');
-    DoorWrite(AddCharR(' ', '', 35 - StrippedStringLength));
-    DoorWrite('`2 $`$' + AddCharR(' ', IntToStr(Item.Value), 8));
-    DoorWriteLn('`2 ' + Item.Description);
+    Option := '';
+    Option += '`2  ' + Item.Name;
+    Option += AddCharR(' ', '', 35 - StrippedStringLength);
+    Option += '`2 $`$' + AddCharR(' ', IntToStr(Item.Value), 8);
+    Option += '`2 ' + Item.Description;
+
+    DoorLiteBarOptions.Add(Option);
   end;
+  DoorLiteBarIndex := 0;
 
-  // Get input
   repeat
-    // TODO Handle arrow keys for lightbar
-    Ch := UpCase(DoorReadKey);
-    if (DoorLastKey.Extended) then
+    if (DoorLiteBar) then
     begin
-      case Ch of
-        'H':
-        begin
-          if (SelectedIndex > 0) then
-          begin
-            // Erase old highlight
-            DoorCursorRestore;
-            DoorCursorDown(SelectedIndex + 1);
-            DoorWrite('`2  ' + SelectedItem.Name);
-
-            // Move up
-            SelectedIndex -= 1;
-            ItemIndex := StrToInt(FInBUYMANAGEROptions[SelectedIndex]);
-            SelectedItem := Game.ItemsDat.Item[ItemIndex];
-
-            // Draw new highlight
-            DoorCursorRestore;
-            DoorCursorDown(SelectedIndex + 1);
-            DoorWrite('`r1  ' + SelectedItem.Name + '`r0`2');
-          end;
-        end;
-
-        'P':
-        begin
-          if (SelectedIndex < (FInBUYMANAGEROptions.Count - 1)) then
-          begin
-            // Erase old highlight
-            DoorCursorRestore;
-            DoorCursorDown(SelectedIndex + 1);
-            DoorWrite('`2  ' + SelectedItem.Name);
-
-            // Move down
-            SelectedIndex += 1;
-            ItemIndex := StrToInt(FInBUYMANAGEROptions[SelectedIndex]);
-            SelectedItem := Game.ItemsDat.Item[ItemIndex];
-
-            // Draw new highlight
-            DoorCursorRestore;
-            DoorCursorDown(SelectedIndex + 1);
-            DoorWrite('`r1  ' + SelectedItem.Name + '`r0`2');
-          end;
-        end;
+      DoorGotoXY(1, 24);
+      DoorWrite('`r4                                                                               ');
+      DoorGotoX(1);
+      if (SelectedItem.Value > Game.Player.Money) then
+      begin
+        DoorWrite('`* ITEM NOT BOUGHT! `%You don''t have enough gold.  `2(`0press a key to continue`2)`r0');
+      end else
+      begin
+        Game.Player.Money -= SelectedItem.Value;
+        Game.Player.I[ItemIndex] += 1;
+        DoorWrite('`* ITEM BOUGHT! `%You now have ' + IntToStr(Game.Player.I[ItemIndex]) + ' of ''em.  `2(`0press a key to continue`2)`r0');
       end;
+      DoorReadKey;
+      DrawBottomLine;
     end else
     begin
-      if (Ch = #13) then
-      begin
-        DoorGotoXY(1, 24);
-        DoorWrite('`r4                                                                               ');
-        DoorGotoX(1);
-        if (SelectedItem.Value > Game.Player.Money) then
-        begin
-          DoorWrite('`* ITEM NOT BOUGHT! `%You don''t have enough gold.  `2(`0press a key to continue`2)`r0');
-        end else
-        begin
-          Game.Player.Money -= SelectedItem.Value;
-          Game.Player.I[ItemIndex] += 1;
-          DoorWrite('`* ITEM BOUGHT! `%You now have ' + IntToStr(Game.Player.I[ItemIndex]) + ' of ''em.  `2(`0press a key to continue`2)`r0');
-        end;
-        DoorReadKey;
-        DrawBottomLine;
-      end;
+      Break;
     end;
-  until (Ch = 'Q');
-
-  // TODO Erase buy manager
-  DoorCursorRestore;
+  until False;
 end;
 
 procedure TRTReader.EndCHOICE;
 const
   IfChars = '=!><+-';
 var
-  Ch: Char;
   I: Integer;
-//  LastVisibleLength: Integer;
   MakeVisible: Boolean;
-  Option: TRTChoiceOption; // TODO Potentially ditch RTCHoiceOption
+  Option: String;
   OptionIndexes: TStringList;
   IfChar: Char;
-//  OldSelectedIndex: Integer;
-//  SelectedIndex: Integer;
-//  Spaces: String;
   Value: String;
   Variable: String;
-//  VisibleCount: Integer;
 begin
   (* @CHOICE
       <A choice>
@@ -2181,24 +2127,24 @@ begin
 
   for I := 0 to FInCHOICEOptions.Count - 1 do
   begin
-    Option := TRTChoiceOption(FInCHOICEOptions.Items[I]);
+    Option := FInCHOICEOptions[I];
     MakeVisible := true;
 
     // Parse out the IF statements
-    while (Pos(Option.Text[1], IfChars) > 0) do
+    while (Pos(Option[1], IfChars) > 0) do
     begin
         // Extract operator
-        IfChar := Option.Text[1];
-        Delete(Option.Text, 1, 1);
+        IfChar := Option[1];
+        Delete(Option, 1, 1);
 
         // Extract variable and translate
-        Variable := StrToTok(Option.Text, ' ')[1];
-        Delete(Option.Text, 1, Length(Variable) + 1);
+        Variable := StrToTok(Option, ' ')[1];
+        Delete(Option, 1, Length(Variable) + 1);
         Variable := TranslateVariables(Variable);
 
         // Extract value
-        Value := StrToTok(Option.Text, ' ')[1];
-        Delete(Option.Text, 1, Length(Value) + 1);
+        Value := StrToTok(Option, ' ')[1];
+        Delete(Option, 1, Length(Value) + 1);
         Value := TranslateVariables(Value);
 
         // Determine result of if
@@ -2215,7 +2161,7 @@ begin
     // Determine if option is visible
     if (MakeVisible) then
     begin
-      DoorLiteBarOptions.Add(TranslateVariables(Option.Text));
+      DoorLiteBarOptions.Add(TranslateVariables(Option));
       OptionIndexes.Add(IntToStr(I + 1)); // This will map the return value of DoorLiteBar to the index in the FInCHOICEOptions array
     end;
   end;
@@ -2943,7 +2889,7 @@ begin
         end else
         if (FInCHOICE) then
         begin
-          FInCHOICEOptions.Add(TRTChoiceOption.Create(Line));
+          FInCHOICEOptions.Add(Line);
         end else
         if (FInDO_ADDLOG) then
         begin

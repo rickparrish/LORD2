@@ -31,7 +31,6 @@ begin
       end;
     end;
   finally
-    Game.SavePlayer;
     DoorShutDown;
   end;
 end.

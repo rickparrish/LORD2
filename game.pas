@@ -483,8 +483,7 @@ end;
 procedure NewExitProc;
 begin
   ExitProc := OldExitProc;
-
-  // TODO Save the player record to file
+  SavePlayer;
 end;
 
 procedure SavePlayer;
@@ -509,9 +508,16 @@ procedure Start;
 var
   Ch: Char;
 begin
+  // Setup exit proc, which ensures the player is saved properly if a HALT is performed
+  OldExitProc := ExitProc;
+  ExitProc := @NewExitProc;
+
   if (LoadDataFiles) then
   begin
     Player.RealName := DoorDropInfo.Alias;
+    Player.LastDayOn := Game.Time;
+    Player.LastDayPlayed := Game.Time;
+    Player.LastSaved := Game.Time;
 
     RTReader.Execute('RULES.REF', 'RULES');
 
@@ -535,10 +541,6 @@ begin
     if (PlayerNum <> -1) then
     begin
       RTReader.Execute('GAMETXT.REF', 'STARTGAME');
-
-      // Setup exit proc, which ensures the player is saved properly if a HALT is performed
-      OldExitProc := ExitProc;
-      ExitProc := @NewExitProc;
 
       LoadMap(Player.Map);
       DrawMap;
@@ -705,12 +707,11 @@ begin
 
     // Repeatedly display litebar until user quits
     repeat
-      // TODO Need a way to tell the litebar how big each page is in case we have many inventory items
       if (DoorLiteBar(11)) then
       begin
         Item := Game.ItemsDat.Item[StrToInt(InventoryItems[DoorLiteBarIndex])];
 
-        // TODO
+        // TODO Equip/use/whatever the item
         DoorGotoXY(1, 24);
         DoorWrite('`r4                                                                               ');
         DoorGotoX(1);

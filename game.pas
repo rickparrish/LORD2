@@ -700,6 +700,7 @@ begin
 
     // Repeatedly display litebar until user quits
     repeat
+      // TODO Need a way to tell the litebar how big each page is in case we have many inventory items
       if (DoorLiteBar) then
       begin
         Item := Game.ItemsDat.Item[StrToInt(InventoryItems[DoorLiteBarIndex])];

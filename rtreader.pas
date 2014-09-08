@@ -2030,6 +2030,7 @@ begin
 
   // Repeatedly display litebar until user quits
   repeat
+    // TODO Need a way to tell the litebar how big each page is in case we have many items to buy
     if (DoorLiteBar) then
     begin
       Item := Game.ItemsDat.Item[StrToInt(FInBUYMANAGEROptions[DoorLiteBarIndex])];
@@ -2115,13 +2116,10 @@ begin
       example, if `p20 was 600 and the user hit the selection:
       "Hey, I have more than 500", RESPONSE would be set to 5. *)
 
-
-  // Determine which options are Visible and assign VisibleIndex
-//  VisibleCount := 0;
-//  LastVisibleLength := 0;
-
-  DoorLiteBarOptions.Clear;
   OptionIndexes := TStringList.Create;
+
+  DoorLiteBarIndex := StrToInt(TranslateVariables('`V01')) - 1;
+  DoorLiteBarOptions.Clear;
 
   for I := 0 to FInCHOICEOptions.Count - 1 do
   begin
@@ -2162,20 +2160,30 @@ begin
       DoorLiteBarOptions.Add(TranslateVariables(Option));
       OptionIndexes.Add(IntToStr(I + 1)); // This will map the return value of DoorLiteBar to the index in the FInCHOICEOptions array
     end;
+
+    // If this is the one we were requested to highlight, then update the DoorLiteBarIndex (in case previous ones were hidden)
+    if (I = DoorLiteBarIndex) then
+    begin
+      if (MakeVisible) then
+      begin
+        // Reassign the lite bar index to the index of the visible item we just added
+        DoorLiteBarIndex := DoorLiteBarOptions.Count - 1;
+      end else
+      begin
+        // Requested item is not visible, so default to the first item
+        DoorLiteBarIndex := 0;
+      end;
+    end;
   end;
 
   // Ensure `V01 specified a valid/visible selection
-  DoorLiteBarIndex := StrToInt(TranslateVariables('`V01'));
-  if ((DoorLiteBarIndex < 1) OR (DoorLiteBarIndex > DoorLiteBarOptions.Count)) then
+  if ((DoorLiteBarIndex < 0) OR (DoorLiteBarIndex > (DoorLiteBarOptions.Count - 1))) then
   begin
-    DoorLiteBarIndex := 1;
+    DoorLiteBarIndex := 0;
   end;
-  DoorLiteBarIndex -= 1; // Turn 1 based to 0 based
-  while Not(DoorLiteBar) do DoorCursorRestore; // TODO Dumb, but avoids user hitting Q.  Maybe add parameter to disable Q
 
-  // TODO Is `V01 the index of the visible elements, or all elements?
-  //      For example if `V01 is 3, and the first item is hidden, does the 3rd item in the list
-  //      or the 3rd visible item (which would be the 4th item in the list) get defaulted?
+  // Display the litebar options until the user picks an option
+  while Not(DoorLiteBar) do DoorCursorRestore; // TODO Dumb, but avoids user hitting Q.  Maybe add parameter to disable Q
 
   // Update global variable responses
   AssignVariable('`V01', OptionIndexes[DoorLiteBarIndex]);

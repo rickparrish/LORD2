@@ -2234,22 +2234,21 @@ var
     Weapon := FightRec.Weapons[Random(Length(FightRec.Weapons))];
 
     // Determine hit amount (copied from RTSoft LORD FAQ, may not be accurate for LORD2)
-    HitAmount := (Weapon.Strength div 2) + Random(Weapon.Strength div 2) - Game.Player.P[5];
+    HitAmount := 1 + (Weapon.Strength div 2) + Random(Weapon.Strength div 2) - Game.Player.P[5]; // P[5] is dodge (personal defense)
     if (Game.Player.ArmourNumber > 0) then HitAmount -= ItemsDat.Item[Game.Player.ArmourNumber].Defence;
 
     // Check for miss or hit
     if (HitAmount <= 0) then
     begin
-      (*
-        You laugh as Chihuahua misses and strikes the ground.
-        You dodge Chihuahua's attack easily.
-        Chihuahua misses as you jump to one side!
-        Your armour absorbs Chihuahua's blow!
-        You are forced to grin as Armored Hedge Hog's puny strike bounces off you.
-      *)
       // Display miss message
       DoorGotoXY(3, 23);
-      DoorWrite('`2You laugh as `0' + FightRec.MonsterName + '`2 misses and strikes the ground.');
+      case Random(5) of
+        0: DoorWrite('`2You dodge `0' + FightRec.MonsterName + '`2''s attack easily.');
+        1: DoorWrite('`2Your armour absorbs `0' + FightRec.MonsterName + '`2''s blow!');
+        2: DoorWrite('`0' + FightRec.MonsterName + '`2 misses as you jump to one side!');
+        3: DoorWrite('`2You laugh as `0' + FightRec.MonsterName + '`2 misses and strikes the ground.');
+        4: DoorWrite('`2You are forced to grin as `0' + FightRec.MonsterName + '`2''s puny strike bounces off you.');
+      end;
     end else
     begin
       // Display hit message
@@ -2282,17 +2281,17 @@ var
     SuperStrike: Boolean;
   begin
     // Determine hit amount (copied from RTSoft LORD FAQ, may not be accurate for LORD2)
-    AttackPower := Game.Player.P[4];
+    AttackPower := Game.Player.P[4]; // P[4] is muscle (personal attack)
     if (Game.Player.WeaponNumber > 0) then AttackPower += ItemsDat.Item[Game.Player.WeaponNumber].Strength;
-    HitAmount := (AttackPower div 2) + Random(AttackPower div 2) - FightRec.Defense;
+    HitAmount := 1 + (AttackPower div 2) + Random(AttackPower div 2) - FightRec.Defense;
 
-    // 8% chance of super strike (testing 100 attacks resulted in 8 super strikes with original L2.EXE)
+    // 12% chance of super strike (it took 421 attacks to generate 50 super strikes with original L2.EXE)
     SuperStrike := false;
-    I := Random(100) + 1;
-    if (I <= 8) then
+    I := Random(241) + 1;
+    if (I <= 12) then
     begin
       SuperStrike := true;
-      HitAmount *= 2; // TODO Unknown if this is correct
+      HitAmount *= 2;
     end;
 
     // Check for miss or hit
@@ -2315,11 +2314,13 @@ var
         DoorWrite('`2You `%SUPER STRIKE`2 for `0' + IntToStr(HitAmount) + '`2 damage!');
       end else
       begin
-        // TODO Display random? hit message
-        // You slap Wild Boar a good one for 3 damage!
-        // You kick Wild Boar hard as you can for 3 damage!
-        // You trip Angry Hen for 3 damage!
-        DoorWrite('`2You trip `0' + FightRec.MonsterName + '`2 for `4' + IntToStr(HitAmount) + '`2 damage!');
+        case Random(4) of
+          0: DoorWrite('`2You trip `0' + FightRec.MonsterName + '`2');
+          1: DoorWrite('`2You slap `0' + FightRec.MonsterName + '`2 a good one');
+          2: DoorWrite('`2You punch `0' + FightRec.MonsterName + '`2 in the jimmy');
+          3: DoorWrite('`2You kick `0' + FightRec.MonsterName + '`2 as hard as you can');
+        end;
+        DoorWrite(' for `4' + IntToStr(HitAmount) + '`2 damage!');
       end;
 
       // Reduce monster hit points
@@ -2337,8 +2338,8 @@ var
         DoorWrite('`2You find `$$' + IntToStr(FightRec.Gold) + '`2 and gain `%' + IntToStr(FightRec.Experience) + '`2 in this battle.`k');
 
         // Rewards
-        Game.Player.P[1] += FightRec.Experience; // TODO Why do we have P[1] and Experience?
-        Game.Player.Experience += FightRec.Experience; // TODO Why do we have P[1] and Experience?
+        Game.Player.P[1] += FightRec.Experience;
+        Game.Player.Experience += FightRec.Experience;
         Game.Player.Money += FightRec.Gold;
 
         if (FightRec.RefFileVictory <> '') AND (FightRec.RefSectionVictory <> '') then
@@ -2371,7 +2372,7 @@ var
       end;
 
       Ch := DoorReadKey;
-      if (Ch in ['4', '6']) then
+      if (Ch in ['4', '6', 'K', 'M']) then
       begin
         if (Result = 'A') then
         begin

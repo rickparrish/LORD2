@@ -660,116 +660,67 @@ var
   I: Integer;
   InventoryItems: TStringList;
   Item: ItemsDatRecord;
-  ItemIndex: Integer;
-  SelectedIndex: Integer;
-  SelectedItem: ItemsDatRecord;
-  StrippedStringLength: Integer;
+  Option: String;
 begin
+  DoorCursorSave;
+  DoorCursorDown(1);
+
   InventoryItems := TStringList.Create;
   for I := 1 to 99 do
   begin
     if (Player.I[I] > 0) then InventoryItems.Add(IntToStr(I));
   end;
 
-  SelectedIndex := 0;
-  ItemIndex := StrToInt(InventoryItems[SelectedIndex]);
-  SelectedItem := Game.ItemsDat.Item[ItemIndex];
-
-  DoorCursorSave;
-
-  // Draw items in inventory
-  DoorCursorDown(1);
-  for I := 0 to InventoryItems.Count - 1 do
+  if (InventoryItems.Count = 0) then
   begin
-    Item := Game.ItemsDat.Item[StrToInt(InventoryItems[I])];
-    StrippedStringLength := Length(SethStrip(Item.Name));
+    InventoryItems.Free;
 
-    if (I = 0) then DoorWrite('`r1');
-    DoorWrite('`2  ' + Item.Name);
-    if (I = 0) then DoorWrite('`r0`2');
-    DoorWrite(AddCharR(' ', '', 35 - StrippedStringLength));
-    DoorWrite('`2 (`0' + IntToStr(Player.I[ItemIndex]) + '`2)' + AddCharR(' ', '', 7 - Length(IntToStr(Player.I[ItemIndex]))));
-    DoorWriteLn('`2 ' + Item.Description);
-  end;
-
-  // Get input
-  repeat
-    // TODO Handle arrow keys for lightbar
-    Ch := UpCase(DoorReadKey);
-    if (DoorLastKey.Extended) then
+    DoorWrite('`2  You are carrying nothing!  (press `%Q`2 to continue)');
+    repeat
+      Ch := UpCase(DoorReadKey);
+    until (Ch = 'Q');
+  end else
+  begin
+    // Setup inventory items
+    DoorLiteBarIndex := 0;
+    DoorLiteBarOptions.Clear;
+    for I := 0 to InventoryItems.Count - 1 do
     begin
-      case Ch of
-        'H':
-        begin
-          if (SelectedIndex > 0) then
-          begin
-            // Erase old highlight
-            DoorCursorRestore;
-            DoorCursorDown(SelectedIndex + 1);
-            DoorWrite('`2  ' + SelectedItem.Name + '`2');
+      Item := Game.ItemsDat.Item[StrToInt(InventoryItems[I])];
 
-            // Move up
-            SelectedIndex -= 1;
-            ItemIndex := StrToInt(InventoryItems[SelectedIndex]);
-            SelectedItem := Game.ItemsDat.Item[ItemIndex];
+      Option := '';
+      Option += '`2  ' + Item.Name;
+      Option += AddCharR(' ', '', 35 - Length(SethStrip(Item.Name)));
+      Option += '`2 (`0' + IntToStr(Player.I[StrToInt(InventoryItems[I])]) + '`2)' + AddCharR(' ', '', 7 - Length(IntToStr(Player.I[StrToInt(InventoryItems[I])])));
+      Option += '`2 ' + Item.Description;
+      Option += AddCharR(' ', '', 31 - Length(SethStrip(Item.Description)));
 
-            // Draw new highlight
-            DoorCursorRestore;
-            DoorCursorDown(SelectedIndex + 1);
-            DoorWrite('`r1  ' + SelectedItem.Name + '`r0`2');
-          end;
-        end;
-
-        'P':
-        begin
-          if (SelectedIndex < (InventoryItems.Count - 1)) then
-          begin
-            // Erase old highlight
-            DoorCursorRestore;
-            DoorCursorDown(SelectedIndex + 1);
-            DoorWrite('`2  ' + SelectedItem.Name + '`2');
-
-            // Move down
-            SelectedIndex += 1;
-            ItemIndex := StrToInt(InventoryItems[SelectedIndex]);
-            SelectedItem := Game.ItemsDat.Item[ItemIndex];
-
-            // Draw new highlight
-            DoorCursorRestore;
-            DoorCursorDown(SelectedIndex + 1);
-            DoorWrite('`r1  ' + SelectedItem.Name + '`r0`2');
-          end;
-        end;
-      end;
-    end else
-    begin
-      case Ch of
-        #13:
-        begin
-          // TODO
-        end;
-
-        'D':
-        begin
-          // TODO Drop
-        end;
-
-        'N':
-        begin
-          // TODO Next page
-        end;
-
-        'P':
-        begin
-          // TODO Prev page
-        end;
-      end;
+      DoorLiteBarOptions.Add(Option);
     end;
-  until (Ch = 'Q');
 
-  // Exit inventory
-  DoorCursorRestore;
-  InventoryItems.Free;
+    // Repeatedly display litebar until user quits
+    repeat
+      if (DoorLiteBar) then
+      begin
+        Item := Game.ItemsDat.Item[StrToInt(InventoryItems[DoorLiteBarIndex])];
+
+        // TODO
+        DoorGotoXY(1, 24);
+        DoorWrite('`r4                                                                               ');
+        DoorGotoX(1);
+        DoorWrite('`* ' + Item.Name + '  `2(`0press a key to continue`2)`r0');
+        DoorReadKey;
+        DoorCursorRestore;
+      end else
+      begin
+        Break;
+      end;
+    until False;
+
+    // Exit inventory
+    DoorCursorRestore;
+    InventoryItems.Free;
+  end;
 end;
 
 begin

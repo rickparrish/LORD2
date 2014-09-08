@@ -2002,6 +2002,7 @@ procedure TRTReader.EndBUYMANAGER;
 var
   I: Integer;
   Item: ItemsDatRecord;
+  ItemName: String;
   Option: String;
 begin
   // Draw top and bottom lines
@@ -2017,10 +2018,14 @@ begin
   for I := 0 to FInBUYMANAGEROptions.Count - 1 do
   begin
     Item := Game.ItemsDat.Item[StrToInt(FInBUYMANAGEROptions[I])];
+    ItemName := Item.Name; // Item.Name can only hold 30, so we need a temp variable
+    if (Item.Armour) then ItemName += ' `0A`2';
+    if (Item.Weapon) then ItemName += ' `4W`2';
+    if (Item.UseOnce) then ItemName += ' `51`2';
 
     Option := '';
-    Option += '`2  ' + Item.Name;
-    Option += AddCharR(' ', '', 35 - Length(SethStrip(Item.Name)));
+    Option += '`2  ' + ItemName;
+    Option += AddCharR(' ', '', 35 - Length(SethStrip(ItemName)));
     Option += '`2 $`$' + AddCharR(' ', IntToStr(Item.Value), 8);
     Option += '`2 ' + Item.Description;
     Option += AddCharR(' ', '', 31 - Length(SethStrip(Item.Description)));
@@ -2031,7 +2036,7 @@ begin
   // Repeatedly display litebar until user quits
   repeat
     // TODO Need a way to tell the litebar how big each page is in case we have many items to buy
-    if (DoorLiteBar) then
+    if (DoorLiteBar(DoorLiteBarOptions.Count)) then // TODO Should calculate size based on WhereY
     begin
       Item := Game.ItemsDat.Item[StrToInt(FInBUYMANAGEROptions[DoorLiteBarIndex])];
 
@@ -2183,7 +2188,7 @@ begin
   end;
 
   // Display the litebar options until the user picks an option
-  while Not(DoorLiteBar) do DoorCursorRestore; // TODO Dumb, but avoids user hitting Q.  Maybe add parameter to disable Q
+  while Not(DoorLiteBar(DoorLiteBarOptions.Count)) do DoorCursorRestore; // TODO Dumb, but avoids user hitting Q.  Maybe add parameter to disable Q
 
   // Update global variable responses
   AssignVariable('`V01', OptionIndexes[DoorLiteBarIndex]);

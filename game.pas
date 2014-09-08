@@ -660,6 +660,7 @@ var
   I: Integer;
   InventoryItems: TStringList;
   Item: ItemsDatRecord;
+  ItemName: String;
   Option: String;
 begin
   DoorCursorSave;
@@ -687,10 +688,14 @@ begin
     for I := 0 to InventoryItems.Count - 1 do
     begin
       Item := Game.ItemsDat.Item[StrToInt(InventoryItems[I])];
+      ItemName := Item.Name; // Item.Name can only hold 30, so we need a temp variable
+      if (Item.Armour) then ItemName += ' `0A`2';
+      if (Item.Weapon) then ItemName += ' `4W`2';
+      if (Item.UseOnce) then ItemName += ' `51`2';
 
       Option := '';
-      Option += '`2  ' + Item.Name;
-      Option += AddCharR(' ', '', 35 - Length(SethStrip(Item.Name)));
+      Option += '`2  ' + ItemName;
+      Option += AddCharR(' ', '', 35 - Length(SethStrip(ItemName)));
       Option += '`2 (`0' + IntToStr(Player.I[StrToInt(InventoryItems[I])]) + '`2)' + AddCharR(' ', '', 7 - Length(IntToStr(Player.I[StrToInt(InventoryItems[I])])));
       Option += '`2 ' + Item.Description;
       Option += AddCharR(' ', '', 31 - Length(SethStrip(Item.Description)));
@@ -701,7 +706,7 @@ begin
     // Repeatedly display litebar until user quits
     repeat
       // TODO Need a way to tell the litebar how big each page is in case we have many inventory items
-      if (DoorLiteBar) then
+      if (DoorLiteBar(11)) then
       begin
         Item := Game.ItemsDat.Item[StrToInt(InventoryItems[DoorLiteBarIndex])];
 

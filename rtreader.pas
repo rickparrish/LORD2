@@ -1997,62 +1997,60 @@ procedure TRTReader.EndBUYMANAGER;
     DoorWrite('`r5                                                                               ');
     DoorGotoX(1);
     DoorWrite('  `$Q `2to quit, `$ENTER `2to buy item.        You have `$' + IntToStr(Game.Player.Money) + ' `2gold.`r0');
-    DoorCursorRestore;
   end;
 
 var
   I: Integer;
   Item: ItemsDatRecord;
-  ItemIndex: Integer;
   Option: String;
-  SelectedIndex: Integer;
-  SelectedItem: ItemsDatRecord;
-  StrippedStringLength: Integer;
 begin
-  SelectedIndex := 0;
-  ItemIndex := StrToInt(FInBUYMANAGEROptions[SelectedIndex]);
-  SelectedItem := Game.ItemsDat.Item[ItemIndex];
-
   // Draw top and bottom lines
   DoorCursorSave;
   DoorWrite('`r5`%  Item To Buy                         Price                                     ');
   DrawBottomLine;
+  DoorCursorRestore;
   DoorCursorDown(1);
 
   // Setup items for sale
+  DoorLiteBarIndex := 0;
   DoorLiteBarOptions.Clear;
   for I := 0 to FInBUYMANAGEROptions.Count - 1 do
   begin
     Item := Game.ItemsDat.Item[StrToInt(FInBUYMANAGEROptions[I])];
-    StrippedStringLength := Length(SethStrip(Item.Name));
 
     Option := '';
     Option += '`2  ' + Item.Name;
-    Option += AddCharR(' ', '', 35 - StrippedStringLength);
+    Option += AddCharR(' ', '', 35 - Length(SethStrip(Item.Name)));
     Option += '`2 $`$' + AddCharR(' ', IntToStr(Item.Value), 8);
     Option += '`2 ' + Item.Description;
+    Option += AddCharR(' ', '', 31 - Length(SethStrip(Item.Description)));
 
     DoorLiteBarOptions.Add(Option);
   end;
-  DoorLiteBarIndex := 0;
 
+  // Repeatedly display litebar until user quits
   repeat
     if (DoorLiteBar) then
     begin
+      Item := Game.ItemsDat.Item[StrToInt(FInBUYMANAGEROptions[DoorLiteBarIndex])];
+
       DoorGotoXY(1, 24);
       DoorWrite('`r4                                                                               ');
       DoorGotoX(1);
-      if (SelectedItem.Value > Game.Player.Money) then
+
+      if (Item.Value > Game.Player.Money) then
       begin
         DoorWrite('`* ITEM NOT BOUGHT! `%You don''t have enough gold.  `2(`0press a key to continue`2)`r0');
       end else
       begin
-        Game.Player.Money -= SelectedItem.Value;
-        Game.Player.I[ItemIndex] += 1;
-        DoorWrite('`* ITEM BOUGHT! `%You now have ' + IntToStr(Game.Player.I[ItemIndex]) + ' of ''em.  `2(`0press a key to continue`2)`r0');
+        Game.Player.Money -= Item.Value;
+        Game.Player.I[StrToInt(FInBUYMANAGEROptions[DoorLiteBarIndex])] += 1;
+        DoorWrite('`* ITEM BOUGHT! `%You now have ' + IntToStr(Game.Player.I[StrToInt(FInBUYMANAGEROptions[DoorLiteBarIndex])]) + ' of ''em.  `2(`0press a key to continue`2)`r0');
       end;
+
       DoorReadKey;
       DrawBottomLine;
+      DoorCursorRestore;
     end else
     begin
       Break;

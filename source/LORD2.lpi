@@ -113,12 +113,12 @@
     <Version Value="11"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value="bin\$(TargetCPU)-$(TargetOS)\LORD2"/>
+      <Filename Value="..\bin\$(TargetCPU)-$(TargetOS)\LORD2"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="..\rmdoor"/>
-      <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
+      <OtherUnitFiles Value="..\..\RMDoor"/>
+      <UnitOutputDirectory Value="..\obj\$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <CodeGeneration>
       <TargetCPU Value="i386"/>

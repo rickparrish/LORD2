@@ -1,0 +1,147 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <ProjectOptions>
+    <Version Value="9"/>
+    <PathDelim Value="\"/>
+    <General>
+      <Flags>
+        <MainUnitHasCreateFormStatements Value="False"/>
+      </Flags>
+      <SessionStorage Value="InProjectDir"/>
+      <MainUnit Value="0"/>
+      <Title Value="Legend of the Red Dragon II"/>
+      <UseAppBundle Value="False"/>
+      <ResourceType Value="res"/>
+    </General>
+    <i18n>
+      <EnableI18N LFM="False"/>
+    </i18n>
+    <VersionInfo>
+      <StringTable ProductVersion=""/>
+    </VersionInfo>
+    <BuildModes Count="1">
+      <Item1 Name="Win32" Default="True"/>
+    </BuildModes>
+    <PublishOptions>
+      <Version Value="2"/>
+      <IncludeFileFilter Value="*.(pas|pp|inc|lfm|lpr|lrs|lpi|lpk|sh|xml)"/>
+      <ExcludeFileFilter Value="*.(bak|ppu|o|so);*~;backup"/>
+    </PublishOptions>
+    <RunParams>
+      <local>
+        <FormatVersion Value="1"/>
+      </local>
+    </RunParams>
+    <Units Count="15">
+      <Unit0>
+        <Filename Value="LORD2.lpr"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="LORD2"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="game.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Game"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="struct.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Struct"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="rtreader.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="RTReader"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="rtglobal.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="RTGlobal"/>
+      </Unit4>
+      <Unit5>
+        <Filename Value="manndoor\units\elecom\rtreffile.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="RTRefFile"/>
+      </Unit5>
+      <Unit6>
+        <Filename Value="rtrefsection.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="RTRefSection"/>
+      </Unit6>
+      <Unit7>
+        <Filename Value="rtreflabel.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="RTRefLabel"/>
+      </Unit7>
+      <Unit8>
+        <Filename Value="rtchoiceoption.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="RTChoiceOption"/>
+      </Unit8>
+      <Unit9>
+        <Filename Value="rmdoor\stringutils.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="StringUtils"/>
+      </Unit9>
+      <Unit10>
+        <Filename Value="rmdoor\door.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Door"/>
+      </Unit10>
+      <Unit11>
+        <Filename Value="rmdoor\ansi.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Ansi"/>
+      </Unit11>
+      <Unit12>
+        <Filename Value="rmdoor\comm.pass.pas"/>
+        <IsPartOfProject Value="True"/>
+      </Unit12>
+      <Unit13>
+        <Filename Value="rmdoor\dropfiles.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="DropFiles"/>
+      </Unit13>
+      <Unit14>
+        <Filename Value="rmdoor\videoutils.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="VideoUtils"/>
+      </Unit14>
+    </Units>
+  </ProjectOptions>
+  <CompilerOptions>
+    <Version Value="11"/>
+    <PathDelim Value="\"/>
+    <Target>
+      <Filename Value="..\bin\$(TargetCPU)-$(TargetOS)\LORD2"/>
+    </Target>
+    <SearchPaths>
+      <IncludeFiles Value="$(ProjOutDir)"/>
+      <OtherUnitFiles Value="..\..\RMDoor"/>
+      <UnitOutputDirectory Value="..\obj\$(TargetCPU)-$(TargetOS)"/>
+    </SearchPaths>
+    <CodeGeneration>
+      <TargetCPU Value="i386"/>
+      <TargetOS Value="win32"/>
+    </CodeGeneration>
+    <Other>
+      <CompilerMessages>
+        <MsgFileName Value=""/>
+      </CompilerMessages>
+      <CompilerPath Value="$(CompPath)"/>
+    </Other>
+  </CompilerOptions>
+  <Debugging>
+    <Exceptions Count="3">
+      <Item1>
+        <Name Value="EAbort"/>
+      </Item1>
+      <Item2>
+        <Name Value="ECodetoolError"/>
+      </Item2>
+      <Item3>
+        <Name Value="EFOpenError"/>
+      </Item3>
+    </Exceptions>
+  </Debugging>
+</CONFIG>

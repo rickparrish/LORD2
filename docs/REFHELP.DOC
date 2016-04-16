@@ -1,0 +1,557 @@
+
+        *******  HOW TO MAKE YOUR OWN REF FILES FOR RTREADER *******
+
+                           For Version .002
+
+Since RTREADER is freeware, this means anybody can use it - For mags,
+newsletters, Bulletin board logon news, whatever.
+
+I only request you don't change this ZIP.  (for instance, packaging it
+without docs and RTNEWS02.REF)  If you want to create a special ZIP
+including this for your users or something, please run the ZIP by me
+first.
+
+The heart of this system is the .REF format.  It is a script language that
+can be used to do complex gaming things, like math and getting random
+numbers, adding and deleting other varibles in the game - nearly
+everything a simple basic could do.
+
+REF is short for - (Not sure at this point).
+
+Although tricky at first, making a ref file is really pretty simple.  If
+something doesn't work, just go look at your .REF file, (a simple text
+file) and fix it!
+
+ To see a demonstration of most commands, check out RTNEWS02.REF, included
+ with this archive.
+
+ *  If a command isn't understood, it will tell you upon execution.
+ *  .REF size is limited only by your total ram
+ *  REF files are completely loaded, and interpreted BEFORE execution for
+    speed.
+ *  Allows BEGIN and END statements, thousands of levels deep.
+ *  Ansi and SethAnsi (Sorry, don't have another name yet, <G> ) are
+    automatically displayed correctly locally and remotely.
+
+IN THIS DOC FILE:
+
+1.  Varibles used by the .REFs
+
+2.  Compact Command list
+
+3.  About headers
+
+4.  Explanation of each command in detail
+
+5.  String and file commands
+
+6.  @SAY and other special commands
+
+7.  The Shell command
+
+8.  Known problems & comments
+
+                  ** Varibles the REF's use: **
+
+
+LOCAL : Will equal 5 if the ref is being viewed locally, otherwise 0.
+RESPONCE : What @CHOICE returned.
+
+    NOTE:  If the following are found in a string being displayed they
+           will be replaces with their values.
+
+`V01 through `V40 These are the 40 global varibles. (for numbers)
+`P01 through `P20 These are the 20 more varibles. (for numbers)
+`S01 through `S10 These are 10 string varibles. (for text)
+`N this is the users name.
+`G Current Graphics Level
+`X Adds a space.
+`D Sends a #8 (delete).
+`0 through `9 and `! through `^ change color.
+`W One tenth a second wait
+`L About a half second wait
+
+(NOTE, these waits are the SAME on all computers, goes by the clock)
+
+(NOTE:  No varibles are saved after RTREADER is exitted, however, you can
+ save what you wish with the @WRITEFILE and @READFILE commands)
+
+
+***************** COMMAND LIST, A GOOD THING TO PRINT! *******************
+
+@DO GOTO <header or LABEL name>
+@NOCHECK : This makes it not scan for labels/headers before running it.
+@ROUTINE <Header or label name> IN <Filename of .REF file>
+@RUN <Header or label name> IN <Filename of .REF file>
+@CHOICE
+@VERSION  <Version it needs>
+@SHOW  : Shows following text/ansi.  Stops when a @ is hit on
+@SHOWLOCAL : Same thing, but shows LOCALLY only.
+@SHOW SCROLL : Same thing, but puts all the text in a nifty scroll window
+@DO WRITE
+@DO BEEP :  Makes a weird beep noise, locally only
+@DISPLAY <Header> IN <Filename> <options> : This displays a sectioned
+                 defined by headers.  Options are:  NOPAUSE and NOSKIP.
+@DISPLAYFILE <name> <options> : Display entire file.  Same options as above
+@IF <Varible> <Math> <Varible> (Math can be MORE, LESS, NOT, IS)
+@GRAPHICS IS <Num> :  3 or more enable remote ANSI.  If you never wanted
+@CLOSESCRIPT : This ends the script.
+@CLEAR SCREEN: Clears entire screen.
+@KEY : Does a [MORE] prompt, centered on current line.
+@KEY NODISPLAY : Waits for keypress without saying anything.
+@DO <Var To Change> <How To Change It> <Change With What>
+Ways to change it:(-,+,/,*,IS)
+@DO <Varible to put # in> RANDOM <Highest random number> <number added to it>
+@DO MOVE <X> <Y> : This moves the curser.  (like GOTOXY in TP) Enter 0 for
+@DO GETKEY <String var to put it in> : This command is usefull, *IF* a key
+@DO READNUM <MAX LENGTH> (Optional: <FOREGROUND COLOR> <BACKGROUND COLOR>
+<DEFAULT>: The number is put into `V40.
+@DO READSTRING <MAX LENGTH> <DEFAULT> <VAR TO PUT IT IN> : Get a string.
+@DO `S04 ADD <thing or vars to add to string>
+@DO COPY TO NAME  Put whatever is in `S10 into `N.  (name)
+@IF <Word or var> INSIDE <Word or var> THEN (ect) :  Allows you to search
+a string for something inside of it.  Not case sensitive.
+@DO STRIP <string var> : This strips beginning and end spaces of a string.
+@DO UPCASE <string var> : Makes a string all capitals.
+@DO STRIPBAD <string var> : Strips all ` codes out, EXCEPT color codes.
+@DO NUMRETURN <`p or `v var> <string or string var> : This returns the
+@DO REPLACE <What> <Withthis> <Inthis> : Replaces something in string
+@DO REPLACEALL <What> <Withthis> <Inthis> : Replaces all in string
+@DO <num var> IS LENGTH <String var>  : Gets length, smart way.
+@DO <num var> IS REALLENGTH <String var>  : Gets length dumb way. (includes
+@DO PAD <string var> <length> :  Adds spaces to end until string is as long
+                                 as <length>.
+@IF <name of file> EXISTS TRUE THEN (..ect..)
+@IF <name of file> EXISTS FALSE THEN (..ect..)
+@WRITEFILE <file name>
+<Thing to write>
+<Thing to write>
+<ect until next @ at beginning of string is hit>
+@READFILE <file name>
+<Var to read into>
+<Var to read into>
+<Ect until next @ at beginning of string is hit>
+@DELETE <file name>
+@DO DELETE <file name>  : Both delete a file.
+@DO TRIM <file name> <number to trim to> :  Trims text file
+@HALT <error level> : Quits and returns correct error level.
+@SHELL <.EXE, BAT or COM> <Parms, up to 8> (note, use `* for node num)
+@DECLARE <Label/header name> <offset in decimal format>
+
+                      ** About headers **
+
+Some may be familiar with the way the door LORD keeps track of it's many
+ansi's and other display files.  It gives each one a HEADER.  Any header
+can be reached with a @DO GOTO <header name> command.
+
+Example header:
+
+@#START
+
+
+This MUST be in a ref file, this is where RTREADER will start.  Anytime
+you wish to return to the start, just do a:
+@DO GOTO START
+command.
+
+                      ** Another kind of header **
+
+Anytime RTREADER hit's a @#, it knows another section is starting, and
+quits.  If you would like to use goto commands INSIDE of a 'section', use
+the @LABEL command.  They work like headers, but don't cause a section to
+'quit'.
+
+Example:
+
+@LABEL LOOP
+
+@DO GOTO LOOP
+
+You can have as many headers/labels as you want, however, the first 300
+'headers' and 'labels' will be INSTANT access, anything past will not be
+quite as quick.
+
+This 'speed up' routine runs by default on all .REF files.  (Processes the
+labels and headers before running)
+
+This takes a noticable pause when doing so, so you may wish to disable this
+feature.  Add a
+
+@NOCHECK
+
+Somewhere near the beginning, it won't check past that point.
+
+Also, the Reader is now capable of mapping labels/headers on the fly if it
+runs across one that isn't - So the SECOND time you run GOTO it, it's
+instantanous.  (this is always active)
+
+@DECLARE <Label/header name> <offset in decimal format>
+
+This statement allows you to declare a label, and where it is.  Don't
+use this unless you know what you are doing - I was thinking I could make
+a SPEEDREF.EXE that simply maps out all the headers and makes them all
+@DECLARE statements, followed by a @NOCHECK and puts them in the beginning.
+
+This would be tricky because every time you add something, the offset
+changes...
+
+
+NOTE:  Headers like all other commands in RTREADER are *NOT* case
+       sensitive.  You can type the whole thing in lowercase, or uppercase
+       - or mixed.  It just don't matter man.
+
+
+                      ** Basic command list: **
+
+
+@GRAPHICS IS <Num> :  3 or more enable remote ANSI.  If you never wanted
+                      to send ANSI, you could set this to 1. You will
+                      probably never touch this one.
+
+@ROUTINE <Header or label name> IN <Filename of .REF file>
+
+The @ROUTINE command is usefull - You can use it jump to a completely new
+.REF file - when it's finished there, instead of dropping to DOS, it will
+load back up the original .REF file and continue where it left off.
+
+@RUN <Header or label name> IN <Filename of .REF file>
+
+Same thing as above, but doesn't come back to the original .REF.
+
+@CHOICE
+<A choice>
+<another choice>
+<ect..When a @ is found in the beginning of a choice it quits>
+
+This gives the user a choice.
+
+The responce is put into varible RESPONCE.  To set which choice the curser
+starts on, put that number into `V01.
+
+** EXAMPLE OF @CHOICE COMMAND **
+
+@DO `V01 IS 1
+
+(now the choice part)
+
+@CHOICE
+Yes   <- Defaults to this, since it's 1
+No
+I don't know
+Who cares
+@IF RESPONCE IS 3 THEN DO
+  @BEGIN
+  @DO `P01 IS RESPONCE
+  @SHOW
+
+You chose `P01!, silly boy!
+
+  @END
+
+@VERSION  <Version it needs>  : For instance, you would put
+          @VERSION 2 for this version of RTREADER.  (002) If it is run
+          on Version 1, (could happen) a window will pop up warning the
+          person he had better get the latest version.
+
+@SHOW           : Shows following text/ansi.  Stops when a @ is hit on
+                  beginning of line.
+
+@SHOW SCROLL          : Same thing, but puts all the text in a nifty scroll
+                        window. (scroll window has commands line Next Screen,
+                        Previous Screen, Start, End and eXtract to file.
+                        (that last one is only shown and executed locally)
+
+@SHOWLOCAL : Same thing as @SHOW but shows LOCALLY only.  Good for
+             a plethora of things, I'm sure.
+
+@DO WRITE
+<Stuff to write>
+
+Same thing as regular @SHOW, but does only one line, without a
+line feed.  Used with @DO MOVE this is good for putting prompts,
+right in front of READNUM and READSTRING's.
+
+NOTE:  You can use Vars mixed with text, ansi and color codes in the
+<stuff to write> part.  Works this way with most stuff.
+
+@DISPLAY <Headername> IN <Filename> <options> : Displays all in given
+                                                segment.  Used in Newworld
+
+@DISPLAYFILE <filename> <options> : This display an entire file.  Possible
+                                  options are:  NOPAUSE and NOSKIP.  Put a
+                                  space between options if you use both.
+
+@IF <Varible> <Math> <Thing the varible must be, or more or less then, or
+another varible>  (Possible math functions: EQUALS, MORE, LESS, NOT)
+
+
+@CLOSESCRIPT : This ends the script.
+@CLEAR SCREEN: Clears entire screen.
+@KEY : Does a [MORE] prompt, centered on current line.
+@KEY NODISPLAY : Waits for keypress without saying anything.
+
+@DO : This statement does a lot - It can be put a the end of a @IF statement
+      also.  (Some commands need @DO in front, some don't.  If they do, they
+      can be used at the end of an @IF statement, if not, you can't.  (like
+      @SHOW)  You would need to use the @BEGIN and @END with the @IF to do
+      it conditionally.
+
+EXAMPLES OF @DO:
+
+Possible DO math symbols are:
+
+@DO <Number To Change> <How To Change It> <Change With What>
+
+Ways to change it:
+
+- <- Take number away
++ <- Addition
+/ <- Division
+* <- Multiplication
+IS <- Makes same as
+
+NOTE:  You can also do this with `S (string vars) but you are limited to
+only using IS.  (no math can be done with strings) (See the string section)
+
+@IF `V04 MORE 500 THEN DO `V04 - 500
+(This would take 500 from `V04 if they had it)
+(+ would add money, IS would MAKE it 500)
+@IF `V04 MORE 500 THEN DO
+ @BEGIN
+ @SHOW
+ `2You have more then 500!  In fact you have `V04!
+ @END
+ (if @BEGIN is followed by a @DO it will be executed, otherwise skipped)
+ (In @DO WRITE, @SAY and @SHOW (Except SHOW SCROLL) it will print the `V,
+  `P and `S varibles - It also understands:
+ `N (user name)
+ `* (node number)
+
+@DO <Varible to put # in> RANDOM <Highest random number> <number to add to it>
+
+This is how you generate random numbers.  To generate a number between 500 and
+1000 and put it in varible `P05 you would put:
+
+@DO `P05 RANDOM 500 500
+
+@DO MOVE <X> <Y> : This moves the curser.  (like GOTOXY in TP) Enter 0 for
+                   a number will default to 'current location'.
+
+
+               **** STRING AND FILE COMMANDS ****
+
+@DO GETKEY <String var to put it in> : This command is usefull, *IF* a key
+                                       IS CURRENTLY being pressed, it puts
+                                       that key into the string var.
+                                       Otherwise, it puts a '_' in to signal
+                                       no key was pressed.
+
+                                       Good way to stop a loop.
+
+@DO READNUM <MAX LENGTH> (Optional: <FOREGROUND COLOR> <BACKGROUND COLOR>
+<DEFAULT>: The number is put into `V40.
+
+The READNUM procedure is a very nice string editer to get a number in. It
+supports arrow keys and such.
+
+@DO READSTRING <MAX LENGTH> <DEFAULT> <VAR TO PUT IT IN> : Get a string.
+Uses same string editer as READNUM.
+
+Note:  You can only use the `S01 through `S10 vars for READSTRING.  You
+can also use these vars for the default.  (or `N)  Use NIL if you want
+the default to be nothing.  (if no Var to put it in is specified, it will
+be put into `S10 for compatibilty with old .REF's)
+
+@DO COPY TO NAME  Put whatever is in `S10 into `N.  (name)
+
+To make a string EQUAL something, you would do it like this:
+@DO `S04 IS Hello I am
+(OR)
+@DO `S04 ADD A programmer
+(OR)
+
+@DO `S04 IS `S02 <- Would copy `S02 to `S04.
+
+Note:  There you can only have three spaces per string defination.
+       Use the ADD to make a long string.  OR use `X to make spaces, this
+       way you can have many spaces in one @DO.
+
+
+@IF <Word or var> INSIDE <Word or var> THEN (ect) :  Allows you to search
+a string for something inside of it.  Not case sensitive.
+
+@DO STRIP <string var> : This strips beginning and end spaces of a string.
+@DO UPCASE <string var> : Makes a string all capitals.
+
+@DO STRIPBAD <string var> : Strips all ` codes out, EXCEPT color codes.
+
+@DO NUMRETURN <`p or `v var> <string or string var> : This returns the
+                                                      number of NUMBERS in
+                                                      the string.  Heck, this
+                                                      could be accomplished
+                                                      using the replace and
+                                                      inside commands also.
+
+@DO REPLACE <What> <Withthis> <Inthis> : Replaces something in string
+@DO REPLACEALL <What> <Withthis> <Inthis> : Replaces all in string
+
+These are valuable - You can replace the first instance, or all of
+word or char in a `s varible.  For instance, to DELETE all 0's in a
+string enter this:
+
+@DO REPLACE 0 NIL `s03
+
+You could use the same with `x to delete all spaces in a string.
+
+Handy for changing bad words to 'good words' also.
+
+@DO <num var> IS LENGTH <String var>  : Gets length, smart way.
+@DO <num var> IS REALLENGTH <String var>  : Gets length dumb way. (includes
+                                            '`' codes without deciphering
+                                            them.)
+
+
+@DO PAD <string var> <length> :  Adds spaces to end until string is as long
+                                 as <length>.
+
+NOTE:  Pad automatically does not include color codes in the length, and DOES
+       include varibles in the length.  (like if there was a `s02 inside the
+       string)  (my God.. If you were displaying `s01 and it had a `s01 in
+                it, wouldn't it display forever?  I'll have to check that.)
+
+
+@IF <name of file> EXISTS TRUE THEN (..ect..)
+@IF <name of file> EXISTS FALSE THEN (..ect..)
+
+NOTE:  The above "name of file" can be a var, num or string, or even mixed.
+       If if not stated, most commands are capable of this.
+
+@WRITEFILE <file name>
+<Thing to write>
+<Thing to write>
+<ect until next @ at beginning of string is hit>
+
+<Thing to write> can be a varible, (string or num) or it can be a word you
+ write - or a combination of the two.
+
+Note:  @WRITEFILE appends the lines if the file exists, otherwise it
+       creates it.  File locking techniques are used.
+
+@READFILE <file name>
+<Var to read into>
+<Var to read into>
+<Ect until next @ at beginning of string is hit>
+
+This works just like @WRITEFILE.  You can use String and Number vars, just
+be warned if a number var attempts to read a string, you will always get
+0.
+
+NOTE:  @READFILE is a smart procedure - It will not run-time error or
+       anything, even if you try to read past the end of the file. It
+       simply won't change the vars if the file isn't long enough.
+
+@DELETE <file name>
+@DO DELETE <file name>  : Both delete a file.
+
+@DO TRIM <file name> <number to trim to> :  This nifty command makes text
+                                            file larger than <number to trim
+                                            to> get smaller.  (it deletes
+                                            lines from the top until file
+                                            is correct # of lines, if smaller
+                                            than num, it doesn't change the
+                                            file)
+
+Note:  On *ALL* of these file commands, you cannot give a path.  A path
+       will be put in the beginning, so file commands can only be used in
+       the current dir.
+
+
+
+                   ****** SPECIAL TALKING COMMANDS ******
+
+      These commands are tricky to use, they are used in RTNEWS02.REF,
+      (the talking to Seth part) but most people probably don't want to
+      hassle with getting the pics in the exact right spot for everything
+      to look right.  (it's a New World thing)
+
+
+@SAY : All text UNDER this will be put in the 'talk window' until a @ is
+hit.
+@KEY TOP : Does <MORE> prompt at game text window.
+@KEY BOTTOM : Does <MORE> prompt at user text window.
+@CLEAR NAME : Deletes the name line of the game window.
+@CLEAR USERSCREEN: Clears user text.
+@CLEAR TEXT: Clears game text.
+@CLEAR PICTURE: Clears pic.
+@CLEAR ALL : Clears user text, pic, game text, name and redraws screen.
+
+                 ****** THE SHELL COMMAND ******
+
+A powerful feature of RTREADER is the ability to run OTHER programs inside
+of it, and return to the exact spot it left automatically.
+
+@SHELL <.EXE, BAT or COM> <Parms, up to 8> (note, use `* for node num)
+
+When this happens, two files are created.
+
+DO<node num>.BAT is created.  This is actually the file that is run.
+
+INFO.<node num> is created.  Simular to LORD's INFO.? system.
+
+This text file contains the following:
+
+Users first name
+Users Last Name
+Ref file it was reading before shelling
+Offset of ref file (where it was when it shelled)
+Graphics <- Passed from drop file, usually between 2 and 5.
+Time Left
+Com Port
+Baud Rate
+Lockbaud
+FOSSIL (or INTERNAL or DIGI)
+
+Note:  The procedure RTREADER uses upon 're-entry' is it reads the proper
+       NODE<node num>.DAT file, *THEN* it reads the INFO.? file and fills
+       in the gaps.  It does read the Time Left back in also.
+
+                    ****** KNOWN PROBLEMS AND COMMENTS *******
+
+1.  The docs suck.  I wrote this in a hurry, and it shows - hopefully I'll
+    have it re-written later by someone with some skill! :>
+
+2.  There are some strange things going on with the @SAY word wrap window.
+    It works, but does not always wrap perfectly.  Future versions will
+    have a 'definable' window size.  The routine is actually in this one, but
+    I have not implented any way to control the default window size.
+
+3.  Although tricks of the trade can speed up even long .REF's, there is 
+    still a MASSIVE slowdown when doing a (P)revious page or (E)nd of file
+    in the @SHOW SCROLL command.  The scroll bar is nifty, but scroll a
+    350 K file and you'll be waiting around 4 seconds per-page-flip when
+    going in REVERSE near the end of the file.
+
+    @SHOW SCROLL is the only slow thing however. 
+
+4.  The way some commands use @DO first and some don't is confusing.  If you
+    get a "GOTO" COMMAND NOT KNOWN error, it's because you typed @GOTO 
+    instead of @DO GOTO, keep this in mind when 'NOT KNOWN's pop up.
+
+5.  RTWall is ANSI only.  ASCII support was not implemented exactly - So you
+    shouldn't let any ANSI users use it.  UNLESS you specify a .REF that has
+    no ansi in it.  And no @CHOOSE routines... Those require ANSI.  
+
+6.  The (F)ind option on @SHOW SCROLL works, however, it only searches
+    pages AFTER the one you are on.  In future versions I hope to have it
+    highlight the word when it finds it, and start on the current page/last
+    word checked.  (I'll add a Find (A)gain probably)
+
+7.  Sometimes ANSI displays without color LOCALLY.  However, it's working
+    fine remotely.  This only happens when running it with a BBS, and sysops
+    usually don't especially care what it looks like locally, so long as 
+    things are working perfectly remotely!
+
+
+8.  I hope to get many suggestions.  Remember, these script routines will
+    be used in future doors even VGA games - Your ideas and suggestions are
+    important!

@@ -1,4 +1,9 @@
 *.lps
 backup/
-bin/
-lib/
+bin/i386-go32v2/*
+!bin/i386-go32v2/LORD2.exe
+bin/i386-linux/*
+!bin/i386-linux/LORD2
+bin/i386-win32/*
+!bin/i386-win32/LORD2.exe
+obj/

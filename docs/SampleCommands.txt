@@ -1,0 +1,144 @@
+@addchar
+@begin
+@bitset `t12 1 1
+@busy
+@buymanager
+@checkmail
+@choice
+@chooseplayer `p20
+@clearblock 13 23
+@closescript
+@convert_file_to_ansi temp`*.dat score.ans
+@convert_file_to_ascii temp`*.dat score.txt
+@dataload barmom.idf &playernum `p20
+@datanewday barmom.idf
+@datasave barmom.idf &playernum 1
+@displayfile temp`*.dat
+@do `i01 - 1 (take away berries and milk and give pie)
+@do `i01 + 1
+@do `i07 is 1
+@do `i34 = 1
+@do `p02 / 2
+@do `p10 is &time
+@do `p20 * `p09
+@do `p20 is &lmap
+@do `p20 is bank
+@do `p20 is gold
+@do `p20 is length `s01
+@do `p20 is random 5 1
+@do `p20 is S&arm_num
+@do `p20 is x
+@do `p21 is &lmap
+@do `p21 is deleted `p20
+@do `p21 is money
+@do `p21 is S&wep_num
+@do `p21 is y
+@do `p25 is &totalaccounts
+@do `s01 add `x
+@do `s01 is `bNo`xname?
+@do `s01 is getname `p20
+@do `s01 is NIL
+@do addlog
+@do bank - `v40
+@do copytoname
+@do dead is 0
+@do delete bounty.&playernum
+@do delete temp`*.dat ;`* is node number
+@do enemy is a`xsnake
+@do frontpad `s04 2
+@do goto baby
+@do map = 70
+@do map is `p36
+@do money - `p20
+@do move `p21 `p20
+@do move 1 12
+@do moveback
+@do pad `s01 20
+@do quebar
+@do readchar `s01
+@do readnum 10
+@do readnum 10 &money
+@do readspecial `s01 CYT
+@DO READSTRING `p21 NIL `s03 <--Read string, NIL is default. (nothing)
+@do readstring 20 NIL
+@do readstring 30 `s01
+@do readstring 40 `s01 `s01
+@do rename lognow.txt logold.txt
+@do replaceall `1 `! `s10
+@do saybar
+@do statbar
+@DO STRIP `s04 <-- Strips all none color ` codes out
+@do stripbad `s01
+@do talk `0`n`x`2has`xentered`xthe`xrealm. all
+@do talk `s02
+@do talk `s02 all
+@do trim bar.txt 17
+@do upcase `s01
+@do write
+@do x - 1
+@do x + 1
+@do x = 27
+@do x is &lastx
+@do x is `t15
+@drawmap
+@drawpart `p20 `p21
+@end
+@fight
+@halt
+@halt 0
+@if &lastx is 58 then do
+@if &money < 1000 then do
+@IF &MONEY > 49 THEN DO
+@if `i01 more 0 then do
+@if `i22 < 1 then goto fail22
+@if `i23 < 1 then goto fail22
+@if `i24 < 1 then goto fail22
+@if `i25 < 1 then goto fail22
+@if `p02 < `p03 then `p02 is `p03
+@if `p02 less `p03 then do
+@if `p20 is 1 then `s01 add apples
+@if `p20 is 1 then `s01 is Gladiator
+@if `p20 is 1 then addlog
+@if `p20 is 1 then saybar
+@if `p98 is 0 then do begin
+@if `v03 is 0 then write
+@if 3rdparty.dat exist false then do
+@if 3rdparty.dat exist true then do
+@if bitcheck `t12 1 1 then do
+@if blockpassable is 0 then do
+@if blockpassable not 0 then do
+@if checkdupe `s10 true then do
+@if l2chip.tmp exist true then delete l2chip.tmp
+@if map < 0 then map is 155
+@itemexit
+@key
+@key bottom
+@label abstart
+@loadcursor
+@loadmap &map
+@loadmap 1175
+@loadmap map
+@lordrank temp`*.dat 1
+@offmap
+@overheadmap
+@pauseoff
+@pauseon
+@readfile bounty.&playernum
+@routine arena`p20
+@routine BOUNTYLIST in BOUNTY.REF
+@routine getitem
+@run barak
+@run barak in gshops.ref
+@savecursor
+@saveglobals
+@sellmanager
+@show
+@SHOW SCROLL
+@update
+@update_update
+@version 99
+@whoison
+@writefile bar.txt
+@writefile bounty.`p22
+@writefile mail\mail`p20.dat
+@writefile temp`*.dat

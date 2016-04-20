@@ -8,8 +8,6 @@ namespace LORD2
 {
     public class RTReader
     {
-        public static RMDoor Door;
-
         internal Dictionary<string, Action<string[]>> _Commands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
         internal Dictionary<string, Action<string[]>> _DOCommands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
         internal Dictionary<string, Func<string[], bool>> _IFCommands = new Dictionary<string, Func<string[], bool>>(StringComparer.OrdinalIgnoreCase);

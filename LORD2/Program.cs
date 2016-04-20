@@ -11,100 +11,96 @@ namespace LORD2
 {
     class Program
     {
-        private static RMDoor Door;
-
         static void Main(string[] args)
         {
             try
             {
-                using (Door = new RMDoor())
+                if (!Debugger.IsAttached) Crt.HideCursor();
+
+                // Initialize door driver
+                Door.Startup();
+                Door.ClrScr();
+                Door.SethWrite = true;
+
+                if (DataStructures.Validate())
                 {
-                    // TODOX I don't like this, but I do like the using to avoid stupidity leaks of not calling Door.Shutdown...maybe refactor to a try..finally though
-                    Global.Door = Door;
-                    RTGlobal.Door = Door;
-                    RTReader.Door = Door;
-
-                    if (!Debugger.IsAttached) Crt.HideCursor();
-
-                    // Initialize door driver
-                    Door.ClrScr();
-                    Door.SethWrite = true;
-
-                    if (DataStructures.Validate())
+                    if (Global.LoadDataFiles())
                     {
-                        if (Global.LoadDataFiles())
+                        RTReader RTR = new RTReader();
+
+                        RTGlobal.OnDRAWMAP += RTR_OnDRAWMAP;
+                        RTGlobal.OnMOVEBACK += RTR_OnMOVEBACK;
+                        RTGlobal.OnUPDATE += RTR_OnUPDATE;
+
+                        // Check if user has a Global.Player already
+                        RTGlobal.PlayerNum = Global.LoadPlayerByRealName(Door.DropInfo.RealName, out Global.Player);
+                        if (RTGlobal.PlayerNum == -1)
                         {
-                            RTReader RTR = new RTReader();
-
-                            RTGlobal.OnDRAWMAP += RTR_OnDRAWMAP;
-                            RTGlobal.OnMOVEBACK += RTR_OnMOVEBACK;
-                            RTGlobal.OnUPDATE += RTR_OnUPDATE;
-
-                            // Check if user has a Global.Player already
+                            // Nope, so try to get them to create one
+                            RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
                             RTGlobal.PlayerNum = Global.LoadPlayerByRealName(Door.DropInfo.RealName, out Global.Player);
-                            if (RTGlobal.PlayerNum == -1)
+                        }
+
+                        // Now check again to see if the user has a Global.Player (either because they already had one, or because they just created one)
+                        if (RTGlobal.PlayerNum != -1)
+                        {
+                            // Global.Player exists, so start the game
+                            RTR.RunSection("GAMETXT.REF", "STARTGAME");
+
+                            // We're now in map mode until we hit a hotspot
+                            Global.LoadMap(Global.Player.Map);
+                            DrawMap();
+
+                            // Allow Global.Player to move around
+                            char? Ch = null;
+                            while (Ch != 'Q')
                             {
-                                // Nope, so try to get them to create one
-                                RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
-                                RTGlobal.PlayerNum = Global.LoadPlayerByRealName(Door.DropInfo.RealName, out Global.Player);
-                            }
-
-                            // Now check again to see if the user has a Global.Player (either because they already had one, or because they just created one)
-                            if (RTGlobal.PlayerNum != -1)
-                            {
-                                // Global.Player exists, so start the game
-                                RTR.RunSection("GAMETXT.REF", "STARTGAME");
-
-                                // We're now in map mode until we hit a hotspot
-                                Global.LoadMap(Global.Player.Map);
-                                DrawMap();
-
-                                // Allow Global.Player to move around
-                                char? Ch = null;
-                                while (Ch != 'Q')
+                                Ch = Door.ReadKey();
+                                if (Ch != null)
                                 {
-                                    Ch = Door.ReadKey();
-                                    if (Ch != null)
+                                    Ch = char.ToUpper((char)Ch);
+                                    switch (Ch)
                                     {
-                                        Ch = char.ToUpper((char)Ch);
-                                        switch (Ch)
-                                        {
-                                            case '8': MovePlayer(0, -1); break;
-                                            case '4': MovePlayer(-1, 0); break;
-                                            case '6': MovePlayer(1, 0); break;
-                                            case '2': MovePlayer(0, 1); break;
-                                        }
+                                        case '8': MovePlayer(0, -1); break;
+                                        case '4': MovePlayer(-1, 0); break;
+                                        case '6': MovePlayer(1, 0); break;
+                                        case '2': MovePlayer(0, 1); break;
                                     }
                                 }
                             }
                         }
-                        else
-                        {
-                            Door.WriteLn("ERROR: Unable to load data files.  Please inform your SysOp");
-                            Door.WriteLn();
-                            Door.WriteLn("Hit a key to quit");
-                            Door.ReadKey();
-                        }
                     }
                     else
                     {
-                        Door.WriteLn("ERROR: Data structure size mismatch.  Please inform your SysOp");
+                        Door.WriteLn("ERROR: Unable to load data files.  Please inform your SysOp");
                         Door.WriteLn();
                         Door.WriteLn("Hit a key to quit");
                         Door.ReadKey();
                     }
-
-
-                    if (Debugger.IsAttached)
-                    {
-                        Crt.FastWrite(StringUtils.PadRight("Terminating...hit a key to quit", '\0', 80), 1, 25, 31);
-                        Crt.ReadKey();
-                    }
                 }
+                else
+                {
+                    Door.WriteLn("ERROR: Data structure size mismatch.  Please inform your SysOp");
+                    Door.WriteLn();
+                    Door.WriteLn("Hit a key to quit");
+                    Door.ReadKey();
+                }
+
+
+                if (Debugger.IsAttached)
+                {
+                    Crt.FastWrite(StringUtils.PadRight("Terminating...hit a key to quit", '\0', 80), 1, 25, 31);
+                    Crt.ReadKey();
+                }
+
             }
             catch (Exception ex)
             {
                 File.AppendAllText("ex.log", ex.ToString() + Environment.NewLine);
+            }
+            finally
+            {
+                Door.Shutdown();
             }
         }
 

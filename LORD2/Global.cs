@@ -8,8 +8,6 @@ namespace LORD2
 {
     public static class Global
     {
-        public static RMDoor Door;
-
         public static string ItemsDatFileName = Global.GetSafeAbsolutePath("items.dat");
         public static string MapDatFileName = Global.GetSafeAbsolutePath("map.dat");
         public static string STimeDatFileName = Global.GetSafeAbsolutePath("stime.dat");

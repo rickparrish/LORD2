@@ -10,8 +10,6 @@ namespace LORD2
 {
     public static class RTGlobal
     {
-        public static RMDoor Door;
-
         // Events
         public static EventHandler OnDRAWMAP = null;
         public static EventHandler OnMOVEBACK = null;

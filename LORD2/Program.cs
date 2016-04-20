@@ -53,18 +53,33 @@ namespace LORD2
 
                             // Allow Global.Player to move around
                             char? Ch = null;
-                            while (Ch != 'Q')
+                            while (char.ToUpper((char)Ch) != 'Q')
                             {
                                 Ch = Door.ReadKey();
                                 if (Ch != null)
                                 {
                                     Ch = char.ToUpper((char)Ch);
-                                    switch (Ch)
+
+                                    // TODOX char is two-byte, so maybe extended keys can be > 255 and avoid the need for this split on extended crap?
+                                    if (Door.LastKey.Extended)
                                     {
-                                        case '8': MovePlayer(0, -1); break;
-                                        case '4': MovePlayer(-1, 0); break;
-                                        case '6': MovePlayer(1, 0); break;
-                                        case '2': MovePlayer(0, 1); break;
+                                        switch (Ch)
+                                        {
+                                            case (char)DoorKey.UpArrow: MovePlayer(0, -1); break;
+                                            case (char)DoorKey.LeftArrow: MovePlayer(-1, 0); break;
+                                            case (char)DoorKey.RightArrow: MovePlayer(1, 0); break;
+                                            case (char)DoorKey.DownArrow: MovePlayer(0, 1); break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        switch (Ch)
+                                        {
+                                            case '8': MovePlayer(0, -1); break;
+                                            case '4': MovePlayer(-1, 0); break;
+                                            case '6': MovePlayer(1, 0); break;
+                                            case '2': MovePlayer(0, 1); break;
+                                        }
                                     }
                                 }
                             }

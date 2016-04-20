@@ -1894,9 +1894,13 @@ namespace LORD2
             {
                 int OldSelectedIndex = SelectedIndex;
 
+                // TODOX Handle arrow keys
                 Ch = Door.ReadKey();
                 switch (Ch)
                 {
+                    // TODOX Should take .Extended into account for arrow keys
+                    case (char)DoorKey.LeftArrow:
+                    case (char)DoorKey.UpArrow:
                     case '8':
                     case '4':
                         while (true)
@@ -1911,6 +1915,10 @@ namespace LORD2
                             if (_InCHOICEOptions[SelectedIndex - 1].Visible) break;
                         }
                         break;
+
+                    // TODOX Should take .Extended into account for arrow keys
+                    case (char)DoorKey.RightArrow:
+                    case (char)DoorKey.DownArrow:
                     case '6':
                     case '2':
                         while (true)

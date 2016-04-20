@@ -123,6 +123,7 @@ namespace LORD2
             if (!File.Exists(Global.WorldDatFileName))
             {
                 // TODO Generate the file
+                // TODO When this is implemented, remove world.dat from SupportFiles?
             }
             if (File.Exists(Global.WorldDatFileName))
             {

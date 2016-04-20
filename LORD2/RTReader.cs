@@ -1899,8 +1899,8 @@ namespace LORD2
                 switch (Ch)
                 {
                     // TODOX Should take .Extended into account for arrow keys
-                    case (char)DoorKey.LeftArrow:
-                    case (char)DoorKey.UpArrow:
+                    case Door.ExtendedKeys.LeftArrow:
+                    case Door.ExtendedKeys.UpArrow:
                     case '8':
                     case '4':
                         while (true)
@@ -1917,8 +1917,8 @@ namespace LORD2
                         break;
 
                     // TODOX Should take .Extended into account for arrow keys
-                    case (char)DoorKey.RightArrow:
-                    case (char)DoorKey.DownArrow:
+                    case Door.ExtendedKeys.RightArrow:
+                    case Door.ExtendedKeys.DownArrow:
                     case '6':
                     case '2':
                         while (true)

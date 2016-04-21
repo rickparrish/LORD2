@@ -74,12 +74,6 @@ namespace LORD2
             Global.Player.Y = (short)y;
         }
 
-        private static void MoveBack()
-        {
-            // Update position and draw player
-            DrawPlayer(RTGlobal.LastX, RTGlobal.LastY);
-        }
-
         private static void MovePlayer(int xoffset, int yoffset)
         {
             int x = Global.Player.X + xoffset;

@@ -1,4 +1,5 @@
-﻿using RandM.RMLib;
+﻿// TODOX Create an RTVariables
+using RandM.RMLib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

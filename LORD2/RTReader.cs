@@ -16,17 +16,21 @@ namespace LORD2
         private RTRefFile _CurrentFile = null;
         private RTRefSection _CurrentSection = null;
         private int _InBEGINCount = 0;
+        private bool _InBUYMANAGER = false;
+        private List<string> _InBUYMANAGEROptions = new List<string>();
         private bool _InCHOICE = false;
         private List<RTChoiceOption> _InCHOICEOptions = new List<RTChoiceOption>();
         private bool _InCLOSESCRIPT = false;
         private bool _InDO_ADDLOG = false;
         private bool _InDO_WRITE = false;
-        private int _InHALT = int.MinValue;
-        private int _InIFFalse = 999;
+        private bool _InFIGHT = false;
+        private int _InIFFalse = 999; // Maybe needs to be renamed -- lets us know when we're skipping over code because it's part of an @IF that evaluated to false
         private string _InREADFILE = "";
         private List<string> _InREADFILELines = new List<string>();
         private bool _InSAY = false;
         private bool _InSAYBAR = false;
+        private bool _InSELLMANAGER = false;
+        private List<string> _InSELLMANAGEROptions = new List<string>();
         private bool _InSHOW = false;
         private bool _InSHOWLOCAL = false;
         private bool _InSHOWSCROLL = false;
@@ -42,16 +46,16 @@ namespace LORD2
             _Commands.Add("@ADDCHAR", CommandADDCHAR);
             _Commands.Add("@BEGIN", CommandBEGIN);
             _Commands.Add("@BITSET", CommandBITSET);
-            _Commands.Add("@BUSY", LogUnimplemented);
-            _Commands.Add("@BUYMANAGER", LogUnimplemented);
-            _Commands.Add("@CHECKMAIL", LogUnimplemented);
+            _Commands.Add("@BUSY", CommandBUSY);
+            _Commands.Add("@BUYMANAGER", CommandBUYMANAGER);
+            _Commands.Add("@CHECKMAIL", CommandCHECKMAIL);
             _Commands.Add("@CHOICE", CommandCHOICE);
-            _Commands.Add("@CHOOSEPLAYER", LogUnimplemented);
-            _Commands.Add("@CLEARBLOCK", CommandCLEARBLOCK);
+            _Commands.Add("@CHOOSEPLAYER", CommandCHOOSEPLAYER);
             _Commands.Add("@CLEAR", CommandCLEAR);
+            _Commands.Add("@CLEARBLOCK", CommandCLEARBLOCK);
             _Commands.Add("@CLOSESCRIPT", CommandCLOSESCRIPT);
-            _Commands.Add("@CONVERT_FILE_TO_ANSI", LogUnimplemented);
-            _Commands.Add("@CONVERT_FILE_TO_ASCII", LogUnimplemented);
+            _Commands.Add("@CONVERT_FILE_TO_ANSI", CommandCONVERT_FILE_TO_ANSI);
+            _Commands.Add("@CONVERT_FILE_TO_ASCII", CommandCONVERT_FILE_TO_ASCII);
             _Commands.Add("@COPYFILE", CommandCOPYFILE);
             _Commands.Add("@DATALOAD", CommandDATALOAD);
             _Commands.Add("@DATANEWDAY", CommandDATANEWDAY);
@@ -61,49 +65,49 @@ namespace LORD2
             _Commands.Add("@DISPLAYFILE", CommandDISPLAYFILE);
             _Commands.Add("@DO", CommandDO);
             _Commands.Add("@DRAWMAP", CommandDRAWMAP);
-            _Commands.Add("@DRAWPART", LogUnimplemented);
+            _Commands.Add("@DRAWPART", CommandDRAWPART);
             _Commands.Add("@END", CommandEND);
-            _Commands.Add("@FIGHT", LogUnimplemented);
-            _Commands.Add("@GRAPHICS", LogUnused);
+            _Commands.Add("@FIGHT", CommandFIGHT);
+            _Commands.Add("@GRAPHICS", CommandGRAPHICS);
             _Commands.Add("@HALT", CommandHALT);
             _Commands.Add("@IF", CommandIF);
-            _Commands.Add("@ITEMEXIT", LogUnimplemented);
+            _Commands.Add("@ITEMEXIT", CommandITEMEXIT);
             _Commands.Add("@KEY", CommandKEY);
             _Commands.Add("@LABEL", CommandLABEL);
-            _Commands.Add("@LOADCURSOR", LogUnimplemented);
-            _Commands.Add("@LOADGLOBALS", LogUnused);
+            _Commands.Add("@LOADCURSOR", CommandLOADCURSOR);
+            _Commands.Add("@LOADGLOBALS", CommandLOADGLOBALS);
             _Commands.Add("@LOADMAP", CommandLOADMAP);
-            _Commands.Add("@LOADWORLD", LogUnused);
-            _Commands.Add("@LORDRANK", LogUnimplemented);
-            _Commands.Add("@MOREMAP", LogUnused);
+            _Commands.Add("@LOADWORLD", CommandLOADWORLD);
+            _Commands.Add("@LORDRANK", CommandLORDRANK);
+            _Commands.Add("@MOREMAP", CommandMOREMAP);
             _Commands.Add("@NAME", CommandNAME);
             _Commands.Add("@NOCHECK", CommandNOCHECK);
-            _Commands.Add("@OFFMAP", LogUnimplemented);
-            _Commands.Add("@OVERHEADMAP", LogUnimplemented);
-            _Commands.Add("@PAUSEOFF", LogUnimplemented);
-            _Commands.Add("@PAUSEON", LogUnimplemented);
-            _Commands.Add("@PROGNAME", LogUnused);
-            _Commands.Add("@RANK", LogUnused);
+            _Commands.Add("@OFFMAP", CommandOFFMAP);
+            _Commands.Add("@OVERHEADMAP", CommandOVERHEADMAP);
+            _Commands.Add("@PAUSEOFF", CommandPAUSEOFF);
+            _Commands.Add("@PAUSEON", CommandPAUSEON);
+            _Commands.Add("@PROGNAME", CommandPROGNAME);
+            _Commands.Add("@RANK", CommandRANK);
             _Commands.Add("@READFILE", CommandREADFILE);
             _Commands.Add("@ROUTINE", CommandROUTINE);
             _Commands.Add("@RUN", CommandRUN);
-            _Commands.Add("@SAVECURSOR", LogUnimplemented);
-            _Commands.Add("@SAVEGLOBALS", LogUnimplemented);
-            _Commands.Add("@SAVEWORLD", LogUnused);
+            _Commands.Add("@SAVECURSOR", CommandSAVECURSOR);
+            _Commands.Add("@SAVEGLOBALS", CommandSAVEGLOBALS);
+            _Commands.Add("@SAVEWORLD", CommandSAVEWORLD);
             _Commands.Add("@SAY", CommandSAY);
-            _Commands.Add("@SELLMANAGER", LogUnimplemented);
+            _Commands.Add("@SELLMANAGER", CommandSELLMANAGER);
             _Commands.Add("@SHOW", CommandSHOW);
             _Commands.Add("@SHOWLOCAL", CommandSHOWLOCAL);
             _Commands.Add("@UPDATE", CommandUPDATE);
-            _Commands.Add("@UPDATE_UPDATE", LogUnimplemented);
+            _Commands.Add("@UPDATE_UPDATE", CommandUPDATE_UPDATE);
             _Commands.Add("@VERSION", CommandVERSION);
-            _Commands.Add("@WHOISON", LogUnimplemented);
+            _Commands.Add("@WHOISON", CommandWHOISON);
             _Commands.Add("@WRITEFILE", CommandWRITEFILE);
 
             // Initialize the @DO commands dictionary
             // @DO <COMMAND> COMMANDS
             _DOCommands.Add("ADDLOG", CommandDO_ADDLOG);
-            _DOCommands.Add("BEEP", LogUnused);
+            _DOCommands.Add("BEEP", CommandDO_BEEP);
             _DOCommands.Add("COPYTONAME", CommandDO_COPYTONAME);
             _DOCommands.Add("DELETE", CommandDO_DELETE);
             _DOCommands.Add("FRONTPAD", CommandDO_FRONTPAD);
@@ -113,7 +117,7 @@ namespace LORD2
             _DOCommands.Add("MOVEBACK", CommandDO_MOVEBACK);
             _DOCommands.Add("NUMRETURN", CommandDO_NUMRETURN);
             _DOCommands.Add("PAD", CommandDO_PAD);
-            _DOCommands.Add("QUEBAR", LogUnimplemented);
+            _DOCommands.Add("QUEBAR", CommandDO_QUEBAR);
             _DOCommands.Add("READCHAR", CommandDO_READCHAR);
             _DOCommands.Add("READNUM", CommandDO_READNUM);
             _DOCommands.Add("READSPECIAL", CommandDO_READSPECIAL);
@@ -122,12 +126,12 @@ namespace LORD2
             _DOCommands.Add("REPLACEALL", CommandDO_REPLACEALL);
             _DOCommands.Add("RENAME", CommandDO_RENAME);
             _DOCommands.Add("SAYBAR", CommandDO_SAYBAR);
-            _DOCommands.Add("STATBAR", LogUnimplemented);
+            _DOCommands.Add("STATBAR", CommandDO_STATBAR);
             _DOCommands.Add("STRIP", CommandDO_STRIP);
-            _DOCommands.Add("STRIPALL", LogUnused);
-            _DOCommands.Add("STRIPBAD", LogUnimplemented);
-            _DOCommands.Add("STRIPCODE", LogUnused);
-            _DOCommands.Add("TALK", LogUnimplemented);
+            _DOCommands.Add("STRIPALL", CommandDO_STRIPALL);
+            _DOCommands.Add("STRIPBAD", CommandDO_STRIPBAD);
+            _DOCommands.Add("STRIPCODE", CommandDO_STRIPCODE);
+            _DOCommands.Add("TALK", CommandDO_TALK);
             _DOCommands.Add("TRIM", CommandDO_TRIM);
             _DOCommands.Add("UPCASE", CommandDO_UPCASE);
             _DOCommands.Add("WRITE", CommandDO_WRITE);
@@ -270,7 +274,7 @@ namespace LORD2
                 This makes the player appear 'red' to other players currently playing.  It 
                 also tells the Lord II engine to run @#busy in gametxt.ref if a player logs on 
                 and someone is attacking him or giving him an item. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandBUYMANAGER(string[] tokens)
@@ -280,14 +284,15 @@ namespace LORD2
                 <item number>
                 <ect until next @ at beginning of string is hit>
                 This command offers items for sale at the price set in items.dat */
-            // TODO Implement
+            _InBUYMANAGEROptions.Clear();
+            _InBUYMANAGER = true;
         }
 
         private void CommandCHECKMAIL(string[] tokens)
         {
             /* @CHECKMAIL
                 Undocumented.  Will need to determine what this does */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandCHOICE(string[] tokens)
@@ -348,7 +353,7 @@ namespace LORD2
                 partial name' prompt, with a 'you mean this guy?'.  It returns the players # 
                 or 0 if none.  If the player isn't found it will display "No one by that name 
                 lives 'round here" and return 0. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandCLEAR(string[] tokens)
@@ -404,7 +409,7 @@ namespace LORD2
                     Door.GotoXY(78, 23);
                     break;
                 default:
-                    // TODO Implement
+                    LogUnimplemented(tokens);
                     break;
             }
         }
@@ -442,7 +447,7 @@ namespace LORD2
             /* @CONVERT_FILE_TO_ANSI <input file> <output file>
                 Converts a text file of Sethansi (whatever) to regular ansi.  This is good for 
                 a final score output. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandCONVERT_FILE_TO_ASCII(string[] tokens)
@@ -450,7 +455,7 @@ namespace LORD2
             /* @CONVERT_FILE_TO_ASCII <input file> <output file>
                 Converts a text file of Sethansi (whatever) to regular ascii, ie, no colors at 
                 all. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandCOPYFILE(string[] tokens)
@@ -662,7 +667,7 @@ namespace LORD2
         {
             /* @DO BEEP
                 Makes a weird beep noise, locally only */
-            // TODO Unused
+            LogUnused(tokens);
         }
 
         private void CommandDO_COPYTONAME(string[] tokens)
@@ -738,7 +743,7 @@ namespace LORD2
             {
                 // HEADER goto
                 RTReader RTR = new RTReader();
-                _InHALT = RTR.RunSection(_CurrentFile.Name, TranslateVariables(tokens[2]));
+                RTR.RunSection(_CurrentFile.Name, TranslateVariables(tokens[2]));
                 _InCLOSESCRIPT = true; // Don't want to resume this ref
             }
             else if (_CurrentSection.Labels.ContainsKey(tokens[2]))
@@ -754,7 +759,7 @@ namespace LORD2
                     {
                         // LABEL goto within a different section
                         RTReader RTR = new RTReader();
-                        _InHALT = RTR.RunSection(_CurrentFile.Name, KVP.Key, TranslateVariables(tokens[2]));
+                        RTR.RunSection(_CurrentFile.Name, KVP.Key, TranslateVariables(tokens[2]));
                         _InCLOSESCRIPT = true; // Don't want to resume this ref
                         break;
                     }
@@ -877,7 +882,7 @@ namespace LORD2
                 <message>
                 This adds a message to the saybar que.  This will ensure that the message is 
                 displayed at it's proper time instead of immediately. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandDO_RANDOM(string[] tokens)
@@ -1023,7 +1028,7 @@ namespace LORD2
             /* @DO STATBAR
                 This draws the statbar. */
             // Identified as @STATBAR not @DO STATBAR in the docs
-            // TODO Unused
+            LogUnused(tokens);
         }
 
         private void CommandDO_STRIP(string[] tokens)
@@ -1037,7 +1042,7 @@ namespace LORD2
         {
             /* @DO STRIPALL
                 This command strips out all ` codes.  This is good for passwords, etc. */
-            // TODO Unused
+            LogUnused(tokens);
         }
 
         private void CommandDO_STRIPBAD(string[] tokens)
@@ -1045,14 +1050,14 @@ namespace LORD2
             /* @DO STRIPBAD
                 This strips out illegal ` codes, and replaces badwords with the standard 
                 badword.dat file. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandDO_STRIPCODE(string[] tokens)
         {
             /* @STRIPCODE <any `s variable>
                 This will remove ALL ` codes from a string. */
-            // TODO Unused
+            LogUnused(tokens);
         }
 
         private void CommandDO_SUBTRACT(string[] tokens)
@@ -1066,7 +1071,7 @@ namespace LORD2
             /* @DO TALK <message> [recipients]
                 Undocumented. Looks like recipients is usually ALL, which sends a global message
                 Lack of recipients value means message is only displayed to those on the same screen */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandDO_TRIM(string[] tokens)
@@ -1122,7 +1127,7 @@ namespace LORD2
             /* @DRAWPART <x> <y>
                 This command will draw one block of the current map as defined by <x> and <y> 
                 with whatever is supposed to be there, including any people. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandEND(string[] tokens)
@@ -1203,7 +1208,7 @@ namespace LORD2
                 You might also have a hotspot defined that calls a routine that will be a 
                 fight.  Make sure you DON'T clear the screen.  It won't hurt anything if you 
                 do, but it won't look very good. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandGRAPHICS(string[] tokens)
@@ -1211,20 +1216,21 @@ namespace LORD2
             /* @GRAPHICS IS <Num> 
                 3 or more enable remote ANSI.  If you never wanted to send ANSI, you could set 
                 this to 1. You will probably never touch this one. */
-            // TODO Unused
+            LogUnused(tokens);
         }
 
+        // TODOX Confirm that finally {} code runs (ie to save the player)
         private void CommandHALT(string[] tokens)
         {
             /* @HALT <error level>
                 This command closes the door and returns the specified error level. */
             if (tokens.Length == 1)
             {
-                _InHALT = 0;
+                Environment.Exit(0);
             }
             else
             {
-                _InHALT = Convert.ToInt32(tokens[1]);
+                Environment.Exit(Convert.ToInt32(tokens[1]));
             }
         }
 
@@ -1387,7 +1393,7 @@ namespace LORD2
                 This tells the item editor to automatically return the player to the map 
                 screen after the item is used.  It is up to you to use the @drawmap and 
                 @update commands as usual though. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandKEY(string[] tokens)
@@ -1430,7 +1436,7 @@ namespace LORD2
             }
             else
             {
-                // TODO Implement
+                LogUnimplemented(tokens);
             }
 
             // Restore text attribute
@@ -1450,7 +1456,7 @@ namespace LORD2
                 This command restores the cursor to the position before the last @SAVECURSOR 
                 was issued.  This is good for creative graphics and text positioning with a 
                 minimum of calculations.  See @SAVECURSOR below. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandLOADGLOBALS(string[] tokens)
@@ -1458,7 +1464,7 @@ namespace LORD2
             /* @LOADGLOBALS
                 This command loads the last value of all global variables as existed when the 
                 last @SAVEGLOBALS command was issued.  See @SAVEGLOBALS below. */
-            // TODO Unused
+            LogUnused(tokens);
         }
 
         private void CommandLOADMAP(string[] tokens)
@@ -1478,7 +1484,7 @@ namespace LORD2
             /* @LOADWORLD
                 This command loads globals and world data.  It has never been used but is 
                 included just in case it becomes necessary to do this.  See @SAVEWORLD below. */
-            // TODO Unused
+            LogUnused(tokens);
         }
 
         private void CommandLORDRANK(string[] tokens)
@@ -1498,14 +1504,14 @@ namespace LORD2
                   48         Status 
                   60         Alignment
                   65         Quests completed */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandMOREMAP(string[] tokens)
         {
             /* @MOREMAP
                 The line UNDER this will be the new <more> prompt.  30 characters maximum. */
-            // TODO Unused
+            LogUnused(tokens);
         }
 
         private void CommandNAME(string[] tokens)
@@ -1538,7 +1544,7 @@ namespace LORD2
                 This takes the player's symbol off the map.  This makes the player appear to 
                 disappear to other players currently playing.  This is usful to make it look
                 like they actually went into the hut, building, ect. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandOVERHEADMAP(string[] tokens)
@@ -1550,7 +1556,7 @@ namespace LORD2
                 is your responsibility.  If you wish to mark the map you must do this in 
                 help.ref under the @#M routine.  Be sure to include a legend so people have 
                 some reference concerning what the marks mean. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandPAUSEOFF(string[] tokens)
@@ -1558,21 +1564,21 @@ namespace LORD2
             /* @PAUSEOFF
                 This turns the 24 line pause off so you can show long ansis etc and it won't 
                 pause every 24 lines. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandPAUSEON(string[] tokens)
         {
             /* @PAUSEON
                 Just the opposite of the above command.  This turns the pause back on. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandPROGNAME(string[] tokens)
         {
             /* @PROGNAME
                 The line UNDER this will be the status bar name of the game. */
-            // TODO Unused
+            LogUnused(tokens);
         }
 
         private void CommandRANK(string[] tokens)
@@ -1584,7 +1590,7 @@ namespace LORD2
                 if feasible.  This one works, but @LORDRANK uses a preset formatting
                 procedure and is therefore quicker.  There may be occasion, however, if you
                 write your own world to use this command rather than @LORDRANK. */
-            // TODO Unused
+            LogUnused(tokens);
         }
 
         private void CommandREADFILE(string[] tokens)
@@ -1615,11 +1621,11 @@ namespace LORD2
             RTReader RTR = new RTReader();
             if (tokens.Length < 4)
             {
-                _InHALT = RTR.RunSection(_CurrentFile.Name, TranslateVariables(tokens[1]));
+                RTR.RunSection(_CurrentFile.Name, TranslateVariables(tokens[1]));
             }
             else
             {
-                _InHALT = RTR.RunSection(TranslateVariables(tokens[3]), TranslateVariables(tokens[1]));
+                RTR.RunSection(TranslateVariables(tokens[3]), TranslateVariables(tokens[1]));
             }
         }
 
@@ -1628,7 +1634,7 @@ namespace LORD2
             /* @RUN <Header or label name> IN <Filename of .REF file>
                 Same thing as ROUTINE, but doesn't come back to the original .REF. */
             RTReader RTR = new RTReader();
-            _InHALT = RTR.RunSection(TranslateVariables(tokens[3]), TranslateVariables(tokens[1]));
+            RTR.RunSection(TranslateVariables(tokens[3]), TranslateVariables(tokens[1]));
             _InCLOSESCRIPT = true; // Don't want to resume this ref
         }
 
@@ -1636,14 +1642,14 @@ namespace LORD2
         {
             /* @SAVECURSOR
                 This command saves the current cursor positioning for later retrieval. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandSAVEGLOBALS(string[] tokens)
         {
             /* @SAVEGLOBALS
                 This command saves the current global variables for later retrieval */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandSAVEWORLD(string[] tokens)
@@ -1651,7 +1657,7 @@ namespace LORD2
             /* @SAVEWORLD
                 This command saves stats and world data.  The only use yet is right after 
                 @#maint is called to save random stats set for that day and such. */
-            // TODO Unused
+            LogUnused(tokens);
         }
 
         private void CommandSAY(string[] tokens)
@@ -1681,7 +1687,8 @@ namespace LORD2
                 The `c is included so that there will be two carriage returns issued.  This is 
                 important for cosmetic purposes only.  I have found that if the @sellmanager
                 is issued at the top of the screen, the boxes don't dissapear as they should. */
-            // TODO Implement
+            _InSELLMANAGEROptions.Clear();
+            _InSELLMANAGER = true;
         }
 
         private void CommandSHOW(string[] tokens)
@@ -1722,7 +1729,7 @@ namespace LORD2
             /* @UPDATE_UPDATE
                 This command writes current player data to UPDATE.TMP file.  This is useful 
                 when you just can't wait until the script is finished for some reason. */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandVERSION(string[] tokens)
@@ -1739,7 +1746,7 @@ namespace LORD2
         {
             /* @WHOISON
                 Undocumented.  Will need to find out what this does */
-            // TODO Implement
+            LogUnimplemented(tokens);
         }
 
         private void CommandWRITEFILE(string[] tokens)
@@ -1755,6 +1762,12 @@ namespace LORD2
             _InWRITEFILE = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
         }
 
+        private void EndBUYMANAGER()
+        {
+            LogUnimplemented(new string[] { "TODOX" });
+        }
+
+        // TODOX Abstract some of this out to RTChoiceOption so you can easily retrieve a list of visible options
         private void EndCHOICE()
         {
             /* @CHOICE
@@ -1894,11 +1907,9 @@ namespace LORD2
             {
                 int OldSelectedIndex = SelectedIndex;
 
-                // TODOX Handle arrow keys
                 Ch = Door.ReadKey();
                 switch (Ch)
                 {
-                    // TODOX Should take .Extended into account for arrow keys
                     case Door.ExtendedKeys.LeftArrow:
                     case Door.ExtendedKeys.UpArrow:
                     case '8':
@@ -1916,7 +1927,6 @@ namespace LORD2
                         }
                         break;
 
-                    // TODOX Should take .Extended into account for arrow keys
                     case Door.ExtendedKeys.RightArrow:
                     case Door.ExtendedKeys.DownArrow:
                     case '6':
@@ -1976,6 +1986,31 @@ namespace LORD2
                     AssignVariable(_InREADFILELines[i], TranslateVariables(Lines[i]));
                 }
             }
+        }
+
+        private void EndSAYBAR(string line)
+        {
+            // Save cursor and text attr
+            int SavedTextAttr = Crt.TextAttr;
+            Door.CursorSave();
+
+            // Output new bar
+            Door.GotoXY(3, 21);
+            Door.TextAttr(31);
+            int StrippedLength = Door.StripSeth(TranslateVariables(line)).Length;
+            int LeftSpaces = Math.Max(0, (76 - StrippedLength) / 2);
+            int RightSpaces = Math.Max(0, 76 - StrippedLength - LeftSpaces);
+            Door.Write(new string(' ', LeftSpaces) + TranslateVariables(line) + new string(' ', RightSpaces));
+            // TODO say bar should be removed after 3 seconds or so
+
+            // Restore
+            Door.CursorRestore();
+            Door.TextAttr(SavedTextAttr);
+        }
+
+        private void EndSELLMANAGER()
+        {
+            LogUnimplemented(new string[] { "TODOX" });
         }
 
         private void EndSHOWSCROLL()
@@ -2047,21 +2082,12 @@ namespace LORD2
             Crt.FastWrite(new string(' ', 80), 1, 25, 0);
         }
 
-        private bool LogUnimplementedFunc(string[] tokens)
+        public void RunSection(string fileName, string sectionName)
         {
-            string Output = "UNIMPLEMENTED (hit a key): " + string.Join(" ", tokens);
-            Crt.FastWrite(StringUtils.PadRight(Output, ' ', 80), 1, 25, 31);
-            Crt.ReadKey();
-            Crt.FastWrite(new string(' ', 80), 1, 25, 0);
-            return false;
+            RunSection(fileName, sectionName, "");
         }
 
-        public int RunSection(string fileName, string sectionName)
-        {
-            return RunSection(fileName, sectionName, "");
-        }
-
-        public int RunSection(string fileName, string sectionName, string labelName)
+        public void RunSection(string fileName, string sectionName, string labelName)
         {
             // Run the selected script
             string FileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
@@ -2070,26 +2096,37 @@ namespace LORD2
                 _CurrentFile = RTGlobal.RefFiles[FileNameWithoutExtension];
                 if (_CurrentFile.Sections.ContainsKey(sectionName))
                 {
-                    // Load section, check if requested label exists, and run script
                     _CurrentSection = _CurrentFile.Sections[sectionName];
-                    if (_CurrentSection.Labels.ContainsKey(labelName)) _CurrentLineNumber = _CurrentSection.Labels[labelName];
-                    RunScript(_CurrentSection.Script.ToArray());
 
-                    // Return the errorcode from _InHALT (which is int.MinValue if no error code)
-                    return _InHALT;
+                    if (labelName != "")
+                    {
+                        if (_CurrentSection.Labels.ContainsKey(labelName))
+                        {
+                            _CurrentLineNumber = _CurrentSection.Labels[labelName];
+                        }
+                        else
+                        {
+                            Door.WriteLn(TranslateVariables("`4`b**`b `%ERROR : `2Label `0" + sectionName + " `2not found in `0" + Path.GetFileName(fileName) + " `4`b**`b`2"));
+                            Door.ReadKey();
+                            return;
+                        }
+                    }
+
+                    RunScript(_CurrentSection.Script.ToArray());
+                    return;
                 }
                 else
                 {
-                    Door.WriteLn(TranslateVariables("`4`b**`b `%ERROR : `0" + sectionName + " `2not found in `0" + Path.GetFileName(fileName) + " `4`b**`b`2"));
+                    Door.WriteLn(TranslateVariables("`4`b**`b `%ERROR : `2Section `0" + sectionName + " `2not found in `0" + Path.GetFileName(fileName) + " `4`b**`b`2"));
                     Door.ReadKey();
-                    return 1;
+                    return;
                 }
             }
             else
             {
                 Door.WriteLn(TranslateVariables("`4`b**`b `%ERROR : `2File `0" + Path.GetFileName(fileName) + " `2not found. `4`b**`b`2"));
                 Door.ReadKey();
-                return 2;
+                return;
             }
         }
 
@@ -2101,10 +2138,6 @@ namespace LORD2
                 string LineTrimmed = Line.Trim();
 
                 if (_InCLOSESCRIPT)
-                {
-                    return;
-                }
-                else if (_InHALT != int.MinValue)
                 {
                     return;
                 }
@@ -2129,13 +2162,17 @@ namespace LORD2
                 {
                     if (LineTrimmed.StartsWith("@"))
                     {
+                        if (_InBUYMANAGER) EndBUYMANAGER();
                         if (_InCHOICE) EndCHOICE();
                         if (_InREADFILE != "") EndREADFILE();
+                        if (_InSELLMANAGER) EndSELLMANAGER();
                         if (_InSHOWSCROLL) EndSHOWSCROLL();
+                        _InBUYMANAGER = false;
                         _InCHOICE = false;
                         _InREADFILE = "";
                         _InSAY = false;
                         _InSAYBAR = false;
+                        _InSELLMANAGER = false;
                         _InSHOW = false;
                         _InSHOWLOCAL = false;
                         _InSHOWSCROLL = false;
@@ -2153,7 +2190,11 @@ namespace LORD2
                     }
                     else
                     {
-                        if (_InCHOICE)
+                        if (_InBUYMANAGER)
+                        {
+                            _InBUYMANAGEROptions.Add(Line);
+                        }
+                        else if (_InCHOICE)
                         {
                             _InCHOICEOptions.Add(new RTChoiceOption(Line));
                         }
@@ -2167,6 +2208,19 @@ namespace LORD2
                             Door.Write(TranslateVariables(Line));
                             _InDO_WRITE = false;
                         }
+                        else if (_InFIGHT)
+                        {
+//                            if ((LineTrimmed <> '') AND NOT(AnsiStartsText(';', LineTrimmed))) then
+//begin
+//            FInFIGHTLines.Add(Line);
+//                            if (FInFIGHTLines.Count = 16) then
+//                            begin
+//              EndFIGHT;
+//                            FInFIGHT:= false;
+//                            end;
+//                            end;
+
+                        }
                         else if (_InREADFILE != "")
                         {
                             _InREADFILELines.Add(Line);
@@ -2178,24 +2232,12 @@ namespace LORD2
                         }
                         else if (_InSAYBAR)
                         {
-                            // Save cursor and text attr
-                            int SavedTextAttr = Crt.TextAttr;
-                            Door.CursorSave();
-
-                            // Output new bar
-                            Door.GotoXY(3, 21);
-                            Door.TextAttr(31);
-                            int StrippedLength = Door.StripSeth(TranslateVariables(Line)).Length;
-                            int LeftSpaces = Math.Max(0, (76 - StrippedLength) / 2);
-                            int RightSpaces = Math.Max(0, 76 - StrippedLength - LeftSpaces);
-                            Door.Write(new string(' ', LeftSpaces) + TranslateVariables(Line) + new string(' ', RightSpaces));
-                            // TODO say bar should be removed after 3 seconds or so
-
-                            // Restore
-                            Door.CursorRestore();
-                            Door.TextAttr(SavedTextAttr);
-
+                            EndSAYBAR(Line);
                             _InSAYBAR = false;
+                        }
+                        else if (_InSELLMANAGER)
+                        {
+                            _InSELLMANAGEROptions.Add(Line);
                         }
                         else if (_InSHOW)
                         {

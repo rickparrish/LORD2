@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace LORD2
@@ -17,6 +18,7 @@ namespace LORD2
         public static string WorldDatFileName = Global.GetSafeAbsolutePath("world.dat");
 
         public static MapDatRecord CurrentMap;
+        public static bool IsNewDay = false;
         public static List<ItemsDatRecord> ItemsDat = new List<ItemsDatRecord>();
         public static TraderDatRecord Player;
         public static List<MapDatRecord> MapDat = new List<MapDatRecord>();
@@ -51,7 +53,7 @@ namespace LORD2
             return Result;
         }
 
-        public static bool LoadDataFiles()
+        public static void LoadDataFiles()
         {
             // Load ITEMS.DAT
             if (File.Exists(Global.ItemsDatFileName))
@@ -67,8 +69,7 @@ namespace LORD2
             }
             else
             {
-                Door.WriteLn("Missing " + Global.ItemsDatFileName);
-                return false;
+                throw new Exception($"{Global.ItemsDatFileName} not found");
             }
 
             // Load MAP.DAT
@@ -85,15 +86,14 @@ namespace LORD2
             }
             else
             {
-                Door.WriteLn("Missing " + Global.MapDatFileName);
-                return false;
+                throw new Exception($"{Global.MapDatFileName} not found");
             }
 
             // Load STIME.DAT
-            bool IsNewDay = false;
             if (File.Exists(Global.STimeDatFileName))
             {
-                if (Convert.ToInt32(FileUtils.FileReadAllText(Global.STimeDatFileName)) != STime) {
+                if (Convert.ToInt32(FileUtils.FileReadAllText(Global.STimeDatFileName)) != STime)
+                {
                     FileUtils.FileWriteAllText(Global.STimeDatFileName, STime.ToString());
                     IsNewDay = true;
                 }
@@ -108,7 +108,8 @@ namespace LORD2
             if (File.Exists(Global.TimeDatFileName))
             {
                 RTGlobal.Time = Convert.ToInt32(FileUtils.FileReadAllText(Global.TimeDatFileName));
-                if (IsNewDay) {
+                if (IsNewDay)
+                {
                     RTGlobal.Time += 1;
                     FileUtils.FileWriteAllText(Global.TimeDatFileName, RTGlobal.Time.ToString());
                 }
@@ -120,11 +121,6 @@ namespace LORD2
             }
 
             // Load WORLD.DAT
-            if (!File.Exists(Global.WorldDatFileName))
-            {
-                // TODO Generate the file
-                // TODO When this is implemented, remove world.dat from SupportFiles?
-            }
             if (File.Exists(Global.WorldDatFileName))
             {
                 using (FileStream FS = new FileStream(Global.WorldDatFileName, FileMode.Open))
@@ -134,19 +130,8 @@ namespace LORD2
             }
             else
             {
-                Door.WriteLn("Missing " + Global.WorldDatFileName);
-                return false;
+                throw new Exception($"{Global.WorldDatFileName} not found");
             }
-
-            // Run maintenance, if required
-            if (IsNewDay)
-            {
-                // This will create a new LOGNOW.TXT and L2TREE.DAT (amongst other things)
-                RTReader RTR = new RTReader();
-                RTR.RunSection("MAINT.REF", "MAINT"); 
-            }
-
-            return true;
         }
 
         public static void LoadMap(int mapNumber)
@@ -237,6 +222,19 @@ namespace LORD2
             // If we get here, user doesn't have an account yet
             record = new TraderDatRecord(true);
             return -1;
+        }
+
+        public static int TotalPlayerAccounts()
+        {
+            if (File.Exists(TraderDatFileName))
+            {
+                long TraderDatFileSize = new FileInfo(TraderDatFileName).Length;
+                return Convert.ToInt32(TraderDatFileSize / Marshal.SizeOf(typeof(TraderDatRecord)));
+            }
+            else
+            {
+                return 0;
+            }
         }
     }
 }

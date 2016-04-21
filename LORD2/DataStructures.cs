@@ -19,62 +19,31 @@ namespace LORD2
             return structure;
         }
 
-        public static bool Validate()
+        public static void Validate()
         {
             int IGM_DATASize = Marshal.SizeOf(typeof(IGM_DATA));
-            if (IGM_DATASize != 1004)
-            {
-                Crt.WriteLn("IGM_DATA is " + IGM_DATASize + ", expected 1004");
-                return false;
-            }
+            if (IGM_DATASize != 1004) throw new Exception($"IGM_DATA is {IGM_DATASize}, expected 1004");
 
             int ItemsDatRecordSize = Marshal.SizeOf(typeof(ItemsDatRecord));
-            if (ItemsDatRecordSize != 204)
-            {
-                Crt.WriteLn("ItemsDatRecord is " + ItemsDatRecordSize + ", expected 204");
-                return false;
-            }
+            if (ItemsDatRecordSize != 204) throw new Exception($"ItemsDatRecord is {ItemsDatRecordSize}, expected 204");
 
             int MAP_INFOSize = Marshal.SizeOf(typeof(MAP_INFO));
-            if (MAP_INFOSize != 6)
-            {
-                Crt.WriteLn("MAP_INFO is " + MAP_INFOSize + ", expected 6");
-                return false;
-            }
+            if (MAP_INFOSize != 6) throw new Exception($"MAP_INFO is {MAP_INFOSize}, expected 6");
+
             int SPECIAL_STRUCTSize = Marshal.SizeOf(typeof(SPECIAL_STRUCT));
-            if (SPECIAL_STRUCTSize != 132)
-            {
-                Crt.WriteLn("SPECIAL_STRUCT is " + SPECIAL_STRUCTSize + ", expected 132");
-                return false;
-            }
+            if (SPECIAL_STRUCTSize != 132) throw new Exception($"SPECIAL_STRUCT is {SPECIAL_STRUCTSize}, expected 132");
+
             int MapDatRecordSize = Marshal.SizeOf(typeof(MapDatRecord));
-            if (MapDatRecordSize != 11451)
-            {
-                Crt.WriteLn("MapDatRecord is " + MapDatRecordSize + ", expected 11451");
-                return false;
-            }
+            if (MapDatRecordSize != 11451) throw new Exception($"MapDatRecord is {MapDatRecordSize}, expected 11451");
 
             int TraderDatRecordSize = Marshal.SizeOf(typeof(TraderDatRecord));
-            if (TraderDatRecordSize != 1193)
-            {
-                Crt.WriteLn("TraderDatRecord is " + TraderDatRecordSize + ", expected 1193");
-                return false;
-            }
+            if (TraderDatRecordSize != 1193) throw new Exception($"TraderDatRecord is {TraderDatRecordSize}, expected 1193");
 
             int UpdateTmpRecordSize = Marshal.SizeOf(typeof(UpdateTmpRecord));
-            if (UpdateTmpRecordSize != 7)
-            {
-                Crt.WriteLn("UpdateTmpRecord is " + UpdateTmpRecordSize + ", expected 7");
-                return false;
-            }
+            if (UpdateTmpRecordSize != 7) throw new Exception($"UpdateTmpRecord is {UpdateTmpRecordSize}, expected 7");
 
             int WorldDatRecordSize = Marshal.SizeOf(typeof(WorldDatRecord));
-            if (WorldDatRecordSize != 6231)
-            {
-                Crt.WriteLn("WorldDatRecord is " + WorldDatRecordSize + ", expected 6231");
-                return false;
-            }
-            return true;
+            if (WorldDatRecordSize != 6231) throw new Exception($"WorldDatRecord is {WorldDatRecordSize}, expected 6231");
         }
 
         public static void WriteStruct<T>(Stream stream, object record) where T : struct
@@ -616,7 +585,7 @@ namespace LORD2
             }
         }
     }
-    
+
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 1)]
     public struct WorldDatRecord
     {

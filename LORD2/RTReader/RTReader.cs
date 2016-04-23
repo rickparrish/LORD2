@@ -40,58 +40,6 @@ namespace LORD2
             InitCommands();
         }
 
-        private void AssignVariable(string variable, string value)
-        {
-            // TODO Instead of translating before calling this function, maybe this function should translate and then
-            //      other functions could pass in the raw string
-
-            // See which variables to update
-            string VariableUpper = variable.Trim().ToUpper();
-            if (VariableUpper.StartsWith("`P"))
-            {
-                // Player longint
-                Global.Player.P[Convert.ToInt32(VariableUpper.Replace("`P", "")) - 1] = Convert.ToInt32(value.Split(' ')[0]);
-                return;
-            }
-            if (VariableUpper.StartsWith("`T"))
-            {
-                // Player byte
-                Global.Player.T[Convert.ToInt32(VariableUpper.Replace("`T", "")) - 1] = Convert.ToByte(value.Split(' ')[0]);
-                return;
-            }
-            if (VariableUpper.StartsWith("`S"))
-            {
-                // Global string
-                Global.WorldDat.S[Convert.ToInt32(VariableUpper.Replace("`S", "")) - 1].Value = value;
-                return;
-            }
-            if (VariableUpper.StartsWith("`V"))
-            {
-                // Global longint
-                Global.WorldDat.V[Convert.ToInt32(VariableUpper.Replace("`V", "")) - 1] = Convert.ToInt32(value.Split(' ')[0]);
-                return;
-            }
-            if (VariableUpper.StartsWith("`I"))
-            {
-                // Player int
-                Global.Player.I[Convert.ToInt32(VariableUpper.Replace("`I", "")) - 1] = Convert.ToInt16(value.Split(' ')[0]);
-                return;
-            }
-            if (VariableUpper.StartsWith("`+"))
-            {
-                // Global item name
-                ItemsDatRecord IDR = Global.ItemsDat[Convert.ToInt32(VariableUpper.Replace("`+", "")) - 1];
-                IDR.Name = value;
-                Global.ItemsDat[Convert.ToInt32(VariableUpper.Replace("`+", "")) - 1] = IDR;
-                return;
-            }
-            if (RTGlobal.Variables.ContainsKey(variable))
-            {
-                if (RTGlobal.Variables[variable].Set != null) RTGlobal.Variables[variable].Set(value.Split(' ')[0]); // These variables only ever hold a single value, so anything after values[0] is likely a comment
-                return;
-            }
-        }
-
         private void EndBUYMANAGER()
         {
             LogUnimplemented(new string[] { "TODOX" });
@@ -165,7 +113,7 @@ namespace LORD2
                     // Extract variable and translate
                     string Variable = _InCHOICEOptions[i].Text.Split(' ')[0];
                     _InCHOICEOptions[i].Text = _InCHOICEOptions[i].Text.Substring(Variable.Length + 1);
-                    Variable = TranslateVariables(Variable);
+                    Variable = RTVariables.TranslateVariables(Variable);
 
                     // Extract value
                     string Value = _InCHOICEOptions[i].Text.Split(' ')[0];
@@ -210,7 +158,7 @@ namespace LORD2
             }
 
             // Ensure `V01 specified a valid/visible selection
-            int SelectedIndex = Convert.ToInt32(TranslateVariables("`V01"));
+            int SelectedIndex = Convert.ToInt32(RTVariables.TranslateVariables("`V01"));
             if ((SelectedIndex < 1) || (SelectedIndex > _InCHOICEOptions.Count)) SelectedIndex = 1;
             while (!_InCHOICEOptions[SelectedIndex - 1].Visible) SelectedIndex += 1;
 
@@ -226,7 +174,7 @@ namespace LORD2
                 {
                     if (_InCHOICEOptions[i].VisibleIndex > 1) Door.Write(Spaces);
                     if (i == (SelectedIndex - 1)) Door.TextBackground(Crt.Blue);
-                    Door.Write(TranslateVariables(_InCHOICEOptions[i].Text));
+                    Door.Write(RTVariables.TranslateVariables(_InCHOICEOptions[i].Text));
                     if (i == (SelectedIndex - 1)) Door.TextBackground(Crt.Black);
                 }
             }
@@ -278,18 +226,18 @@ namespace LORD2
                 if (OldSelectedIndex != SelectedIndex)
                 {
                     // Store new selection
-                    AssignVariable("`V01", SelectedIndex.ToString());
+                    RTVariables.SetVariable("`V01", SelectedIndex.ToString());
 
                     // Redraw old selection without blue highlight
                     Door.CursorRestore();
                     if (_InCHOICEOptions[OldSelectedIndex - 1].VisibleIndex > 1) Door.CursorDown(_InCHOICEOptions[OldSelectedIndex - 1].VisibleIndex - 1);
-                    Door.Write(TranslateVariables(_InCHOICEOptions[OldSelectedIndex - 1].Text));
+                    Door.Write(RTVariables.TranslateVariables(_InCHOICEOptions[OldSelectedIndex - 1].Text));
 
                     // Draw new selection with blue highlight
                     Door.CursorRestore();
                     if (_InCHOICEOptions[SelectedIndex - 1].VisibleIndex > 1) Door.CursorDown(_InCHOICEOptions[SelectedIndex - 1].VisibleIndex - 1);
                     Door.TextBackground(Crt.Blue);
-                    Door.Write(TranslateVariables(_InCHOICEOptions[SelectedIndex - 1].Text));
+                    Door.Write(RTVariables.TranslateVariables(_InCHOICEOptions[SelectedIndex - 1].Text));
                     Door.TextBackground(Crt.Black);
                 }
             }
@@ -313,7 +261,7 @@ namespace LORD2
                 int LoopMax = Math.Min(Lines.Length, _InREADFILELines.Count);
                 for (int i = 0; i < LoopMax; i++)
                 {
-                    AssignVariable(_InREADFILELines[i], TranslateVariables(Lines[i]));
+                    RTVariables.SetVariable(_InREADFILELines[i], RTVariables.TranslateVariables(Lines[i]));
                 }
             }
         }
@@ -327,10 +275,10 @@ namespace LORD2
             // Output new bar
             Door.GotoXY(3, 21);
             Door.TextAttr(31);
-            int StrippedLength = Door.StripSeth(TranslateVariables(line)).Length;
+            int StrippedLength = Door.StripSeth(RTVariables.TranslateVariables(line)).Length;
             int LeftSpaces = Math.Max(0, (76 - StrippedLength) / 2);
             int RightSpaces = Math.Max(0, 76 - StrippedLength - LeftSpaces);
-            Door.Write(new string(' ', LeftSpaces) + TranslateVariables(line) + new string(' ', RightSpaces));
+            Door.Write(new string(' ', LeftSpaces) + RTVariables.TranslateVariables(line) + new string(' ', RightSpaces));
             // TODO say bar should be removed after 3 seconds or so
 
             // Restore
@@ -441,7 +389,7 @@ namespace LORD2
                         }
                         else
                         {
-                            Door.WriteLn(TranslateVariables("`4`b**`b `%ERROR : `2Label `0" + sectionName + " `2not found in `0" + Path.GetFileName(fileName) + " `4`b**`b`2"));
+                            Door.WriteLn(RTVariables.TranslateVariables("`4`b**`b `%ERROR : `2Label `0" + sectionName + " `2not found in `0" + Path.GetFileName(fileName) + " `4`b**`b`2"));
                             Door.ReadKey();
                             return;
                         }
@@ -452,14 +400,14 @@ namespace LORD2
                 }
                 else
                 {
-                    Door.WriteLn(TranslateVariables("`4`b**`b `%ERROR : `2Section `0" + sectionName + " `2not found in `0" + Path.GetFileName(fileName) + " `4`b**`b`2"));
+                    Door.WriteLn(RTVariables.TranslateVariables("`4`b**`b `%ERROR : `2Section `0" + sectionName + " `2not found in `0" + Path.GetFileName(fileName) + " `4`b**`b`2"));
                     Door.ReadKey();
                     return;
                 }
             }
             else
             {
-                Door.WriteLn(TranslateVariables("`4`b**`b `%ERROR : `2File `0" + Path.GetFileName(fileName) + " `2not found. `4`b**`b`2"));
+                Door.WriteLn(RTVariables.TranslateVariables("`4`b**`b `%ERROR : `2File `0" + Path.GetFileName(fileName) + " `2not found. `4`b**`b`2"));
                 Door.ReadKey();
                 return;
             }
@@ -535,12 +483,12 @@ namespace LORD2
                         }
                         else if (_InDO_ADDLOG)
                         {
-                            FileUtils.FileAppendAllText(Global.GetSafeAbsolutePath("LOGNOW.TXT"), TranslateVariables(Line));
+                            FileUtils.FileAppendAllText(Global.GetSafeAbsolutePath("LOGNOW.TXT"), RTVariables.TranslateVariables(Line));
                             _InDO_ADDLOG = false;
                         }
                         else if (_InDO_WRITE)
                         {
-                            Door.Write(TranslateVariables(Line));
+                            Door.Write(RTVariables.TranslateVariables(Line));
                             _InDO_WRITE = false;
                         }
                         else if (_InFIGHT)
@@ -563,7 +511,7 @@ namespace LORD2
                         else if (_InSAY)
                         {
                             // TODO SHould be in TEXT window (but since LORD2 doesn't use @SAY, not a high priority)
-                            Door.Write(TranslateVariables(Line));
+                            Door.Write(RTVariables.TranslateVariables(Line));
                         }
                         else if (_InSAYBAR)
                         {
@@ -576,87 +524,25 @@ namespace LORD2
                         }
                         else if (_InSHOW)
                         {
-                            Door.WriteLn(TranslateVariables(Line));
+                            Door.WriteLn(RTVariables.TranslateVariables(Line));
                         }
                         else if (_InSHOWLOCAL)
                         {
-                            Ansi.Write(TranslateVariables(Line) + "\r\n");
+                            Ansi.Write(RTVariables.TranslateVariables(Line) + "\r\n");
                         }
                         else if (_InSHOWSCROLL)
                         {
-                            _InSHOWSCROLLLines.Add(TranslateVariables(Line));
+                            _InSHOWSCROLLLines.Add(RTVariables.TranslateVariables(Line));
                         }
                         else if (_InWRITEFILE != "")
                         {
-                            FileUtils.FileAppendAllText(_InWRITEFILE, TranslateVariables(Line) + Environment.NewLine, RMEncoding.Ansi);
+                            FileUtils.FileAppendAllText(_InWRITEFILE, RTVariables.TranslateVariables(Line) + Environment.NewLine, RMEncoding.Ansi);
                         }
                     }
                 }
 
                 _CurrentLineNumber += 1;
             }
-        }
-
-        private string TranslateVariables(string input)
-        {
-            // TODO commas get added to numbers (ie 123456 is 123,456)
-            string inputUpper = input.ToUpper();
-
-            if (input.Contains("`"))
-            {
-                if (inputUpper.Contains("`I"))
-                {
-                    for (int i = 0; i < Global.Player.I.Length; i++)
-                    {
-                        input = Regex.Replace(input, Regex.Escape("`I" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.Player.I[i].ToString(), RegexOptions.IgnoreCase);
-                    }
-                }
-                if (inputUpper.Contains("`P"))
-                {
-                    for (int i = 0; i < Global.Player.P.Length; i++)
-                    {
-                        input = Regex.Replace(input, Regex.Escape("`P" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.Player.P[i].ToString(), RegexOptions.IgnoreCase);
-                    }
-                }
-                if (inputUpper.Contains("`+"))
-                {
-                    for (int i = 0; i < Global.ItemsDat.Count; i++)
-                    {
-                        input = Regex.Replace(input, Regex.Escape("`+" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.ItemsDat[i].Name, RegexOptions.IgnoreCase);
-                    }
-                }
-                if (inputUpper.Contains("`S"))
-                {
-                    for (int i = 0; i < Global.WorldDat.S.Length; i++)
-                    {
-                        input = Regex.Replace(input, Regex.Escape("`S" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.WorldDat.S[i].Value, RegexOptions.IgnoreCase);
-                    }
-                }
-                if (inputUpper.Contains("`T"))
-                {
-                    for (int i = 0; i < Global.Player.T.Length; i++)
-                    {
-                        input = Regex.Replace(input, Regex.Escape("`T" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.Player.T[i].ToString(), RegexOptions.IgnoreCase);
-                    }
-                }
-                if (inputUpper.Contains("`V"))
-                {
-                    for (int i = 0; i < Global.WorldDat.V.Length; i++)
-                    {
-                        input = Regex.Replace(input, Regex.Escape("`V" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.WorldDat.V[i].ToString(), RegexOptions.IgnoreCase);
-                    }
-                }
-            }
-            foreach (KeyValuePair<string, RTVariable> KVP in RTGlobal.Variables)
-            {
-                // Returns the original string if no translation is needed/required, or the translated string if keyword was found
-                if (inputUpper.Contains(KVP.Key.ToUpper()))
-                {
-                    input = KVP.Value.Get(input);
-                }
-            }
-
-            return input;
         }
     }
 }

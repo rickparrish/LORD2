@@ -49,6 +49,7 @@
     <Compile Include="RTReader\RTReader.cs" />
     <Compile Include="RTReader\RTRefFile.cs" />
     <Compile Include="RTReader\RTRefSection.cs" />
+    <Compile Include="RTReader\RTVariables.cs" />
     <Compile Include="RTReader\RTVariable.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -29,6 +29,7 @@ namespace LORD2
             }
             catch (Exception ex)
             {
+                if (Debugger.IsAttached) throw;
                 FileUtils.FileAppendAllText(Global.GetSafeAbsolutePath("ex.log"), ex.ToString() + Environment.NewLine);
                 Door.WriteLn();
                 Door.WriteLn($"`4`b**`% ERROR : `2{ex.Message} `4`b**`2");

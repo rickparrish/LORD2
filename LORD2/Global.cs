@@ -20,7 +20,7 @@ namespace LORD2
         public static MapDatRecord CurrentMap;
         public static bool IsNewDay = false;
         public static List<ItemsDatRecord> ItemsDat = new List<ItemsDatRecord>();
-        public static TraderDatRecord Player;
+        public static TraderDatRecord Player = new TraderDatRecord(true);
         public static List<MapDatRecord> MapDat = new List<MapDatRecord>();
         public static int STime = DateTime.Now.Year + DateTime.Now.Month + DateTime.Now.Day;
         public static WorldDatRecord WorldDat;

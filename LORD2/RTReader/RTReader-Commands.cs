@@ -22,7 +22,7 @@ namespace LORD2
                 to do this can result in a corrupted TRADER.DAT file. */
             // TODO a race condition could cause these two inserts to be out of sync
 
-            Global.Player.Name = TranslateVariables("`N");
+            Global.Player.Name = RTVariables.TranslateVariables("`N");
             Global.Player.RealName = Door.DropInfo.Alias;
             Global.Player.Map = 155; // TODO Should come from global variable
             Global.Player.SexMale = 1; // TODO Should come from global variable
@@ -56,11 +56,11 @@ namespace LORD2
                 Sets a certain bit in byte variable X to value Y.  Y must be 0 or 1.  This lets you 
                 have 8 yes/no variables to each byte variable. */
             string VariableName = tokens[1];
-            int StartValue = Convert.ToInt32(TranslateVariables(VariableName));
-            int BitToSet = Convert.ToInt32(TranslateVariables(tokens[2]));
-            int ValueToSet = Convert.ToInt32(TranslateVariables(tokens[3]));
+            int StartValue = Convert.ToInt32(RTVariables.TranslateVariables(VariableName));
+            int BitToSet = Convert.ToInt32(RTVariables.TranslateVariables(tokens[2]));
+            int ValueToSet = Convert.ToInt32(RTVariables.TranslateVariables(tokens[3]));
             int EndValue = StartValue | (ValueToSet << BitToSet);
-            AssignVariable(VariableName, EndValue.ToString());
+            RTVariables.SetVariable(VariableName, EndValue.ToString());
         }
 
         private void CommandBUSY(string[] tokens)
@@ -257,8 +257,8 @@ namespace LORD2
         {
             /* @COPYFILE <input filename> <output filename>
                 This command copies a <input filename to <output filename>.           */
-            string SourceFile = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
-            string DestFile = Global.GetSafeAbsolutePath(TranslateVariables(tokens[2]));
+            string SourceFile = Global.GetSafeAbsolutePath(RTVariables.TranslateVariables(tokens[1]));
+            string DestFile = Global.GetSafeAbsolutePath(RTVariables.TranslateVariables(tokens[2]));
             if ((SourceFile != "") && (DestFile != "") && (File.Exists(SourceFile)))
             {
                 FileUtils.FileCopy(SourceFile, DestFile);
@@ -271,7 +271,7 @@ namespace LORD2
                 a long integer by # from a datafile.  If the file doesn't exist, it is created
                 and all 200 long integers are set to 0.
                 NOTE: You should specify an extension (usually .IDF) */
-            string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
+            string FileName = Global.GetSafeAbsolutePath(RTVariables.TranslateVariables(tokens[1]));
             if (FileName != "")
             {
                 if (File.Exists(FileName))
@@ -279,7 +279,7 @@ namespace LORD2
                     using (FileStream FS = new FileStream(FileName, FileMode.Open))
                     {
                         IGM_DATA IGMD = DataStructures.ReadStruct<IGM_DATA>(FS);
-                        AssignVariable(tokens[3], IGMD.Data[Convert.ToInt32(TranslateVariables(tokens[2])) - 1].ToString());
+                        RTVariables.SetVariable(tokens[3], IGMD.Data[Convert.ToInt32(RTVariables.TranslateVariables(tokens[2])) - 1].ToString());
                     }
                 }
                 else
@@ -298,7 +298,7 @@ namespace LORD2
                         }
                         DataStructures.WriteStruct<IGM_DATA>(FS, IGMD);
                     }
-                    AssignVariable(tokens[3], "0");
+                    RTVariables.SetVariable(tokens[3], "0");
                 }
             }
         }
@@ -309,7 +309,7 @@ namespace LORD2
                 called, all records in <filename> will be set to 0.  Check EXAMPLE.REF in the 
                 LORD II archive for an example of how this works.
                 NOTE: You should specify an extension (usually .IDF) */
-            string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
+            string FileName = Global.GetSafeAbsolutePath(RTVariables.TranslateVariables(tokens[1]));
             if (FileName != "")
             {
                 if (File.Exists(FileName))
@@ -359,7 +359,7 @@ namespace LORD2
                 and all 200 long integers (except the one referenced) are set to 0.  The 
                 record that is referenced will be set to the value of the 3rd parameter.
                 NOTE: You should specify an extension (usually .IDF) */
-            string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
+            string FileName = Global.GetSafeAbsolutePath(RTVariables.TranslateVariables(tokens[1]));
             if (FileName != "")
             {
                 if (File.Exists(FileName))
@@ -368,7 +368,7 @@ namespace LORD2
                     {
                         // Read file
                         IGM_DATA IGMD = DataStructures.ReadStruct<IGM_DATA>(FS);
-                        IGMD.Data[Convert.ToInt32(TranslateVariables(tokens[2])) - 1] = Convert.ToInt32(TranslateVariables(tokens[3]));
+                        IGMD.Data[Convert.ToInt32(RTVariables.TranslateVariables(tokens[2])) - 1] = Convert.ToInt32(RTVariables.TranslateVariables(tokens[3]));
 
                         // Write file
                         FS.Position = 0;
@@ -385,7 +385,7 @@ namespace LORD2
                         {
                             IGMD.Data[i] = 0;
                         }
-                        IGMD.Data[Convert.ToInt32(TranslateVariables(tokens[2])) - 1] = Convert.ToInt32(TranslateVariables(tokens[3]));
+                        IGMD.Data[Convert.ToInt32(RTVariables.TranslateVariables(tokens[2])) - 1] = Convert.ToInt32(RTVariables.TranslateVariables(tokens[3]));
                         for (int i = 0; i < IGMD.Extra.Length; i++)
                         {
                             IGMD.Extra[i] = '\0';
@@ -407,7 +407,7 @@ namespace LORD2
             /* @DISPLAY <this> IN <this file> <options>
                 This is used to display a certain part of a file.  This is compatible with the 
                 LORDTXT.DAT format. */
-            Door.WriteLn(TranslateVariables(string.Join("\r\n", RTGlobal.RefFiles[Path.GetFileNameWithoutExtension(tokens[3])].Sections[tokens[1]].Script.ToArray())));
+            Door.WriteLn(RTVariables.TranslateVariables(string.Join("\r\n", RTGlobal.RefFiles[Path.GetFileNameWithoutExtension(tokens[3])].Sections[tokens[1]].Script.ToArray())));
         }
 
         private void CommandDISPLAYFILE(string[] tokens)
@@ -415,10 +415,10 @@ namespace LORD2
             /* @DISPLAYFILE <filename> <options> 
                 This display an entire file.  Possible options are:  NOPAUSE and NOSKIP.  Put a
                 space between options if you use both. */
-            string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
+            string FileName = Global.GetSafeAbsolutePath(RTVariables.TranslateVariables(tokens[1]));
             if (File.Exists(FileName))
             {
-                Door.Write(TranslateVariables(FileUtils.FileReadAllText(FileName, RMEncoding.Ansi)));
+                Door.Write(RTVariables.TranslateVariables(FileUtils.FileReadAllText(FileName, RMEncoding.Ansi)));
             }
         }
 
@@ -443,11 +443,11 @@ namespace LORD2
             /* @DO <Number To Change> <How To Change It> <Change With What> */
             if (tokens[2] == "+")
             {
-                AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) + Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+                RTVariables.SetVariable(tokens[1], (Convert.ToInt32(RTVariables.TranslateVariables(tokens[1])) + Convert.ToInt32(RTVariables.TranslateVariables(tokens[3]))).ToString());
             }
             else if (tokens[2].ToUpper() == "ADD")
             {
-                AssignVariable(tokens[1], TranslateVariables(tokens[1] + string.Join(" ", tokens, 3, tokens.Length - 3)));
+                RTVariables.SetVariable(tokens[1], RTVariables.TranslateVariables(tokens[1] + string.Join(" ", tokens, 3, tokens.Length - 3)));
             }
         }
 
@@ -472,7 +472,7 @@ namespace LORD2
                 allow a player to change his name or to get the name a new player wants to go 
                 by.  It is also useful in the @#newplayer routine to get the alias the player 
                 wants to go by in the game. */
-            Global.Player.Name = TranslateVariables("`S10");
+            Global.Player.Name = RTVariables.TranslateVariables("`S10");
         }
 
         private void CommandDO_DELETE(string[] tokens)
@@ -490,7 +490,7 @@ namespace LORD2
         private void CommandDO_DIVIDE(string[] tokens)
         {
             /* @DO <Number To Change> <How To Change It> <Change With What> */
-            AssignVariable(tokens[1], Math.Truncate(Convert.ToDouble(TranslateVariables(tokens[1])) / Convert.ToDouble(TranslateVariables(tokens[3]))).ToString());
+            RTVariables.SetVariable(tokens[1], Math.Truncate(Convert.ToDouble(RTVariables.TranslateVariables(tokens[1])) / Convert.ToDouble(RTVariables.TranslateVariables(tokens[3]))).ToString());
         }
 
         private void CommandDO_FRONTPAD(string[] tokens)
@@ -498,11 +498,11 @@ namespace LORD2
             /* @DO FRONTPAD <string variable> <length>
                 This adds spaces to the front of the string until the string is as long as 
                 <length>. */
-            int StringLength = Door.StripSeth(TranslateVariables(tokens[2])).Length;
+            int StringLength = Door.StripSeth(RTVariables.TranslateVariables(tokens[2])).Length;
             int RequestedLength = Convert.ToInt32(tokens[3]);
             if (StringLength < RequestedLength)
             {
-                AssignVariable(tokens[2], StringUtils.PadLeft(TranslateVariables(tokens[2]), ' ', Convert.ToInt32(tokens[3])));
+                RTVariables.SetVariable(tokens[2], StringUtils.PadLeft(RTVariables.TranslateVariables(tokens[2]), ' ', Convert.ToInt32(tokens[3])));
             }
         }
 
@@ -517,16 +517,16 @@ namespace LORD2
                 char? Ch = Door.ReadKey();
                 if (Ch == null)
                 {
-                    AssignVariable(tokens[2], "_");
+                    RTVariables.SetVariable(tokens[2], "_");
                 }
                 else
                 {
-                    AssignVariable(tokens[2], Ch.ToString());
+                    RTVariables.SetVariable(tokens[2], Ch.ToString());
                 }
             }
             else
             {
-                AssignVariable(tokens[2], "_");
+                RTVariables.SetVariable(tokens[2], "_");
             }
         }
 
@@ -537,7 +537,7 @@ namespace LORD2
             if (_CurrentFile.Sections.ContainsKey(tokens[2]))
             {
                 // HEADER goto
-                RTReader.Execute(_CurrentFile.Name, TranslateVariables(tokens[2]));
+                RTReader.Execute(_CurrentFile.Name, RTVariables.TranslateVariables(tokens[2]));
                 _InCLOSESCRIPT = true; // Don't want to resume this ref
             }
             else if (_CurrentSection.Labels.ContainsKey(tokens[2]))
@@ -552,7 +552,7 @@ namespace LORD2
                     if (KVP.Value.Labels.ContainsKey(tokens[2]))
                     {
                         // LABEL goto within a different section
-                        RTReader.Execute(_CurrentFile.Name, KVP.Key, TranslateVariables(tokens[2]));
+                        RTReader.Execute(_CurrentFile.Name, KVP.Key, RTVariables.TranslateVariables(tokens[2]));
                         _InCLOSESCRIPT = true; // Don't want to resume this ref
                         break;
                     }
@@ -568,16 +568,16 @@ namespace LORD2
                 /* @DO `p20 is deleted 8
                     Puts 1 (player is deleted) or 0 (player is not deleted) in `p20.  This only 
                     works with `p variables.  The account number can be a `p variable. */
-                int PlayerNumber = Convert.ToInt32(TranslateVariables(tokens[4]));
+                int PlayerNumber = Convert.ToInt32(RTVariables.TranslateVariables(tokens[4]));
 
                 TraderDatRecord TDR;
                 if (PlayerNumber == Global.LoadPlayerByPlayerNumber(PlayerNumber, out TDR))
                 {
-                    AssignVariable(tokens[1], TDR.Deleted == 0 ? "0" : "1");
+                    RTVariables.SetVariable(tokens[1], TDR.Deleted == 0 ? "0" : "1");
                 }
                 else
                 {
-                    AssignVariable(tokens[1], "0");
+                    RTVariables.SetVariable(tokens[1], "0");
                 }
             }
             else if (tokens[3].ToUpper() == "GETNAME")
@@ -585,29 +585,29 @@ namespace LORD2
                 /* @DO `s01 is getname 8
                     This would get the name of player 8 and put it in `s01.  This only works with 
                     `s variables.  The account number can be a `p variable. */
-                int PlayerNumber = Convert.ToInt32(TranslateVariables(tokens[4]));
+                int PlayerNumber = Convert.ToInt32(RTVariables.TranslateVariables(tokens[4]));
 
                 TraderDatRecord TDR;
                 if (PlayerNumber == Global.LoadPlayerByPlayerNumber(PlayerNumber, out TDR))
                 {
-                    AssignVariable(tokens[1], TDR.Name);
+                    RTVariables.SetVariable(tokens[1], TDR.Name);
                 }
             }
             else if (tokens[3].ToUpper() == "LENGTH")
             {
                 /* @DO <number variable> IS LENGTH <String variable>
                     Gets length, smart way. */
-                AssignVariable(tokens[1], Door.StripSeth(TranslateVariables(tokens[4])).Length.ToString());
+                RTVariables.SetVariable(tokens[1], Door.StripSeth(RTVariables.TranslateVariables(tokens[4])).Length.ToString());
             }
             else if (tokens[3].ToUpper() == "REALLENGTH")
             {
                 /* @DO <number variable> IS REALLENGTH <String variable>
                     Gets length dumb way. (includes '`' codes without deciphering them.) */
-                AssignVariable(tokens[1], TranslateVariables(tokens[4]).Length.ToString());
+                RTVariables.SetVariable(tokens[1], RTVariables.TranslateVariables(tokens[4]).Length.ToString());
             }
             else
             {
-                AssignVariable(tokens[1], string.Join(" ", tokens, 3, tokens.Length - 3));
+                RTVariables.SetVariable(tokens[1], RTVariables.TranslateVariables(string.Join(" ", tokens, 3, tokens.Length - 3)));
             }
         }
 
@@ -615,8 +615,8 @@ namespace LORD2
         {
             /* @DO MOVE <X> <Y> : This moves the curser.  (like GOTOXY in TP) Enter 0 for
                 a number will default to 'current location'. */
-            int X = Convert.ToInt32(TranslateVariables(tokens[2]));
-            int Y = Convert.ToInt32(TranslateVariables(tokens[3]));
+            int X = Convert.ToInt32(RTVariables.TranslateVariables(tokens[2]));
+            int Y = Convert.ToInt32(RTVariables.TranslateVariables(tokens[3]));
             if ((X > 0) && (Y > 0))
             {
                 Door.GotoXY(X, Y);
@@ -644,7 +644,7 @@ namespace LORD2
         private void CommandDO_MULTIPLY(string[] tokens)
         {
             /* @DO <Number To Change> <How To Change It> <Change With What> */
-            AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) * Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+            RTVariables.SetVariable(tokens[1], (Convert.ToInt32(RTVariables.TranslateVariables(tokens[1])) * Convert.ToInt32(RTVariables.TranslateVariables(tokens[3]))).ToString());
         }
 
         private void CommandDO_NUMRETURN(string[] tokens)
@@ -652,20 +652,20 @@ namespace LORD2
             /* @DO NUMRETURN <int var> <string var>
                 Undocumented.  Seems to return the number of integers in the given string
                 Example "123test456" returns 6 because there are 6 numbers */
-            string Translated = TranslateVariables(tokens[3]);
+            string Translated = RTVariables.TranslateVariables(tokens[3]);
             string TranslatedWithoutNumbers = Regex.Replace(Translated, "[0-9]", "", RegexOptions.IgnoreCase);
-            AssignVariable(tokens[2], (Translated.Length - TranslatedWithoutNumbers.Length).ToString());
+            RTVariables.SetVariable(tokens[2], (Translated.Length - TranslatedWithoutNumbers.Length).ToString());
         }
 
         private void CommandDO_PAD(string[] tokens)
         {
             /* @DO PAD <string variable> <length>
                 This adds spaces to the end of the string until string is as long as <length>. */
-            int StringLength = Door.StripSeth(TranslateVariables(tokens[2])).Length;
+            int StringLength = Door.StripSeth(RTVariables.TranslateVariables(tokens[2])).Length;
             int RequestedLength = Convert.ToInt32(tokens[3]);
             if (StringLength < RequestedLength)
             {
-                AssignVariable(tokens[2], StringUtils.PadRight(TranslateVariables(tokens[2]), ' ', Convert.ToInt32(tokens[3])));
+                RTVariables.SetVariable(tokens[2], StringUtils.PadRight(RTVariables.TranslateVariables(tokens[2]), ' ', Convert.ToInt32(tokens[3])));
             }
         }
 
@@ -685,7 +685,7 @@ namespace LORD2
                 RANDOM 100 200 will pick a number between 0 (inclusive) and 100 (exclusive) and add 200 to it, resulting in 200-299 */
             int Min = Convert.ToInt32(tokens[4]);
             int Max = Min + Convert.ToInt32(tokens[3]);
-            AssignVariable(tokens[1], _R.Next(Min, Max).ToString());
+            RTVariables.SetVariable(tokens[1], _R.Next(Min, Max).ToString());
         }
 
         private void CommandDO_READCHAR(string[] tokens)
@@ -697,11 +697,11 @@ namespace LORD2
             char? Ch = Door.ReadKey();
             if (Ch == null)
             {
-                AssignVariable(tokens[2], "\0");
+                RTVariables.SetVariable(tokens[2], "\0");
             }
             else
             {
-                AssignVariable(tokens[2], Ch.ToString());
+                RTVariables.SetVariable(tokens[2], Ch.ToString());
             }
         }
 
@@ -712,13 +712,13 @@ namespace LORD2
                 The READNUM procedure is a very nice string editer to get a number in. It
                 supports arrow keys and such. */
             string Default = "";
-            if (tokens.Length >= 4) Default = TranslateVariables(tokens[3]);
+            if (tokens.Length >= 4) Default = RTVariables.TranslateVariables(tokens[3]);
 
-            string ReadNum = Door.TextBox(Default, CharacterMask.Numeric, '\0', Convert.ToInt32(TranslateVariables(tokens[2])), Convert.ToInt32(TranslateVariables(tokens[2])), 31);
+            string ReadNum = Door.TextBox(Default, CharacterMask.Numeric, '\0', Convert.ToInt32(RTVariables.TranslateVariables(tokens[2])), Convert.ToInt32(RTVariables.TranslateVariables(tokens[2])), 31);
             int AnswerInt = 0;
             if (!int.TryParse(ReadNum, out AnswerInt)) AnswerInt = 0;
 
-            AssignVariable("`V40", AnswerInt.ToString());
+            RTVariables.SetVariable("`V40", AnswerInt.ToString());
         }
 
         private void CommandDO_READSPECIAL(string[] tokens)
@@ -745,13 +745,13 @@ namespace LORD2
                     if (Ch == '\r')
                     {
                         // Assign first option when enter is hit
-                        AssignVariable(tokens[2], tokens[3][0].ToString());
+                        RTVariables.SetVariable(tokens[2], tokens[3][0].ToString());
                         break;
                     }
                     else if (tokens[3].ToUpper().Contains(Ch.ToString()))
                     {
                         // Assign selected character
-                        AssignVariable(tokens[2], Ch.ToString());
+                        RTVariables.SetVariable(tokens[2], Ch.ToString());
                         break;
                     }
                 }
@@ -766,14 +766,14 @@ namespace LORD2
                 also use these vars for the default.  (or `N)  Use NIL if you want the default 
                 to be nothing.  (if no variable to put it in is specified, it will be put into `S10 
                 for compatibilty with old .REF's) */
-            string ReadString = Door.TextBox(Regex.Replace(TranslateVariables(tokens[3]), "NIL", "", RegexOptions.IgnoreCase), CharacterMask.All, '\0', Convert.ToInt32(TranslateVariables(tokens[2])), Convert.ToInt32(TranslateVariables(tokens[2])), 31);
+            string ReadString = Door.TextBox(Regex.Replace(RTVariables.TranslateVariables(tokens[3]), "NIL", "", RegexOptions.IgnoreCase), CharacterMask.All, '\0', Convert.ToInt32(RTVariables.TranslateVariables(tokens[2])), Convert.ToInt32(RTVariables.TranslateVariables(tokens[2])), 31);
             if (tokens.Length >= 5)
             {
-                AssignVariable(tokens[4], ReadString);
+                RTVariables.SetVariable(tokens[4], ReadString);
             }
             else
             {
-                AssignVariable("`S10", ReadString);
+                RTVariables.SetVariable("`S10", ReadString);
             }
         }
 
@@ -783,7 +783,7 @@ namespace LORD2
                 Replaces X with Y in an `s variable. */
             // Identified as @REPLACE not @DO REPLACE in the docs
             // The following regex matches only the first instance of the word foo: (?<!foo.*)foo (from http://stackoverflow.com/a/148561/342378)
-            AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), "(?<!" + Regex.Escape(TranslateVariables(tokens[2])) + ".*)" + Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
+            RTVariables.SetVariable(tokens[4], Regex.Replace(RTVariables.TranslateVariables(tokens[4]), "(?<!" + Regex.Escape(RTVariables.TranslateVariables(tokens[2])) + ".*)" + Regex.Escape(RTVariables.TranslateVariables(tokens[2])), RTVariables.TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
         }
 
         private void CommandDO_REPLACEALL(string[] tokens)
@@ -791,15 +791,15 @@ namespace LORD2
             /* @DO REPLACEALL <X> <Y> <in `S10>:
                 Same as above but replaces all instances. */
             // Identified as @REPLACEALL not @DO REPLACEALL in the docs
-            AssignVariable(tokens[4], Regex.Replace(TranslateVariables(tokens[4]), Regex.Escape(TranslateVariables(tokens[2])), TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
+            RTVariables.SetVariable(tokens[4], Regex.Replace(RTVariables.TranslateVariables(tokens[4]), Regex.Escape(RTVariables.TranslateVariables(tokens[2])), RTVariables.TranslateVariables(tokens[3]), RegexOptions.IgnoreCase));
         }
 
         private void CommandDO_RENAME(string[] tokens)
         {
             /* @DO RENAME <old name> <new name>
                 Undocumented.  Renames a file */
-            string OldFile = Global.GetSafeAbsolutePath(TranslateVariables(tokens[2]));
-            string NewFile = Global.GetSafeAbsolutePath(TranslateVariables(tokens[3]));
+            string OldFile = Global.GetSafeAbsolutePath(RTVariables.TranslateVariables(tokens[2]));
+            string NewFile = Global.GetSafeAbsolutePath(RTVariables.TranslateVariables(tokens[3]));
             if ((OldFile != "") && (NewFile != "") && (File.Exists(OldFile)))
             {
                 FileUtils.FileMove(OldFile, NewFile);
@@ -828,7 +828,7 @@ namespace LORD2
         {
             /* @DO STRIP <string variable>
                 This strips beginning and end spaces of a string. */
-            AssignVariable(tokens[2], TranslateVariables(tokens[2]).Trim());
+            RTVariables.SetVariable(tokens[2], RTVariables.TranslateVariables(tokens[2]).Trim());
         }
 
         private void CommandDO_STRIPALL(string[] tokens)
@@ -856,7 +856,7 @@ namespace LORD2
         private void CommandDO_SUBTRACT(string[] tokens)
         {
             /* @DO <Number To Change> <How To Change It> <Change With What> */
-            AssignVariable(tokens[1], (Convert.ToInt32(TranslateVariables(tokens[1])) - Convert.ToInt32(TranslateVariables(tokens[3]))).ToString());
+            RTVariables.SetVariable(tokens[1], (Convert.ToInt32(RTVariables.TranslateVariables(tokens[1])) - Convert.ToInt32(RTVariables.TranslateVariables(tokens[3]))).ToString());
         }
 
         private void CommandDO_TALK(string[] tokens)
@@ -873,10 +873,10 @@ namespace LORD2
                 This nifty command makes text file larger than <number to trim to> get 
                 smaller.  (It deletes lines from the top until the file is correct # of lines, 
                 if smaller than <number to trim to>, it doesn't change the file) */
-            string FileName = Global.GetSafeAbsolutePath(TranslateVariables(tokens[2]));
+            string FileName = Global.GetSafeAbsolutePath(RTVariables.TranslateVariables(tokens[2]));
             if (File.Exists(FileName))
             {
-                int MaxLines = Convert.ToInt32(TranslateVariables(tokens[3]));
+                int MaxLines = Convert.ToInt32(RTVariables.TranslateVariables(tokens[3]));
                 List<string> Lines = new List<string>();
                 Lines.AddRange(FileUtils.FileReadAllLines(FileName, RMEncoding.Ansi));
                 if (Lines.Count > MaxLines)
@@ -891,7 +891,7 @@ namespace LORD2
         {
             /* @DO UPCASE <string variable>
                 This makes a string all capitals. */
-            AssignVariable(tokens[2], TranslateVariables(tokens[2]).ToUpper());
+            RTVariables.SetVariable(tokens[2], RTVariables.TranslateVariables(tokens[2]).ToUpper());
         }
 
         private void CommandDO_WRITE(string[] tokens)
@@ -1069,7 +1069,7 @@ namespace LORD2
             /* @IF bitcheck <`t variable> <bit number> <0 or 1>
                 Check if the given bit is set or not in the given `t variable */
             // TODO Untested
-            return ((Convert.ToInt32(TranslateVariables(tokens[2])) & (1 << Convert.ToInt32(TranslateVariables(tokens[3])))) == Convert.ToInt32(TranslateVariables(tokens[4])));
+            return ((Convert.ToInt32(RTVariables.TranslateVariables(tokens[2])) & (1 << Convert.ToInt32(RTVariables.TranslateVariables(tokens[3])))) == Convert.ToInt32(RTVariables.TranslateVariables(tokens[4])));
         }
 
         private bool CommandIF_BLOCKPASSABLE(string[] tokens)
@@ -1082,8 +1082,8 @@ namespace LORD2
         {
             /* @if checkdupe <`s variable> <true or false>
                 Check if the given player name already exists */
-            string GameName = TranslateVariables(tokens[2]);
-            bool TrueFalse = Convert.ToBoolean(TranslateVariables(tokens[3]));
+            string GameName = RTVariables.TranslateVariables(tokens[2]);
+            bool TrueFalse = Convert.ToBoolean(RTVariables.TranslateVariables(tokens[3]));
 
             TraderDatRecord TDR;
             bool Exists = (Global.LoadPlayerByGameName(GameName, out TDR) != -1);
@@ -1093,8 +1093,8 @@ namespace LORD2
         private bool CommandIF_EXIST(string[] tokens)
         {
             /* Undocumented.  Checks if given file exists */
-            string Left = TranslateVariables(tokens[1]);
-            string Right = TranslateVariables(tokens[3]);
+            string Left = RTVariables.TranslateVariables(tokens[1]);
+            string Right = RTVariables.TranslateVariables(tokens[3]);
 
             string FileName = Global.GetSafeAbsolutePath(Left);
             bool TrueFalse = Convert.ToBoolean(Right.ToUpper());
@@ -1106,16 +1106,16 @@ namespace LORD2
             /* @IF <Word or variable> INSIDE <Word or variable>
                 This allows you to search a string for something inside of it.  Not case 
                 sensitive. */
-            string Left = TranslateVariables(tokens[1]);
-            string Right = TranslateVariables(tokens[3]);
+            string Left = RTVariables.TranslateVariables(tokens[1]);
+            string Right = RTVariables.TranslateVariables(tokens[3]);
 
             return Right.ToUpper().Contains(Left.ToUpper());
         }
 
         private bool CommandIF_IS(string[] tokens)
         {
-            string Left = TranslateVariables(tokens[1]);
-            string Right = TranslateVariables(tokens[3]);
+            string Left = RTVariables.TranslateVariables(tokens[1]);
+            string Right = RTVariables.TranslateVariables(tokens[3]);
             int LeftInt;
             int RightInt;
 
@@ -1131,8 +1131,8 @@ namespace LORD2
 
         private bool CommandIF_LESS(string[] tokens)
         {
-            string Left = TranslateVariables(tokens[1]);
-            string Right = TranslateVariables(tokens[3]);
+            string Left = RTVariables.TranslateVariables(tokens[1]);
+            string Right = RTVariables.TranslateVariables(tokens[3]);
             int LeftInt;
             int RightInt;
 
@@ -1148,8 +1148,8 @@ namespace LORD2
 
         private bool CommandIF_MORE(string[] tokens)
         {
-            string Left = TranslateVariables(tokens[1]);
-            string Right = TranslateVariables(tokens[3]);
+            string Left = RTVariables.TranslateVariables(tokens[1]);
+            string Right = RTVariables.TranslateVariables(tokens[3]);
             int LeftInt;
             int RightInt;
 
@@ -1165,8 +1165,8 @@ namespace LORD2
 
         private bool CommandIF_NOT(string[] tokens)
         {
-            string Left = TranslateVariables(tokens[1]);
-            string Right = TranslateVariables(tokens[3]);
+            string Left = RTVariables.TranslateVariables(tokens[1]);
+            string Right = RTVariables.TranslateVariables(tokens[3]);
             int LeftInt;
             int RightInt;
 
@@ -1199,7 +1199,7 @@ namespace LORD2
                 /* @KEY 
                     Does a [MORE] prompt, centered on current line.
                     NOTE: Actually indents two lines, not centered */
-                Door.Write(TranslateVariables("  `2<`0MORE`2>"));
+                Door.Write(RTVariables.TranslateVariables("  `2<`0MORE`2>"));
                 Door.ReadKey();
                 Door.Write("\b\b\b\b\b\b\b\b        \b\b\b\b\b\b\b\b");
             }
@@ -1208,7 +1208,7 @@ namespace LORD2
                 /* @KEY BOTTOM
                     This does <MORE> prompt at user text window. */
                 Door.GotoXY(35, 24);
-                Door.Write(TranslateVariables("`2<`0MORE`2>"));
+                Door.Write(RTVariables.TranslateVariables("`2<`0MORE`2>"));
                 Door.ReadKey();
                 Door.Write("\b\b\b\b\b\b      \b\b\b\b\b\b");
             }
@@ -1223,7 +1223,7 @@ namespace LORD2
                 /* @KEY TOP
                     This does <MORE> prompt at game text window. */
                 Door.GotoXY(40, 15);
-                Door.Write(TranslateVariables("`2<`0MORE`2>"));
+                Door.Write(RTVariables.TranslateVariables("`2<`0MORE`2>"));
                 Door.ReadKey();
                 Door.Write("\b\b\b\b\b\b      \b\b\b\b\b\b");
             }
@@ -1269,7 +1269,7 @@ namespace LORD2
                 The L2 engine will display a runtime error and close the door.   Be SURE to 
                 change the map variable too!!  Using this and changing the X and Y coordinates 
                 effectivly lets you do a 'warp' from a .ref file. */
-            Global.LoadMap(Convert.ToInt32(TranslateVariables(tokens[1])));
+            Global.LoadMap(Convert.ToInt32(RTVariables.TranslateVariables(tokens[1])));
         }
 
         private void CommandLOADWORLD(string[] tokens)
@@ -1311,7 +1311,7 @@ namespace LORD2
         {
             /* @NAME <name to put under picture>
                 Undocumented. Puts a name under the picture window */
-            string Name = TranslateVariables(string.Join(" ", tokens, 1, tokens.Length - 1));
+            string Name = RTVariables.TranslateVariables(string.Join(" ", tokens, 1, tokens.Length - 1));
             Door.GotoXY(55 + Convert.ToInt32(Math.Truncate((22 - Door.StripSeth(Name).Length) / 2.0)), 15);
             Door.Write(Name);
         }
@@ -1398,7 +1398,7 @@ namespace LORD2
                 NOTE:  @READFILE is a smart procedure - It will not run-time error or 
                 anything, even if you try to read past the end of the file. It simply won't 
                 change the variables if the file isn't long enough. */
-            _InREADFILE = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
+            _InREADFILE = Global.GetSafeAbsolutePath(RTVariables.TranslateVariables(tokens[1]));
             _InREADFILELines.Clear();
         }
 
@@ -1413,11 +1413,11 @@ namespace LORD2
                 the first procedure that ran @ROUTINE. */
             if (tokens.Length < 4)
             {
-                RTReader.Execute(_CurrentFile.Name, TranslateVariables(tokens[1]));
+                RTReader.Execute(_CurrentFile.Name, RTVariables.TranslateVariables(tokens[1]));
             }
             else
             {
-                RTReader.Execute(TranslateVariables(tokens[3]), TranslateVariables(tokens[1]));
+                RTReader.Execute(RTVariables.TranslateVariables(tokens[3]), RTVariables.TranslateVariables(tokens[1]));
             }
         }
 
@@ -1425,7 +1425,7 @@ namespace LORD2
         {
             /* @RUN <Header or label name> IN <Filename of .REF file>
                 Same thing as ROUTINE, but doesn't come back to the original .REF. */
-            RTReader.Execute(TranslateVariables(tokens[3]), TranslateVariables(tokens[1]));
+            RTReader.Execute(RTVariables.TranslateVariables(tokens[3]), RTVariables.TranslateVariables(tokens[1]));
             _InCLOSESCRIPT = true; // Don't want to resume this ref
         }
 
@@ -1550,7 +1550,7 @@ namespace LORD2
                 write - or a combination of the two.
                 Note:  @WRITEFILE appends the lines if the file exists, otherwise it creates 
                 it.  File locking techniques are used. */
-            _InWRITEFILE = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
+            _InWRITEFILE = Global.GetSafeAbsolutePath(RTVariables.TranslateVariables(tokens[1]));
         }
 
         private void InitCommands()

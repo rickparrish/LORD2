@@ -6,216 +6,11 @@ using System.Text.RegularExpressions;
 
 namespace LORD2
 {
-    public class RTReader
+    public partial class RTReader
     {
         internal Dictionary<string, Action<string[]>> _Commands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
         internal Dictionary<string, Action<string[]>> _DOCommands = new Dictionary<string, Action<string[]>>(StringComparer.OrdinalIgnoreCase);
         internal Dictionary<string, Func<string[], bool>> _IFCommands = new Dictionary<string, Func<string[], bool>>(StringComparer.OrdinalIgnoreCase);
-
-        private int _CurrentLineNumber = 0;
-        private RTRefFile _CurrentFile = null;
-        private RTRefSection _CurrentSection = null;
-        private int _InBEGINCount = 0;
-        private bool _InBUYMANAGER = false;
-        private List<string> _InBUYMANAGEROptions = new List<string>();
-        private bool _InCHOICE = false;
-        private List<RTChoiceOption> _InCHOICEOptions = new List<RTChoiceOption>();
-        private bool _InCLOSESCRIPT = false;
-        private bool _InDO_ADDLOG = false;
-        private bool _InDO_WRITE = false;
-        private bool _InFIGHT = false;
-        private int _InIFFalse = 999; // Maybe needs to be renamed -- lets us know when we're skipping over code because it's part of an @IF that evaluated to false
-        private string _InREADFILE = "";
-        private List<string> _InREADFILELines = new List<string>();
-        private bool _InSAY = false;
-        private bool _InSAYBAR = false;
-        private bool _InSELLMANAGER = false;
-        private List<string> _InSELLMANAGEROptions = new List<string>();
-        private bool _InSHOW = false;
-        private bool _InSHOWLOCAL = false;
-        private bool _InSHOWSCROLL = false;
-        private List<string> _InSHOWSCROLLLines = new List<string>();
-        private string _InWRITEFILE = "";
-        private Random _R = new Random();
-        private int _Version = 99;
-
-        public RTReader()
-        {
-            // Initialize the commands dictionary
-            _Commands.Add("@", CommandNOP);
-            _Commands.Add("@ADDCHAR", CommandADDCHAR);
-            _Commands.Add("@BEGIN", CommandBEGIN);
-            _Commands.Add("@BITSET", CommandBITSET);
-            _Commands.Add("@BUSY", CommandBUSY);
-            _Commands.Add("@BUYMANAGER", CommandBUYMANAGER);
-            _Commands.Add("@CHECKMAIL", CommandCHECKMAIL);
-            _Commands.Add("@CHOICE", CommandCHOICE);
-            _Commands.Add("@CHOOSEPLAYER", CommandCHOOSEPLAYER);
-            _Commands.Add("@CLEAR", CommandCLEAR);
-            _Commands.Add("@CLEARBLOCK", CommandCLEARBLOCK);
-            _Commands.Add("@CLOSESCRIPT", CommandCLOSESCRIPT);
-            _Commands.Add("@CONVERT_FILE_TO_ANSI", CommandCONVERT_FILE_TO_ANSI);
-            _Commands.Add("@CONVERT_FILE_TO_ASCII", CommandCONVERT_FILE_TO_ASCII);
-            _Commands.Add("@COPYFILE", CommandCOPYFILE);
-            _Commands.Add("@DATALOAD", CommandDATALOAD);
-            _Commands.Add("@DATANEWDAY", CommandDATANEWDAY);
-            _Commands.Add("@DATASAVE", CommandDATASAVE);
-            _Commands.Add("@DECLARE", CommandDECLARE);
-            _Commands.Add("@DISPLAY", CommandDISPLAY);
-            _Commands.Add("@DISPLAYFILE", CommandDISPLAYFILE);
-            _Commands.Add("@DO", CommandDO);
-            _Commands.Add("@DRAWMAP", CommandDRAWMAP);
-            _Commands.Add("@DRAWPART", CommandDRAWPART);
-            _Commands.Add("@END", CommandEND);
-            _Commands.Add("@FIGHT", CommandFIGHT);
-            _Commands.Add("@GRAPHICS", CommandGRAPHICS);
-            _Commands.Add("@HALT", CommandHALT);
-            _Commands.Add("@IF", CommandIF);
-            _Commands.Add("@ITEMEXIT", CommandITEMEXIT);
-            _Commands.Add("@KEY", CommandKEY);
-            _Commands.Add("@LABEL", CommandLABEL);
-            _Commands.Add("@LOADCURSOR", CommandLOADCURSOR);
-            _Commands.Add("@LOADGLOBALS", CommandLOADGLOBALS);
-            _Commands.Add("@LOADMAP", CommandLOADMAP);
-            _Commands.Add("@LOADWORLD", CommandLOADWORLD);
-            _Commands.Add("@LORDRANK", CommandLORDRANK);
-            _Commands.Add("@MOREMAP", CommandMOREMAP);
-            _Commands.Add("@NAME", CommandNAME);
-            _Commands.Add("@NOCHECK", CommandNOCHECK);
-            _Commands.Add("@OFFMAP", CommandOFFMAP);
-            _Commands.Add("@OVERHEADMAP", CommandOVERHEADMAP);
-            _Commands.Add("@PAUSEOFF", CommandPAUSEOFF);
-            _Commands.Add("@PAUSEON", CommandPAUSEON);
-            _Commands.Add("@PROGNAME", CommandPROGNAME);
-            _Commands.Add("@RANK", CommandRANK);
-            _Commands.Add("@READFILE", CommandREADFILE);
-            _Commands.Add("@ROUTINE", CommandROUTINE);
-            _Commands.Add("@RUN", CommandRUN);
-            _Commands.Add("@SAVECURSOR", CommandSAVECURSOR);
-            _Commands.Add("@SAVEGLOBALS", CommandSAVEGLOBALS);
-            _Commands.Add("@SAVEWORLD", CommandSAVEWORLD);
-            _Commands.Add("@SAY", CommandSAY);
-            _Commands.Add("@SELLMANAGER", CommandSELLMANAGER);
-            _Commands.Add("@SHOW", CommandSHOW);
-            _Commands.Add("@SHOWLOCAL", CommandSHOWLOCAL);
-            _Commands.Add("@UPDATE", CommandUPDATE);
-            _Commands.Add("@UPDATE_UPDATE", CommandUPDATE_UPDATE);
-            _Commands.Add("@VERSION", CommandVERSION);
-            _Commands.Add("@WHOISON", CommandWHOISON);
-            _Commands.Add("@WRITEFILE", CommandWRITEFILE);
-
-            // Initialize the @DO commands dictionary
-            // @DO <COMMAND> COMMANDS
-            _DOCommands.Add("ADDLOG", CommandDO_ADDLOG);
-            _DOCommands.Add("BEEP", CommandDO_BEEP);
-            _DOCommands.Add("COPYTONAME", CommandDO_COPYTONAME);
-            _DOCommands.Add("DELETE", CommandDO_DELETE);
-            _DOCommands.Add("FRONTPAD", CommandDO_FRONTPAD);
-            _DOCommands.Add("GETKEY", CommandDO_GETKEY);
-            _DOCommands.Add("GOTO", CommandDO_GOTO);
-            _DOCommands.Add("MOVE", CommandDO_MOVE);
-            _DOCommands.Add("MOVEBACK", CommandDO_MOVEBACK);
-            _DOCommands.Add("NUMRETURN", CommandDO_NUMRETURN);
-            _DOCommands.Add("PAD", CommandDO_PAD);
-            _DOCommands.Add("QUEBAR", CommandDO_QUEBAR);
-            _DOCommands.Add("READCHAR", CommandDO_READCHAR);
-            _DOCommands.Add("READNUM", CommandDO_READNUM);
-            _DOCommands.Add("READSPECIAL", CommandDO_READSPECIAL);
-            _DOCommands.Add("READSTRING", CommandDO_READSTRING);
-            _DOCommands.Add("REPLACE", CommandDO_REPLACE);
-            _DOCommands.Add("REPLACEALL", CommandDO_REPLACEALL);
-            _DOCommands.Add("RENAME", CommandDO_RENAME);
-            _DOCommands.Add("SAYBAR", CommandDO_SAYBAR);
-            _DOCommands.Add("STATBAR", CommandDO_STATBAR);
-            _DOCommands.Add("STRIP", CommandDO_STRIP);
-            _DOCommands.Add("STRIPALL", CommandDO_STRIPALL);
-            _DOCommands.Add("STRIPBAD", CommandDO_STRIPBAD);
-            _DOCommands.Add("STRIPCODE", CommandDO_STRIPCODE);
-            _DOCommands.Add("TALK", CommandDO_TALK);
-            _DOCommands.Add("TRIM", CommandDO_TRIM);
-            _DOCommands.Add("UPCASE", CommandDO_UPCASE);
-            _DOCommands.Add("WRITE", CommandDO_WRITE);
-            // @DO <SOMETHING> <COMMAND> COMMANDS
-            _DOCommands.Add("/", CommandDO_DIVIDE);
-            _DOCommands.Add("*", CommandDO_MULTIPLY);
-            _DOCommands.Add("+", CommandDO_ADD);
-            _DOCommands.Add("-", CommandDO_SUBTRACT);
-            _DOCommands.Add("=", CommandDO_IS);
-            _DOCommands.Add("ADD", CommandDO_ADD);
-            _DOCommands.Add("IS", CommandDO_IS);
-            _DOCommands.Add("RANDOM", CommandDO_RANDOM);
-
-            // Initialize the @IF commands dictionary
-            // @IF <COMMAND> COMMANDS
-            _IFCommands.Add("BITCHECK", CommandIF_BITCHECK);
-            _IFCommands.Add("BLOCKPASSABLE", CommandIF_BLOCKPASSABLE);
-            _IFCommands.Add("CHECKDUPE", CommandIF_CHECKDUPE);
-            // @IF <SOMETHING> <COMMAND> COMMANDS
-            _IFCommands.Add("EQUALS", CommandIF_IS);
-            _IFCommands.Add("EXIST", CommandIF_EXIST);
-            _IFCommands.Add("EXISTS", CommandIF_EXIST);
-            _IFCommands.Add("INSIDE", CommandIF_INSIDE);
-            _IFCommands.Add("IS", CommandIF_IS);
-            _IFCommands.Add("LESS", CommandIF_LESS);
-            _IFCommands.Add("MORE", CommandIF_MORE);
-            _IFCommands.Add("NOT", CommandIF_NOT);
-            _IFCommands.Add("=", CommandIF_IS);
-            _IFCommands.Add("<", CommandIF_LESS);
-            _IFCommands.Add(">", CommandIF_MORE);
-
-        }
-
-        private void AssignVariable(string variable, string value)
-        {
-            // TODO Instead of translating before calling this function, maybe this function should translate and then
-            //      other functions could pass in the raw string
-
-            // See which variables to update
-            string VariableUpper = variable.Trim().ToUpper();
-            if (VariableUpper.StartsWith("`P"))
-            {
-                // Player longint
-                Global.Player.P[Convert.ToInt32(VariableUpper.Replace("`P", "")) - 1] = Convert.ToInt32(value.Split(' ')[0]);
-                return;
-            }
-            if (VariableUpper.StartsWith("`T"))
-            {
-                // Player byte
-                Global.Player.T[Convert.ToInt32(VariableUpper.Replace("`T", "")) - 1] = Convert.ToByte(value.Split(' ')[0]);
-                return;
-            }
-            if (VariableUpper.StartsWith("`S"))
-            {
-                // Global string
-                Global.WorldDat.S[Convert.ToInt32(VariableUpper.Replace("`S", "")) - 1].Value = value;
-                return;
-            }
-            if (VariableUpper.StartsWith("`V"))
-            {
-                // Global longint
-                Global.WorldDat.V[Convert.ToInt32(VariableUpper.Replace("`V", "")) - 1] = Convert.ToInt32(value.Split(' ')[0]);
-                return;
-            }
-            if (VariableUpper.StartsWith("`I"))
-            {
-                // Player int
-                Global.Player.I[Convert.ToInt32(VariableUpper.Replace("`I", "")) - 1] = Convert.ToInt16(value.Split(' ')[0]);
-                return;
-            }
-            if (VariableUpper.StartsWith("`+"))
-            {
-                // Global item name
-                ItemsDatRecord IDR = Global.ItemsDat[Convert.ToInt32(VariableUpper.Replace("`+", "")) - 1];
-                IDR.Name = value;
-                Global.ItemsDat[Convert.ToInt32(VariableUpper.Replace("`+", "")) - 1] = IDR;
-                return;
-            }
-            if (RTGlobal.Variables.ContainsKey(variable))
-            {
-                if (RTGlobal.Variables[variable].Set != null) RTGlobal.Variables[variable].Set(value.Split(' ')[0]); // These variables only ever hold a single value, so anything after values[0] is likely a comment
-                return;
-            }
-        }
 
         private void CommandADDCHAR(string[] tokens)
         {
@@ -1758,571 +1553,129 @@ namespace LORD2
             _InWRITEFILE = Global.GetSafeAbsolutePath(TranslateVariables(tokens[1]));
         }
 
-        private void EndBUYMANAGER()
+        private void InitCommands()
         {
-            LogUnimplemented(new string[] { "TODOX" });
-        }
+            // Initialize the commands dictionary
+            _Commands.Add("@", CommandNOP);
+            _Commands.Add("@ADDCHAR", CommandADDCHAR);
+            _Commands.Add("@BEGIN", CommandBEGIN);
+            _Commands.Add("@BITSET", CommandBITSET);
+            _Commands.Add("@BUSY", CommandBUSY);
+            _Commands.Add("@BUYMANAGER", CommandBUYMANAGER);
+            _Commands.Add("@CHECKMAIL", CommandCHECKMAIL);
+            _Commands.Add("@CHOICE", CommandCHOICE);
+            _Commands.Add("@CHOOSEPLAYER", CommandCHOOSEPLAYER);
+            _Commands.Add("@CLEAR", CommandCLEAR);
+            _Commands.Add("@CLEARBLOCK", CommandCLEARBLOCK);
+            _Commands.Add("@CLOSESCRIPT", CommandCLOSESCRIPT);
+            _Commands.Add("@CONVERT_FILE_TO_ANSI", CommandCONVERT_FILE_TO_ANSI);
+            _Commands.Add("@CONVERT_FILE_TO_ASCII", CommandCONVERT_FILE_TO_ASCII);
+            _Commands.Add("@COPYFILE", CommandCOPYFILE);
+            _Commands.Add("@DATALOAD", CommandDATALOAD);
+            _Commands.Add("@DATANEWDAY", CommandDATANEWDAY);
+            _Commands.Add("@DATASAVE", CommandDATASAVE);
+            _Commands.Add("@DECLARE", CommandDECLARE);
+            _Commands.Add("@DISPLAY", CommandDISPLAY);
+            _Commands.Add("@DISPLAYFILE", CommandDISPLAYFILE);
+            _Commands.Add("@DO", CommandDO);
+            _Commands.Add("@DRAWMAP", CommandDRAWMAP);
+            _Commands.Add("@DRAWPART", CommandDRAWPART);
+            _Commands.Add("@END", CommandEND);
+            _Commands.Add("@FIGHT", CommandFIGHT);
+            _Commands.Add("@GRAPHICS", CommandGRAPHICS);
+            _Commands.Add("@HALT", CommandHALT);
+            _Commands.Add("@IF", CommandIF);
+            _Commands.Add("@ITEMEXIT", CommandITEMEXIT);
+            _Commands.Add("@KEY", CommandKEY);
+            _Commands.Add("@LABEL", CommandLABEL);
+            _Commands.Add("@LOADCURSOR", CommandLOADCURSOR);
+            _Commands.Add("@LOADGLOBALS", CommandLOADGLOBALS);
+            _Commands.Add("@LOADMAP", CommandLOADMAP);
+            _Commands.Add("@LOADWORLD", CommandLOADWORLD);
+            _Commands.Add("@LORDRANK", CommandLORDRANK);
+            _Commands.Add("@MOREMAP", CommandMOREMAP);
+            _Commands.Add("@NAME", CommandNAME);
+            _Commands.Add("@NOCHECK", CommandNOCHECK);
+            _Commands.Add("@OFFMAP", CommandOFFMAP);
+            _Commands.Add("@OVERHEADMAP", CommandOVERHEADMAP);
+            _Commands.Add("@PAUSEOFF", CommandPAUSEOFF);
+            _Commands.Add("@PAUSEON", CommandPAUSEON);
+            _Commands.Add("@PROGNAME", CommandPROGNAME);
+            _Commands.Add("@RANK", CommandRANK);
+            _Commands.Add("@READFILE", CommandREADFILE);
+            _Commands.Add("@ROUTINE", CommandROUTINE);
+            _Commands.Add("@RUN", CommandRUN);
+            _Commands.Add("@SAVECURSOR", CommandSAVECURSOR);
+            _Commands.Add("@SAVEGLOBALS", CommandSAVEGLOBALS);
+            _Commands.Add("@SAVEWORLD", CommandSAVEWORLD);
+            _Commands.Add("@SAY", CommandSAY);
+            _Commands.Add("@SELLMANAGER", CommandSELLMANAGER);
+            _Commands.Add("@SHOW", CommandSHOW);
+            _Commands.Add("@SHOWLOCAL", CommandSHOWLOCAL);
+            _Commands.Add("@UPDATE", CommandUPDATE);
+            _Commands.Add("@UPDATE_UPDATE", CommandUPDATE_UPDATE);
+            _Commands.Add("@VERSION", CommandVERSION);
+            _Commands.Add("@WHOISON", CommandWHOISON);
+            _Commands.Add("@WRITEFILE", CommandWRITEFILE);
 
-        // TODOX Abstract some of this out to RTChoiceOption so you can easily retrieve a list of visible options
-        private void EndCHOICE()
-        {
-            /* @CHOICE
-                <A choice>
-                <another choice>
-                <ect..When a @ is found in the beginning of a choice it quits>
-                This gives the user a choice using a lightbar.
-                The responce is put into varible RESPONCE.  This may also be spelled RESPONSE. 
-                To set which choice the cursor starts on, put that number into `V01.
-                ** EXAMPLE OF @CHOICE COMMAND **
-                @DO `V01 IS 1 ;which choice should be highlighted when they start
-                (now the actual choice command)
-                @CHOICE
-                Yes   <- Defaults to this, since it's 1
-                No
-                I don't know
-                Who cares
-                @IF RESPONCE IS 3 THEN DO
-                  @BEGIN
-                  @DO `P01 IS RESPONCE
-                  @SHOW
+            // Initialize the @DO commands dictionary
+            // @DO <COMMAND> COMMANDS
+            _DOCommands.Add("ADDLOG", CommandDO_ADDLOG);
+            _DOCommands.Add("BEEP", CommandDO_BEEP);
+            _DOCommands.Add("COPYTONAME", CommandDO_COPYTONAME);
+            _DOCommands.Add("DELETE", CommandDO_DELETE);
+            _DOCommands.Add("FRONTPAD", CommandDO_FRONTPAD);
+            _DOCommands.Add("GETKEY", CommandDO_GETKEY);
+            _DOCommands.Add("GOTO", CommandDO_GOTO);
+            _DOCommands.Add("MOVE", CommandDO_MOVE);
+            _DOCommands.Add("MOVEBACK", CommandDO_MOVEBACK);
+            _DOCommands.Add("NUMRETURN", CommandDO_NUMRETURN);
+            _DOCommands.Add("PAD", CommandDO_PAD);
+            _DOCommands.Add("QUEBAR", CommandDO_QUEBAR);
+            _DOCommands.Add("READCHAR", CommandDO_READCHAR);
+            _DOCommands.Add("READNUM", CommandDO_READNUM);
+            _DOCommands.Add("READSPECIAL", CommandDO_READSPECIAL);
+            _DOCommands.Add("READSTRING", CommandDO_READSTRING);
+            _DOCommands.Add("REPLACE", CommandDO_REPLACE);
+            _DOCommands.Add("REPLACEALL", CommandDO_REPLACEALL);
+            _DOCommands.Add("RENAME", CommandDO_RENAME);
+            _DOCommands.Add("SAYBAR", CommandDO_SAYBAR);
+            _DOCommands.Add("STATBAR", CommandDO_STATBAR);
+            _DOCommands.Add("STRIP", CommandDO_STRIP);
+            _DOCommands.Add("STRIPALL", CommandDO_STRIPALL);
+            _DOCommands.Add("STRIPBAD", CommandDO_STRIPBAD);
+            _DOCommands.Add("STRIPCODE", CommandDO_STRIPCODE);
+            _DOCommands.Add("TALK", CommandDO_TALK);
+            _DOCommands.Add("TRIM", CommandDO_TRIM);
+            _DOCommands.Add("UPCASE", CommandDO_UPCASE);
+            _DOCommands.Add("WRITE", CommandDO_WRITE);
+            // @DO <SOMETHING> <COMMAND> COMMANDS
+            _DOCommands.Add("/", CommandDO_DIVIDE);
+            _DOCommands.Add("*", CommandDO_MULTIPLY);
+            _DOCommands.Add("+", CommandDO_ADD);
+            _DOCommands.Add("-", CommandDO_SUBTRACT);
+            _DOCommands.Add("=", CommandDO_IS);
+            _DOCommands.Add("ADD", CommandDO_ADD);
+            _DOCommands.Add("IS", CommandDO_IS);
+            _DOCommands.Add("RANDOM", CommandDO_RANDOM);
 
-                You chose `P01!, silly boy!
-
-                  @END
-                The choice command is more useful now; you can now define *IF* type statements 
-                so a certain choice will only be there if a conditional statement is met.
-                For instance:
-                @CHOICE
-                Yes
-                No
-                =`p20 500 Hey, I have 500 exactly!
-                !`p20 500 Hey, I have anything BUT 500 exactly!
-                >`p20 500 Hey, I have MORE than 500!
-                <`p20 100 Hey, I have LESS than 100!
-                >`p20 100 <`p20 500 I have more then 100 and less than 500!
-                Also:  You can check the status of individual bits in a `T player byte.  The 
-                bit is true or false, like this:
-                +`t12 1 Hey! Byte 12's bit 1 is TRUE! (which is 1)
-                -`t12 3 Hey! Byte 12's bit 3 is FALSE! (which is 0)
-
-                The = > and < commands can be stacked as needed.  In the above example, if 
-                `p20 was 600, only options 1, 2, 4, and 5 would be available, and RESPONSE 
-                would be set to the correct option if one of those were selected.  For 
-                example, if `p20 was 600 and the user hit the selection:
-                "Hey, I have more than 500", RESPONSE would be set to 5. */
-
-
-            // Determine which options are Visible and assign VisibleIndex
-            int VisibleCount = 0;
-            int LastVisibleLength = 0;
-
-            char[] IfChars = { '=', '!', '>', '<', '+', '-' };
-            for (int i = 0; i < _InCHOICEOptions.Count; i++)
-            {
-                bool MakeVisible = true;
-
-                // Parse out the IF statements
-                while (Array.IndexOf(IfChars, _InCHOICEOptions[i].Text[0]) != -1)
-                {
-                    // Extract operator
-                    char Operator = _InCHOICEOptions[i].Text[0];
-                    _InCHOICEOptions[i].Text = _InCHOICEOptions[i].Text.Substring(1);
-
-                    // Extract variable and translate
-                    string Variable = _InCHOICEOptions[i].Text.Split(' ')[0];
-                    _InCHOICEOptions[i].Text = _InCHOICEOptions[i].Text.Substring(Variable.Length + 1);
-                    Variable = TranslateVariables(Variable);
-
-                    // Extract value
-                    string Value = _InCHOICEOptions[i].Text.Split(' ')[0];
-                    _InCHOICEOptions[i].Text = _InCHOICEOptions[i].Text.Substring(Value.Length + 1);
-
-                    // Determine result of if
-                    switch (Operator)
-                    {
-                        case '=':
-                            MakeVisible = MakeVisible && (Convert.ToInt32(Variable) == Convert.ToInt32(Value));
-                            break;
-                        case '!':
-                            MakeVisible = MakeVisible && (Convert.ToInt32(Variable) != Convert.ToInt32(Value));
-                            break;
-                        case '>':
-                            MakeVisible = MakeVisible && (Convert.ToInt32(Variable) > Convert.ToInt32(Value));
-                            break;
-                        case '<':
-                            MakeVisible = MakeVisible && (Convert.ToInt32(Variable) < Convert.ToInt32(Value));
-                            break;
-                        case '+':
-                            MakeVisible = MakeVisible && ((Convert.ToInt32(Variable) & (1 << Convert.ToInt32(Value))) != 0);
-                            break;
-                        case '-':
-                            MakeVisible = MakeVisible && ((Convert.ToInt32(Variable) & (1 << Convert.ToInt32(Value))) == 0);
-                            break;
-                    }
-                }
-
-                // Determine if option is visible
-                if (MakeVisible)
-                {
-                    VisibleCount += 1;
-                    LastVisibleLength = Door.StripSeth(_InCHOICEOptions[i].Text).Length;
-                    _InCHOICEOptions[i].Visible = true;
-                    _InCHOICEOptions[i].VisibleIndex = VisibleCount;
-                }
-                else
-                {
-                    _InCHOICEOptions[i].Visible = false;
-                }
-            }
-
-            // Ensure `V01 specified a valid/visible selection
-            int SelectedIndex = Convert.ToInt32(TranslateVariables("`V01"));
-            if ((SelectedIndex < 1) || (SelectedIndex > _InCHOICEOptions.Count)) SelectedIndex = 1;
-            while (!_InCHOICEOptions[SelectedIndex - 1].Visible) SelectedIndex += 1;
-
-            // Determine how many spaces to indent by (all lines should be indented same as first line)
-            string Spaces = "\r\n" + new string(' ', Crt.WhereX() - 1);
-
-            // Output options
-            Door.CursorSave();
-            Door.TextAttr(15);
-            for (int i = 0; i < _InCHOICEOptions.Count; i++)
-            {
-                if (_InCHOICEOptions[i].Visible)
-                {
-                    if (_InCHOICEOptions[i].VisibleIndex > 1) Door.Write(Spaces);
-                    if (i == (SelectedIndex - 1)) Door.TextBackground(Crt.Blue);
-                    Door.Write(TranslateVariables(_InCHOICEOptions[i].Text));
-                    if (i == (SelectedIndex - 1)) Door.TextBackground(Crt.Black);
-                }
-            }
-
-            // Get response
-            char? Ch = null;
-            while (Ch != '\r')
-            {
-                int OldSelectedIndex = SelectedIndex;
-
-                Ch = Door.ReadKey();
-                switch (Ch)
-                {
-                    case Door.ExtendedKeys.LeftArrow:
-                    case Door.ExtendedKeys.UpArrow:
-                    case '8':
-                    case '4':
-                        while (true)
-                        {
-                            // Go to previous item
-                            SelectedIndex -= 1;
-
-                            // Wrap to bottom if we were at the top item
-                            if (SelectedIndex < 1) SelectedIndex = _InCHOICEOptions.Count;
-
-                            // Check if new selected item is visible (and break if so)
-                            if (_InCHOICEOptions[SelectedIndex - 1].Visible) break;
-                        }
-                        break;
-
-                    case Door.ExtendedKeys.RightArrow:
-                    case Door.ExtendedKeys.DownArrow:
-                    case '6':
-                    case '2':
-                        while (true)
-                        {
-                            // Go to previous item
-                            SelectedIndex += 1;
-
-                            // Wrap to bottom if we were at the top item
-                            if (SelectedIndex > _InCHOICEOptions.Count) SelectedIndex = 1;
-
-                            // Check if new selected item is visible (and break if so)
-                            if (_InCHOICEOptions[SelectedIndex - 1].Visible) break;
-                        }
-                        break;
-                }
-
-                if (OldSelectedIndex != SelectedIndex)
-                {
-                    // Store new selection
-                    AssignVariable("`V01", SelectedIndex.ToString());
-
-                    // Redraw old selection without blue highlight
-                    Door.CursorRestore();
-                    if (_InCHOICEOptions[OldSelectedIndex - 1].VisibleIndex > 1) Door.CursorDown(_InCHOICEOptions[OldSelectedIndex - 1].VisibleIndex - 1);
-                    Door.Write(TranslateVariables(_InCHOICEOptions[OldSelectedIndex - 1].Text));
-
-                    // Draw new selection with blue highlight
-                    Door.CursorRestore();
-                    if (_InCHOICEOptions[SelectedIndex - 1].VisibleIndex > 1) Door.CursorDown(_InCHOICEOptions[SelectedIndex - 1].VisibleIndex - 1);
-                    Door.TextBackground(Crt.Blue);
-                    Door.Write(TranslateVariables(_InCHOICEOptions[SelectedIndex - 1].Text));
-                    Door.TextBackground(Crt.Black);
-                }
-            }
-
-            // Move cursor below choice statement
-            Door.CursorRestore();
-            Door.CursorDown(VisibleCount - 1);
-            Door.CursorRight(LastVisibleLength);
-
-            // Update global variable responses
-            RTGlobal.RESPONSE = SelectedIndex.ToString();
-        }
-
-        private void EndREADFILE()
-        {
-            // TODO _InWRITEFILE could be handled like this, so no need for multiple writes per writefile
-            if (File.Exists(_InREADFILE))
-            {
-                string[] Lines = FileUtils.FileReadAllLines(_InREADFILE, RMEncoding.Ansi);
-
-                int LoopMax = Math.Min(Lines.Length, _InREADFILELines.Count);
-                for (int i = 0; i < LoopMax; i++)
-                {
-                    AssignVariable(_InREADFILELines[i], TranslateVariables(Lines[i]));
-                }
-            }
-        }
-
-        private void EndSAYBAR(string line)
-        {
-            // Save cursor and text attr
-            int SavedTextAttr = Crt.TextAttr;
-            Door.CursorSave();
-
-            // Output new bar
-            Door.GotoXY(3, 21);
-            Door.TextAttr(31);
-            int StrippedLength = Door.StripSeth(TranslateVariables(line)).Length;
-            int LeftSpaces = Math.Max(0, (76 - StrippedLength) / 2);
-            int RightSpaces = Math.Max(0, 76 - StrippedLength - LeftSpaces);
-            Door.Write(new string(' ', LeftSpaces) + TranslateVariables(line) + new string(' ', RightSpaces));
-            // TODO say bar should be removed after 3 seconds or so
-
-            // Restore
-            Door.CursorRestore();
-            Door.TextAttr(SavedTextAttr);
-        }
-
-        private void EndSELLMANAGER()
-        {
-            LogUnimplemented(new string[] { "TODOX" });
-        }
-
-        private void EndSHOWSCROLL()
-        {
-            char? Ch = null;
-            int Page = 1;
-            int MaxPage = Convert.ToInt32(Math.Truncate(_InSHOWSCROLLLines.Count / 22.0));
-            if (_InSHOWSCROLLLines.Count % 22 != 0) MaxPage += 1;
-            int SavedAttr = 7;
-
-            while (Ch != 'Q')
-            {
-                Door.TextAttr(SavedAttr);
-                Door.ClrScr();
-
-                int LineStart = (Page - 1) * 22;
-                int LineEnd = LineStart + 21;
-                for (int i = LineStart; i <= LineEnd; i++)
-                {
-                    if (i >= _InSHOWSCROLLLines.Count) break;
-                    Door.WriteLn(_InSHOWSCROLLLines[i]);
-                }
-                SavedAttr = Crt.TextAttr;
-
-                Door.GotoXY(1, 23);
-                Door.TextAttr(31);
-                Door.Write(new string(' ', 79));
-                Door.GotoXY(3, 23);
-                Door.Write("(" + Page + ")");
-                Door.GotoXY(9, 23);
-                Door.Write("[N]ext Page, [P]revious Page, [Q]uit, [S]tart, [E]nd");
-
-                Ch = Door.ReadKey();
-                if (Ch != null)
-                {
-                    Ch = char.ToUpper((char)Ch);
-                    switch (Ch)
-                    {
-                        case 'E': Page = MaxPage; break;
-                        case 'N': Page = Math.Min(MaxPage, Page + 1); break;
-                        case 'P': Page = Math.Max(1, Page - 1); break;
-                        case 'S': Page = 1; break;
-                    }
-                }
-            }
-        }
-
-        public static void Execute(string fileName, string sectionName, string labelName = "")
-        {
-            (new RTReader()).RunSection(fileName, sectionName, labelName);
-        }
-
-        private void LogMissing(string[] tokens)
-        {
-            string Output = "MISSING!!! (hit a key): " + string.Join(" ", tokens);
-            Crt.FastWrite(StringUtils.PadRight(Output, ' ', 80), 1, 25, 31);
-            Crt.ReadKey();
-            Crt.FastWrite(new string(' ', 80), 1, 25, 0);
-        }
-
-        private void LogUnused(string[] tokens)
-        {
-            string Output = "UNUSED?!? (hit a key): " + string.Join(" ", tokens);
-            Crt.FastWrite(StringUtils.PadRight(Output, ' ', 80), 1, 25, 31);
-            Crt.ReadKey();
-            Crt.FastWrite(new string(' ', 80), 1, 25, 0);
-        }
-
-        private void LogUnimplemented(string[] tokens)
-        {
-            string Output = "UNIMPLEMENTED (hit a key): " + string.Join(" ", tokens);
-            Crt.FastWrite(StringUtils.PadRight(Output, ' ', 80), 1, 25, 31);
-            Crt.ReadKey();
-            Crt.FastWrite(new string(' ', 80), 1, 25, 0);
-        }
-
-        public void RunSection(string fileName, string sectionName)
-        {
-            RunSection(fileName, sectionName, "");
-        }
-
-        public void RunSection(string fileName, string sectionName, string labelName)
-        {
-            // Run the selected script
-            string FileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
-            if (RTGlobal.RefFiles.ContainsKey(FileNameWithoutExtension))
-            {
-                _CurrentFile = RTGlobal.RefFiles[FileNameWithoutExtension];
-                if (_CurrentFile.Sections.ContainsKey(sectionName))
-                {
-                    _CurrentSection = _CurrentFile.Sections[sectionName];
-
-                    if (labelName != "")
-                    {
-                        if (_CurrentSection.Labels.ContainsKey(labelName))
-                        {
-                            _CurrentLineNumber = _CurrentSection.Labels[labelName];
-                        }
-                        else
-                        {
-                            Door.WriteLn(TranslateVariables("`4`b**`b `%ERROR : `2Label `0" + sectionName + " `2not found in `0" + Path.GetFileName(fileName) + " `4`b**`b`2"));
-                            Door.ReadKey();
-                            return;
-                        }
-                    }
-
-                    RunScript(_CurrentSection.Script.ToArray());
-                    return;
-                }
-                else
-                {
-                    Door.WriteLn(TranslateVariables("`4`b**`b `%ERROR : `2Section `0" + sectionName + " `2not found in `0" + Path.GetFileName(fileName) + " `4`b**`b`2"));
-                    Door.ReadKey();
-                    return;
-                }
-            }
-            else
-            {
-                Door.WriteLn(TranslateVariables("`4`b**`b `%ERROR : `2File `0" + Path.GetFileName(fileName) + " `2not found. `4`b**`b`2"));
-                Door.ReadKey();
-                return;
-            }
-        }
-
-        private void RunScript(string[] script)
-        {
-            while (_CurrentLineNumber < script.Length)
-            {
-                string Line = script[_CurrentLineNumber];
-                string LineTrimmed = Line.Trim();
-
-                if (_InCLOSESCRIPT)
-                {
-                    return;
-                }
-                else if (_InIFFalse < 999)
-                {
-                    if (LineTrimmed.StartsWith("@"))
-                    {
-                        string[] Tokens = LineTrimmed.Split(' ');
-                        switch (Tokens[0].ToUpper())
-                        {
-                            case "@BEGIN":
-                                _InBEGINCount += 1;
-                                break;
-                            case "@END":
-                                _InBEGINCount -= 1;
-                                if (_InBEGINCount == _InIFFalse) _InIFFalse = 999;
-                                break;
-                        }
-                    }
-                }
-                else
-                {
-                    if (LineTrimmed.StartsWith("@"))
-                    {
-                        if (_InBUYMANAGER) EndBUYMANAGER();
-                        if (_InCHOICE) EndCHOICE();
-                        if (_InREADFILE != "") EndREADFILE();
-                        if (_InSELLMANAGER) EndSELLMANAGER();
-                        if (_InSHOWSCROLL) EndSHOWSCROLL();
-                        _InBUYMANAGER = false;
-                        _InCHOICE = false;
-                        _InREADFILE = "";
-                        _InSAY = false;
-                        _InSAYBAR = false;
-                        _InSELLMANAGER = false;
-                        _InSHOW = false;
-                        _InSHOWLOCAL = false;
-                        _InSHOWSCROLL = false;
-                        _InWRITEFILE = "";
-
-                        string[] Tokens = LineTrimmed.Split(' ');
-                        if (_Commands.ContainsKey(Tokens[0]))
-                        {
-                            _Commands[Tokens[0]](Tokens);
-                        }
-                        else
-                        {
-                            LogMissing(Tokens);
-                        }
-                    }
-                    else
-                    {
-                        if (_InBUYMANAGER)
-                        {
-                            _InBUYMANAGEROptions.Add(Line);
-                        }
-                        else if (_InCHOICE)
-                        {
-                            _InCHOICEOptions.Add(new RTChoiceOption(Line));
-                        }
-                        else if (_InDO_ADDLOG)
-                        {
-                            FileUtils.FileAppendAllText(Global.GetSafeAbsolutePath("LOGNOW.TXT"), TranslateVariables(Line));
-                            _InDO_ADDLOG = false;
-                        }
-                        else if (_InDO_WRITE)
-                        {
-                            Door.Write(TranslateVariables(Line));
-                            _InDO_WRITE = false;
-                        }
-                        else if (_InFIGHT)
-                        {
-//                            if ((LineTrimmed <> '') AND NOT(AnsiStartsText(';', LineTrimmed))) then
-//begin
-//            FInFIGHTLines.Add(Line);
-//                            if (FInFIGHTLines.Count = 16) then
-//                            begin
-//              EndFIGHT;
-//                            FInFIGHT:= false;
-//                            end;
-//                            end;
-
-                        }
-                        else if (_InREADFILE != "")
-                        {
-                            _InREADFILELines.Add(Line);
-                        }
-                        else if (_InSAY)
-                        {
-                            // TODO SHould be in TEXT window (but since LORD2 doesn't use @SAY, not a high priority)
-                            Door.Write(TranslateVariables(Line));
-                        }
-                        else if (_InSAYBAR)
-                        {
-                            EndSAYBAR(Line);
-                            _InSAYBAR = false;
-                        }
-                        else if (_InSELLMANAGER)
-                        {
-                            _InSELLMANAGEROptions.Add(Line);
-                        }
-                        else if (_InSHOW)
-                        {
-                            Door.WriteLn(TranslateVariables(Line));
-                        }
-                        else if (_InSHOWLOCAL)
-                        {
-                            Ansi.Write(TranslateVariables(Line) + "\r\n");
-                        }
-                        else if (_InSHOWSCROLL)
-                        {
-                            _InSHOWSCROLLLines.Add(TranslateVariables(Line));
-                        }
-                        else if (_InWRITEFILE != "")
-                        {
-                            FileUtils.FileAppendAllText(_InWRITEFILE, TranslateVariables(Line) + Environment.NewLine, RMEncoding.Ansi);
-                        }
-                    }
-                }
-
-                _CurrentLineNumber += 1;
-            }
-        }
-
-        private string TranslateVariables(string input)
-        {
-            // TODO commas get added to numbers (ie 123456 is 123,456)
-            string inputUpper = input.ToUpper();
-
-            if (input.Contains("`"))
-            {
-                if (inputUpper.Contains("`I"))
-                {
-                    for (int i = 0; i < Global.Player.I.Length; i++)
-                    {
-                        input = Regex.Replace(input, Regex.Escape("`I" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.Player.I[i].ToString(), RegexOptions.IgnoreCase);
-                    }
-                }
-                if (inputUpper.Contains("`P"))
-                {
-                    for (int i = 0; i < Global.Player.P.Length; i++)
-                    {
-                        input = Regex.Replace(input, Regex.Escape("`P" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.Player.P[i].ToString(), RegexOptions.IgnoreCase);
-                    }
-                }
-                if (inputUpper.Contains("`+"))
-                {
-                    for (int i = 0; i < Global.ItemsDat.Count; i++)
-                    {
-                        input = Regex.Replace(input, Regex.Escape("`+" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.ItemsDat[i].Name, RegexOptions.IgnoreCase);
-                    }
-                }
-                if (inputUpper.Contains("`S"))
-                {
-                    for (int i = 0; i < Global.WorldDat.S.Length; i++)
-                    {
-                        input = Regex.Replace(input, Regex.Escape("`S" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.WorldDat.S[i].Value, RegexOptions.IgnoreCase);
-                    }
-                }
-                if (inputUpper.Contains("`T"))
-                {
-                    for (int i = 0; i < Global.Player.T.Length; i++)
-                    {
-                        input = Regex.Replace(input, Regex.Escape("`T" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.Player.T[i].ToString(), RegexOptions.IgnoreCase);
-                    }
-                }
-                if (inputUpper.Contains("`V"))
-                {
-                    for (int i = 0; i < Global.WorldDat.V.Length; i++)
-                    {
-                        input = Regex.Replace(input, Regex.Escape("`V" + StringUtils.PadLeft((i + 1).ToString(), '0', 2)), Global.WorldDat.V[i].ToString(), RegexOptions.IgnoreCase);
-                    }
-                }
-            }
-            foreach (KeyValuePair<string, RTVariable> KVP in RTGlobal.Variables)
-            {
-                // Returns the original string if no translation is needed/required, or the translated string if keyword was found
-                if (inputUpper.Contains(KVP.Key.ToUpper()))
-                {
-                    input = KVP.Value.Get(input);
-                }
-            }
-
-            return input;
+            // Initialize the @IF commands dictionary
+            // @IF <COMMAND> COMMANDS
+            _IFCommands.Add("BITCHECK", CommandIF_BITCHECK);
+            _IFCommands.Add("BLOCKPASSABLE", CommandIF_BLOCKPASSABLE);
+            _IFCommands.Add("CHECKDUPE", CommandIF_CHECKDUPE);
+            // @IF <SOMETHING> <COMMAND> COMMANDS
+            _IFCommands.Add("EQUALS", CommandIF_IS);
+            _IFCommands.Add("EXIST", CommandIF_EXIST);
+            _IFCommands.Add("EXISTS", CommandIF_EXIST);
+            _IFCommands.Add("INSIDE", CommandIF_INSIDE);
+            _IFCommands.Add("IS", CommandIF_IS);
+            _IFCommands.Add("LESS", CommandIF_LESS);
+            _IFCommands.Add("MORE", CommandIF_MORE);
+            _IFCommands.Add("NOT", CommandIF_NOT);
+            _IFCommands.Add("=", CommandIF_IS);
+            _IFCommands.Add("<", CommandIF_LESS);
+            _IFCommands.Add(">", CommandIF_MORE);
         }
     }
 }

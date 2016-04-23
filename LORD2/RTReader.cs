@@ -742,8 +742,7 @@ namespace LORD2
             if (_CurrentFile.Sections.ContainsKey(tokens[2]))
             {
                 // HEADER goto
-                RTReader RTR = new RTReader();
-                RTR.RunSection(_CurrentFile.Name, TranslateVariables(tokens[2]));
+                RTReader.Execute(_CurrentFile.Name, TranslateVariables(tokens[2]));
                 _InCLOSESCRIPT = true; // Don't want to resume this ref
             }
             else if (_CurrentSection.Labels.ContainsKey(tokens[2]))
@@ -758,8 +757,7 @@ namespace LORD2
                     if (KVP.Value.Labels.ContainsKey(tokens[2]))
                     {
                         // LABEL goto within a different section
-                        RTReader RTR = new RTReader();
-                        RTR.RunSection(_CurrentFile.Name, KVP.Key, TranslateVariables(tokens[2]));
+                        RTReader.Execute(_CurrentFile.Name, KVP.Key, TranslateVariables(tokens[2]));
                         _InCLOSESCRIPT = true; // Don't want to resume this ref
                         break;
                     }
@@ -1618,14 +1616,13 @@ namespace LORD2
                 have found that @ROUTINE cannot be nested.  That is if you use an @ROUTINE 
                 command inside of a routine called by @ROUTINE, the reader cannot return to 
                 the first procedure that ran @ROUTINE. */
-            RTReader RTR = new RTReader();
             if (tokens.Length < 4)
             {
-                RTR.RunSection(_CurrentFile.Name, TranslateVariables(tokens[1]));
+                RTReader.Execute(_CurrentFile.Name, TranslateVariables(tokens[1]));
             }
             else
             {
-                RTR.RunSection(TranslateVariables(tokens[3]), TranslateVariables(tokens[1]));
+                RTReader.Execute(TranslateVariables(tokens[3]), TranslateVariables(tokens[1]));
             }
         }
 
@@ -1633,8 +1630,7 @@ namespace LORD2
         {
             /* @RUN <Header or label name> IN <Filename of .REF file>
                 Same thing as ROUTINE, but doesn't come back to the original .REF. */
-            RTReader RTR = new RTReader();
-            RTR.RunSection(TranslateVariables(tokens[3]), TranslateVariables(tokens[1]));
+            RTReader.Execute(TranslateVariables(tokens[3]), TranslateVariables(tokens[1]));
             _InCLOSESCRIPT = true; // Don't want to resume this ref
         }
 
@@ -2056,6 +2052,11 @@ namespace LORD2
                     }
                 }
             }
+        }
+
+        public static void Execute(string fileName, string sectionName, string labelName = "")
+        {
+            (new RTReader()).RunSection(fileName, sectionName, labelName);
         }
 
         private void LogMissing(string[] tokens)

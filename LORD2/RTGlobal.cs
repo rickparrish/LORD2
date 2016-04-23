@@ -466,8 +466,6 @@ namespace LORD2
 
         private static void LoadRefFile(string fileName)
         {
-            RTReader RTR = new RTReader();
-
             // A place to store all the sections found in this file
             RTRefFile NewFile = new RTRefFile(fileName);
 
@@ -512,149 +510,151 @@ namespace LORD2
                 {
                     NewSection.Script.Add(Line);
 
-                    if (Debugger.IsAttached)
-                    {
-                        // Also record command usage
-                        string[] Tokens = LineTrimmed.Split(' ');
-                        if (Tokens[0] == "@DO")
-                        {
-                            // Get the @DO command
-                            string Command = string.Join(" ", Tokens);
-                            string DOName = Command;
-                            if (RTR._DOCommands.ContainsKey(Tokens[1]))
-                            {
-                                Command = Tokens[1];
-                                DOName = "@DO " + Command;
-                            }
-                            else if ((Tokens.Length >= 3) && (RTR._DOCommands.ContainsKey(Tokens[2])))
-                            {
-                                Command = Tokens[2];
-                                DOName = "@DO . " + Command;
-                            }
+                    #region Debug crap
+                    //if (Debugger.IsAttached)
+                    //{
+                    //    // Also record command usage
+                    //    string[] Tokens = LineTrimmed.Split(' ');
+                    //    if (Tokens[0] == "@DO")
+                    //    {
+                    //        // Get the @DO command
+                    //        string Command = string.Join(" ", Tokens);
+                    //        string DOName = Command;
+                    //        if (RTR._DOCommands.ContainsKey(Tokens[1]))
+                    //        {
+                    //            Command = Tokens[1];
+                    //            DOName = "@DO " + Command;
+                    //        }
+                    //        else if ((Tokens.Length >= 3) && (RTR._DOCommands.ContainsKey(Tokens[2])))
+                    //        {
+                    //            Command = Tokens[2];
+                    //            DOName = "@DO . " + Command;
+                    //        }
 
-                            // Determine if @DO command is known
-                            if (RTR._DOCommands.ContainsKey(Command))
-                            {
-                                if (RTR._DOCommands[Command].Method.Name == "LogUnimplemented")
-                                {
-                                    // Known, but not yet implemented
-                                    if (!_UnimplementedCommandUsage.ContainsKey(DOName)) _UnimplementedCommandUsage[DOName] = 0;
-                                    _UnimplementedCommandUsage[DOName] = _UnimplementedCommandUsage[DOName] + 1;
-                                }
-                                else if (RTR._DOCommands[Command].Method.Name == "LogUnused")
-                                {
-                                    // Known, but not known to be used
-                                    if (!_UnusedCommandUsage.ContainsKey(DOName)) _UnusedCommandUsage[DOName] = 0;
-                                    _UnusedCommandUsage[DOName] = _UnusedCommandUsage[DOName] + 1;
-                                }
-                                else if (RTR._DOCommands[Command].Method.Name.StartsWith("Command"))
-                                {
-                                    // Known and implemented
-                                    if (!_ImplementedCommandUsage.ContainsKey(DOName)) _ImplementedCommandUsage[DOName] = 0;
-                                    _ImplementedCommandUsage[DOName] = _ImplementedCommandUsage[DOName] + 1;
-                                }
-                                else
-                                {
-                                    // Should never happen
-                                    Crt.WriteLn("What's up with this? " + string.Join(" ", Tokens));
-                                    Crt.ReadKey();
-                                }
-                            }
-                            else
-                            {
-                                // Unknown
-                                if (!_UnknownCommandUsage.ContainsKey(DOName)) _UnknownCommandUsage[DOName] = 0;
-                                _UnknownCommandUsage[DOName] = _UnknownCommandUsage[DOName] + 1;
-                            }
-                        }
-                        else if (Tokens[0] == "@IF")
-                        {
-                            // Get the @IF command
-                            string Command = string.Join(" ", Tokens);
-                            string IFName = Command;
-                            if (RTR._IFCommands.ContainsKey(Tokens[1]))
-                            {
-                                Command = Tokens[1];
-                                IFName = "@IF " + Command;
-                            }
-                            else if (RTR._IFCommands.ContainsKey(Tokens[2]))
-                            {
-                                Command = Tokens[2];
-                                IFName = "@IF . " + Command;
-                            }
+                    //        // Determine if @DO command is known
+                    //        if (RTR._DOCommands.ContainsKey(Command))
+                    //        {
+                    //            if (RTR._DOCommands[Command].Method.Name == "LogUnimplemented")
+                    //            {
+                    //                // Known, but not yet implemented
+                    //                if (!_UnimplementedCommandUsage.ContainsKey(DOName)) _UnimplementedCommandUsage[DOName] = 0;
+                    //                _UnimplementedCommandUsage[DOName] = _UnimplementedCommandUsage[DOName] + 1;
+                    //            }
+                    //            else if (RTR._DOCommands[Command].Method.Name == "LogUnused")
+                    //            {
+                    //                // Known, but not known to be used
+                    //                if (!_UnusedCommandUsage.ContainsKey(DOName)) _UnusedCommandUsage[DOName] = 0;
+                    //                _UnusedCommandUsage[DOName] = _UnusedCommandUsage[DOName] + 1;
+                    //            }
+                    //            else if (RTR._DOCommands[Command].Method.Name.StartsWith("Command"))
+                    //            {
+                    //                // Known and implemented
+                    //                if (!_ImplementedCommandUsage.ContainsKey(DOName)) _ImplementedCommandUsage[DOName] = 0;
+                    //                _ImplementedCommandUsage[DOName] = _ImplementedCommandUsage[DOName] + 1;
+                    //            }
+                    //            else
+                    //            {
+                    //                // Should never happen
+                    //                Crt.WriteLn("What's up with this? " + string.Join(" ", Tokens));
+                    //                Crt.ReadKey();
+                    //            }
+                    //        }
+                    //        else
+                    //        {
+                    //            // Unknown
+                    //            if (!_UnknownCommandUsage.ContainsKey(DOName)) _UnknownCommandUsage[DOName] = 0;
+                    //            _UnknownCommandUsage[DOName] = _UnknownCommandUsage[DOName] + 1;
+                    //        }
+                    //    }
+                    //    else if (Tokens[0] == "@IF")
+                    //    {
+                    //        // Get the @IF command
+                    //        string Command = string.Join(" ", Tokens);
+                    //        string IFName = Command;
+                    //        if (RTR._IFCommands.ContainsKey(Tokens[1]))
+                    //        {
+                    //            Command = Tokens[1];
+                    //            IFName = "@IF " + Command;
+                    //        }
+                    //        else if (RTR._IFCommands.ContainsKey(Tokens[2]))
+                    //        {
+                    //            Command = Tokens[2];
+                    //            IFName = "@IF . " + Command;
+                    //        }
 
-                            // Determine if @IF command is known
-                            if (RTR._IFCommands.ContainsKey(Command))
-                            {
-                                if (RTR._IFCommands[Command].Method.Name == "LogUnimplementedFunc")
-                                {
-                                    // Known, but not yet implemented
-                                    if (!_UnimplementedCommandUsage.ContainsKey(IFName)) _UnimplementedCommandUsage[IFName] = 0;
-                                    _UnimplementedCommandUsage[IFName] = _UnimplementedCommandUsage[IFName] + 1;
-                                }
-                                else if (RTR._IFCommands[Command].Method.Name == "LogUnused")
-                                {
-                                    // Known, but not known to be used
-                                    if (!_UnusedCommandUsage.ContainsKey(IFName)) _UnusedCommandUsage[IFName] = 0;
-                                    _UnusedCommandUsage[IFName] = _UnusedCommandUsage[IFName] + 1;
-                                }
-                                else if (RTR._IFCommands[Command].Method.Name.StartsWith("Command"))
-                                {
-                                    // Known and implemented
-                                    if (!_ImplementedCommandUsage.ContainsKey(IFName)) _ImplementedCommandUsage[IFName] = 0;
-                                    _ImplementedCommandUsage[IFName] = _ImplementedCommandUsage[IFName] + 1;
-                                }
-                                else
-                                {
-                                    // Should never happen
-                                    Crt.WriteLn("What's up with this? " + string.Join(" ", Tokens));
-                                    Crt.ReadKey();
-                                }
-                            }
-                            else
-                            {
-                                // Unknown
-                                if (!_UnknownCommandUsage.ContainsKey(IFName)) _UnknownCommandUsage[IFName] = 0;
-                                _UnknownCommandUsage[IFName] = _UnknownCommandUsage[IFName] + 1;
-                            }
-                        }
-                        else
-                        {
-                            if (RTR._Commands.ContainsKey(Tokens[0]))
-                            {
-                                if (RTR._Commands[Tokens[0]].Method.Name == "LogUnimplemented")
-                                {
-                                    // Known, but not yet implemented
-                                    if (!_UnimplementedCommandUsage.ContainsKey(Tokens[0])) _UnimplementedCommandUsage[Tokens[0]] = 0;
-                                    _UnimplementedCommandUsage[Tokens[0]] = _UnimplementedCommandUsage[Tokens[0]] + 1;
-                                }
-                                else if (RTR._Commands[Tokens[0]].Method.Name == "LogUnused")
-                                {
-                                    // Known, but not known to be used
-                                    if (!_UnusedCommandUsage.ContainsKey(Tokens[0])) _UnusedCommandUsage[Tokens[0]] = 0;
-                                    _UnusedCommandUsage[Tokens[0]] = _UnusedCommandUsage[Tokens[0]] + 1;
-                                }
-                                else if (RTR._Commands[Tokens[0]].Method.Name.StartsWith("Command"))
-                                {
-                                    // Known and implemented
-                                    if (!_ImplementedCommandUsage.ContainsKey(Tokens[0])) _ImplementedCommandUsage[Tokens[0]] = 0;
-                                    _ImplementedCommandUsage[Tokens[0]] = _ImplementedCommandUsage[Tokens[0]] + 1;
-                                }
-                                else
-                                {
-                                    // Should never happen
-                                    Crt.WriteLn("What's up with this? " + string.Join(" ", Tokens));
-                                    Crt.ReadKey();
-                                }
-                            }
-                            else
-                            {
-                                // Unknown
-                                if (!_UnknownCommandUsage.ContainsKey(Tokens[0])) _UnknownCommandUsage[Tokens[0]] = 0;
-                                _UnknownCommandUsage[Tokens[0]] = _UnknownCommandUsage[Tokens[0]] + 1;
-                            }
-                        }
-                    }
+                    //        // Determine if @IF command is known
+                    //        if (RTR._IFCommands.ContainsKey(Command))
+                    //        {
+                    //            if (RTR._IFCommands[Command].Method.Name == "LogUnimplementedFunc")
+                    //            {
+                    //                // Known, but not yet implemented
+                    //                if (!_UnimplementedCommandUsage.ContainsKey(IFName)) _UnimplementedCommandUsage[IFName] = 0;
+                    //                _UnimplementedCommandUsage[IFName] = _UnimplementedCommandUsage[IFName] + 1;
+                    //            }
+                    //            else if (RTR._IFCommands[Command].Method.Name == "LogUnused")
+                    //            {
+                    //                // Known, but not known to be used
+                    //                if (!_UnusedCommandUsage.ContainsKey(IFName)) _UnusedCommandUsage[IFName] = 0;
+                    //                _UnusedCommandUsage[IFName] = _UnusedCommandUsage[IFName] + 1;
+                    //            }
+                    //            else if (RTR._IFCommands[Command].Method.Name.StartsWith("Command"))
+                    //            {
+                    //                // Known and implemented
+                    //                if (!_ImplementedCommandUsage.ContainsKey(IFName)) _ImplementedCommandUsage[IFName] = 0;
+                    //                _ImplementedCommandUsage[IFName] = _ImplementedCommandUsage[IFName] + 1;
+                    //            }
+                    //            else
+                    //            {
+                    //                // Should never happen
+                    //                Crt.WriteLn("What's up with this? " + string.Join(" ", Tokens));
+                    //                Crt.ReadKey();
+                    //            }
+                    //        }
+                    //        else
+                    //        {
+                    //            // Unknown
+                    //            if (!_UnknownCommandUsage.ContainsKey(IFName)) _UnknownCommandUsage[IFName] = 0;
+                    //            _UnknownCommandUsage[IFName] = _UnknownCommandUsage[IFName] + 1;
+                    //        }
+                    //    }
+                    //    else
+                    //    {
+                    //        if (RTR._Commands.ContainsKey(Tokens[0]))
+                    //        {
+                    //            if (RTR._Commands[Tokens[0]].Method.Name == "LogUnimplemented")
+                    //            {
+                    //                // Known, but not yet implemented
+                    //                if (!_UnimplementedCommandUsage.ContainsKey(Tokens[0])) _UnimplementedCommandUsage[Tokens[0]] = 0;
+                    //                _UnimplementedCommandUsage[Tokens[0]] = _UnimplementedCommandUsage[Tokens[0]] + 1;
+                    //            }
+                    //            else if (RTR._Commands[Tokens[0]].Method.Name == "LogUnused")
+                    //            {
+                    //                // Known, but not known to be used
+                    //                if (!_UnusedCommandUsage.ContainsKey(Tokens[0])) _UnusedCommandUsage[Tokens[0]] = 0;
+                    //                _UnusedCommandUsage[Tokens[0]] = _UnusedCommandUsage[Tokens[0]] + 1;
+                    //            }
+                    //            else if (RTR._Commands[Tokens[0]].Method.Name.StartsWith("Command"))
+                    //            {
+                    //                // Known and implemented
+                    //                if (!_ImplementedCommandUsage.ContainsKey(Tokens[0])) _ImplementedCommandUsage[Tokens[0]] = 0;
+                    //                _ImplementedCommandUsage[Tokens[0]] = _ImplementedCommandUsage[Tokens[0]] + 1;
+                    //            }
+                    //            else
+                    //            {
+                    //                // Should never happen
+                    //                Crt.WriteLn("What's up with this? " + string.Join(" ", Tokens));
+                    //                Crt.ReadKey();
+                    //            }
+                    //        }
+                    //        else
+                    //        {
+                    //            // Unknown
+                    //            if (!_UnknownCommandUsage.ContainsKey(Tokens[0])) _UnknownCommandUsage[Tokens[0]] = 0;
+                    //            _UnknownCommandUsage[Tokens[0]] = _UnknownCommandUsage[Tokens[0]] + 1;
+                    //        }
+                    //    }
+                    //}
+                    #endregion
                 }
                 else
                 {

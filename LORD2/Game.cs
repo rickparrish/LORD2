@@ -1,4 +1,5 @@
-﻿using RandM.RMLib;
+﻿// TODOX When a player idles too long execute NOTIME in HELP.REF and then quit
+using RandM.RMLib;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -152,8 +153,7 @@ namespace LORD2
                     }
                     else if ((SS.RefFile != "") && (SS.RefName != ""))
                     {
-                        RTReader RTR = new RTReader();
-                        RTR.RunSection(SS.RefFile, SS.RefName);
+                        RTReader.Execute(SS.RefFile, SS.RefName);
                         break;
                     }
                 }
@@ -164,23 +164,22 @@ namespace LORD2
             {
                 if (new Random().Next(Global.CurrentMap.BattleOdds) == 0)
                 {
-                    RTReader RTR = new RTReader();
-                    RTR.RunSection(Global.CurrentMap.BatFile, Global.CurrentMap.BatName);
+                    RTReader.Execute(Global.CurrentMap.BatFile, Global.CurrentMap.BatName);
                 }
             }
         }
 
-        private static void RTR_OnDRAWMAP(object sender, System.EventArgs e)
+        private static void RTGlobal_OnDRAWMAP(object sender, System.EventArgs e)
         {
             DrawMap();
         }
 
-        private static void RTR_OnMOVEBACK(object sender, System.EventArgs e)
+        private static void RTGlobal_OnMOVEBACK(object sender, System.EventArgs e)
         {
             DrawPlayer(RTGlobal.LastX, RTGlobal.LastY);
         }
 
-        private static void RTR_OnUPDATE(object sender, System.EventArgs e)
+        private static void RTGlobal_OnUPDATE(object sender, System.EventArgs e)
         {
             // TODO Draw all Global.Players on this screen
         }
@@ -206,44 +205,43 @@ namespace LORD2
             Global.LoadDataFiles();
 
             // Initialize the RTReader engine
-            RTReader RTR = new RTReader();
-            RTGlobal.OnDRAWMAP += RTR_OnDRAWMAP;
-            RTGlobal.OnMOVEBACK += RTR_OnMOVEBACK;
-            RTGlobal.OnUPDATE += RTR_OnUPDATE;
+            RTGlobal.OnDRAWMAP += RTGlobal_OnDRAWMAP;
+            RTGlobal.OnMOVEBACK += RTGlobal_OnMOVEBACK;
+            RTGlobal.OnUPDATE += RTGlobal_OnUPDATE;
 
-            try
+            // TODOX Pascal did this -- needed?
+            //Global.Player.RealName = Door.DropInfo.RealName;
+            //Global.Player.LastDayOn = (short)RTGlobal.Time;
+            //Global.Player.LastDayPlayed = RTGlobal.Time;
+            //Global.Player.LastSaved = RTGlobal.Time;
+
+            // Load the rules and run maint, if it's a new day
+            RTReader.Execute("RULES.REF", "RULES");
+            if (Global.IsNewDay) RTReader.Execute("MAINT.REF", "MAINT");
+
+            // Check if user has a Global.Player already
+            RTGlobal.PlayerNum = Global.LoadPlayerByRealName(Door.DropInfo.RealName, out Global.Player);
+            if (RTGlobal.PlayerNum == -1)
             {
-                // TODOX Pascal did this -- needed?
-                //Global.Player.RealName = Door.DropInfo.RealName;
-                //Global.Player.LastDayOn = (short)RTGlobal.Time;
-                //Global.Player.LastDayPlayed = RTGlobal.Time;
-                //Global.Player.LastSaved = RTGlobal.Time;
-
-                // Load the rules and run maint, if it's a new day
-                RTR.RunSection("RULES.REF", "RULES");
-                if (Global.IsNewDay) RTR.RunSection("MAINT.REF", "MAINT");
-
-                // Check if user has a Global.Player already
-                RTGlobal.PlayerNum = Global.LoadPlayerByRealName(Door.DropInfo.RealName, out Global.Player);
-                if (RTGlobal.PlayerNum == -1)
+                if (Global.TotalPlayerAccounts() < 200)
                 {
-                    if (Global.TotalPlayerAccounts() < 200)
-                    {
-                        // Nope, so try to get them to create one
-                        RTR.RunSection("GAMETXT.REF", "NEWPLAYER");
-                        RTGlobal.PlayerNum = Global.LoadPlayerByRealName(Door.DropInfo.RealName, out Global.Player);
-                    }
-                    else
-                    {
-                        RTR.RunSection("GAMETXT.REF", "FULL");
-                    }
+                    // Nope, so try to get them to create one
+                    RTReader.Execute("GAMETXT.REF", "NEWPLAYER");
+                    RTGlobal.PlayerNum = Global.LoadPlayerByRealName(Door.DropInfo.RealName, out Global.Player);
                 }
+                else
+                {
+                    RTReader.Execute("GAMETXT.REF", "FULL");
+                }
+            }
 
-                // Now check again to see if the user has a Global.Player (either because they already had one, or because they just created one)
-                if (RTGlobal.PlayerNum != -1)
+            // Now check again to see if the user has a Global.Player (either because they already had one, or because they just created one)
+            if (RTGlobal.PlayerNum != -1)
+            {
+                try
                 {
                     // Global.Player exists, so start the game
-                    RTR.RunSection("GAMETXT.REF", "STARTGAME");
+                    RTReader.Execute("GAMETXT.REF", "STARTGAME");
 
                     // We're now in map mode until we hit a hotspot
                     Global.LoadMap(Global.Player.Map);
@@ -286,15 +284,15 @@ namespace LORD2
                                     break;
 
                                 case 'L':
-                                    RTR.RunSection("HELP", "LISTPLAYERS");
+                                    RTReader.Execute("HELP", "LISTPLAYERS");
                                     break;
 
                                 case 'M':
-                                    RTR.RunSection("HELP", "MAP");
+                                    RTReader.Execute("HELP", "MAP");
                                     break;
 
                                 case 'P':
-                                    RTR.RunSection("HELP", "WHOISON");
+                                    RTReader.Execute("HELP", "WHOISON");
                                     break;
 
                                 case 'Q':
@@ -331,39 +329,39 @@ namespace LORD2
                                     break;
 
                                 case 'T':
-                                    RTR.RunSection("HELP", "TALK");
+                                    RTReader.Execute("HELP", "TALK");
                                     break;
 
                                 case 'V':
-                                    RTR.RunSection("GAMETXT", "STATS");
+                                    RTReader.Execute("GAMETXT", "STATS");
                                     //TODOX ViewInventory();
-                                    RTR.RunSection("GAMETXT", "CLOSESTATS");
+                                    RTReader.Execute("GAMETXT", "CLOSESTATS");
                                     break;
 
                                 case 'Y':
-                                    RTR.RunSection("HELP", "YELL");
+                                    RTReader.Execute("HELP", "YELL");
                                     break;
 
                                 case 'Z':
-                                    RTR.RunSection("HELP", "Z");
+                                    RTReader.Execute("HELP", "Z");
                                     break;
 
                                 case '?':
-                                    RTR.RunSection("HELP", "HELP");
+                                    RTReader.Execute("HELP", "HELP");
                                     break;
                             }
                         }
                     }
 
                     // TODO Clear status bar and disable events so its not redrawn
-                    RTR.RunSection("GAMETXT", "ENDGAME");
+                    RTReader.Execute("GAMETXT", "ENDGAME");
                     Thread.Sleep(2500);
                 }
-            }
-            finally
-            {
-                // Ensure the player gets saved even if we run into an exception above
-                SavePlayer();
+                finally
+                {
+                    // Ensure the player gets saved even if we run into an exception above
+                    SavePlayer();
+                }
             }
         }
     }

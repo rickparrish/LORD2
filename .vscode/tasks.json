@@ -1,0 +1,23 @@
+{
+    "version": "0.1.0",
+    "windows": {
+        "command": "Z:\\FPC\\3.0.2\\bin\\i386-win32\\fpc.exe",
+        "args": ["@fpc-win32.cfg"]
+    },
+    "linux": {
+        "command": "FPC_BIN_PATH"
+    },
+    "isShellCommand": true,
+    "showOutput": "always",
+    "args": ["source\\LORD2.lpr"],
+    "problemMatcher": {
+        "owner": "external",
+        "pattern": {
+            "regexp": "^([\\w]+\\.(p|pp|pas))\\((\\d+)\\,(\\d+)\\)\\s(Fatal|Error|Warning|Note):(.*)",
+            "file": 1,
+            "line": 3,
+            "column": 4,
+            "message": 6
+        }
+    }
+}

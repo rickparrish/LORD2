@@ -432,50 +432,40 @@ end;
 procedure MovePlayer(AXOffset, AYOffset: Integer);
 var
   i, x, y: Integer;
-  Moved, Special: Boolean;
+  Moved, NewMap, Special: Boolean;
 begin
   x := Player.x + AXOffset;
   y := Player.y + AYOffset;
   Moved := false;
+  NewMap := false;
   Special := false;
 
   // Check for movement to new screen
-  if (x = 0) then
+  NewMap := (x = 0) OR (x = 81) OR (y = 0) OR (y = 21);
+  if (NewMap) then
   begin
-    Player.Map -= 1;
-    Player.X := 80;
-    if (WorldDat.HideOnMap[Player.Map] = 0) then Player.LastMap := Player.Map;
+    if (x = 0) then
+    begin
+      Player.Map -= 1;
+      Player.X := 80;
+    end else
+    if (x = 81) then
+    begin
+      Player.Map += 1;
+      Player.X := 1;
+    end else
+    if (y = 0) then
+    begin
+      Player.Map -= 80;
+      Player.Y := 20;
+    end else
+    if (y = 21) then
+    begin
+      Player.Map += 80;
+      Player.Y := 1;
+    end;
 
-    LoadMap(Player.Map);
-    DrawMap;
-    Update;
-  end else
-  if (x = 81) then
-  begin
-    Player.Map += 1;
-    Player.X := 1;
     if (WorldDat.HideOnMap[Player.Map] = 0) then Player.LastMap := Player.Map;
-
-    LoadMap(Player.Map);
-    DrawMap;
-    Update;
-  end else
-  if (y = 0) then
-  begin
-    Player.Map -= 80;
-    Player.Y := 20;
-    if (WorldDat.HideOnMap[Player.Map] = 0) then Player.LastMap := Player.Map;
-
-    LoadMap(Player.Map);
-    DrawMap;
-    Update;
-  end else
-  if (y = 21) then
-  begin
-    Player.Map += 80;
-    Player.Y := 1;
-    if (WorldDat.HideOnMap[Player.Map] = 0) then Player.LastMap := Player.Map;
-
     LoadMap(Player.Map);
     DrawMap;
     Update;

@@ -2188,7 +2188,7 @@ begin
   end;
 
   // Display the litebar options until the user picks an option
-  while Not(DoorLiteBar(DoorLiteBarOptions.Count)) do DoorCursorRestore; // TODO Dumb, but avoids user hitting Q.  Maybe add parameter to disable Q
+  while NOT(DoorLiteBar(DoorLiteBarOptions.Count)) do DoorCursorRestore; // TODO Dumb, but avoids user hitting Q.  Maybe add parameter to disable Q
 
   // Update global variable responses
   AssignVariable('`V01', OptionIndexes[DoorLiteBarIndex]);
@@ -2475,7 +2475,7 @@ begin
     if (Action = 'A') then
     begin
       AttackByPlayer;
-      if Not(ExitLoop) then AttackByMonster;
+      if NOT(ExitLoop) then AttackByMonster;
     end else
     if (Action = 'R') then
     begin
@@ -2664,13 +2664,13 @@ begin
   LogTODOFileName := Game.GetSafeAbsolutePath('LogTODO.txt');
   if (FileExists(LogTODOFileName)) then
   begin
-    if Not(OpenFileForAppend(F, LogTODOFileName, 100)) then
+    if NOT(OpenFileForAppend(F, LogTODOFileName, 100)) then
     begin
       Exit;
     end;
   end else
   begin
-    if Not(OpenFileForOverwrite(F, LogTODOFileName, 100)) then
+    if NOT(OpenFileForOverwrite(F, LogTODOFileName, 100)) then
     begin
       Exit;
     end;
@@ -2800,7 +2800,7 @@ begin
       if (Pos('THEN DO', UpperCase(TokToStr(ATokens, ' '))) > 0) then
       begin
         // @BEGIN..@END coming, so skip it if our result was false
-        if Not(IFResult) then
+        if NOT(IFResult) then
         begin
           FInIFFalse := FInBEGINCount;
         end;

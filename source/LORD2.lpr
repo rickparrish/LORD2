@@ -15,7 +15,7 @@ begin
     try
       ClrScr;
 
-      Maint := (ParamCount > 0) and (LowerCase(ParamStr(1)) = '/maint');
+      Maint := (ParamCount > 0) AND (LowerCase(ParamStr(1)) = '/maint');
 
       if (Game.Init) then
       begin
@@ -38,7 +38,7 @@ begin
       begin
         // Unable to initialize game (likely data files missing)
         DoorWriteLn('Aborting due to game initialization failure...');
-        if Not(Maint) then
+        if NOT(Maint) then
         begin
           DoorWriteLn('Hit a key to quit back to the BBS');
           DoorReadKey;
@@ -56,7 +56,7 @@ begin
       end;
     end;
   finally
-    if Not(Maint) then
+    if NOT(Maint) then
     begin
       DoorShutDown;
     end;

@@ -33,11 +33,13 @@ var
 
 procedure DrawMap;
 function GetSafeAbsolutePath(AFileName: String): String;
+function Init: Boolean;
 function LoadDataFiles: Boolean;
 procedure LoadMap(AMapNumber: Integer);
 function LoadPlayerByGameName(AGameName: String; var ARecord: TraderDatRecord): Integer;
 function LoadPlayerByPlayerNumber(APlayerNumber: Integer; var ARecord: TraderDatRecord): Integer;
 function LoadPlayerByRealName(ARealName: String; var ARecord: TraderDatRecord): Integer;
+procedure Maint;
 procedure MoveBack;
 procedure SavePlayer;
 procedure Start;
@@ -109,6 +111,25 @@ begin
   Result := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + AFileName;
 end;
 
+function Init: Boolean;
+begin
+  if (LoadDataFiles) then
+  begin
+    Player.RealName := DoorDropInfo.Alias;
+    Player.LastDayOn := Game.Time;
+    Player.LastDayPlayed := Game.Time;
+    Player.LastSaved := Game.Time;
+
+    RTReader.Execute('RULES.REF', 'RULES');
+
+    Result := true;
+  end else
+  begin
+    DoorWriteLn('ERROR: Unable to load data files.  Please inform your SysOp');
+    Result := false;
+  end;
+end;
+
 function LoadDataFiles: Boolean;
 begin
   Result := true;
@@ -132,12 +153,12 @@ begin
       Result := true;
     end else
     begin
-      DoorWriteLn('Unable to open ' + ItemsDatFileName);
+      DoorWriteLn('Unable to open ' + ExtractFileName(ItemsDatFileName) + '.  Sorry.');
       Result := false;
     end;
   end else
   begin
-    DoorWriteLn('File does not exist ' + ItemsDatFileName);
+    DoorWriteLn(ExtractFileName(ItemsDatFileName) + ' is missing.  Sorry.');
     Result := false;
   end;
 end;
@@ -156,13 +177,11 @@ begin
       Close(F);
     end else
     begin
-      DoorWriteLn('Unable to open ' + MapDatFileName);
-      raise Exception.Create('Unable to open ' + MapDatFileName);
+      raise Exception.Create('Unable to open ' + ExtractFileName(MapDatFileName) + '.  Sorry.');
     end;
   end else
   begin
-    DoorWriteLn('File does not exist ' + MapDatFileName);
-    raise Exception.Create('File does not exist ' + MapDatFileName);
+    raise Exception.Create(ExtractFileName(MapDatFileName) + ' is missing.  Sorry.');
   end;
 end;
 
@@ -175,7 +194,7 @@ begin
     Result := true;
   end else
   begin
-    DoorWriteLn('File does not exist ' + MapDatFileName);
+    DoorWriteLn(ExtractFileName(MapDatFileName) + ' is missing.  Sorry.');
     Result := false;
   end;
 end;
@@ -208,8 +227,7 @@ begin
       Close(F);
     end else
     begin
-      DoorWriteLn('Unable to open ' + TraderDatFileName);
-      raise Exception.Create('Unable to open ' + TraderDatFileName);
+      raise Exception.Create('Unable to open ' + ExtractFileName(TraderDatFileName) + '.  Sorry.');
     end;
   end;
 end;
@@ -240,8 +258,7 @@ begin
       Close(F);
     end else
     begin
-      DoorWriteLn('Unable to open ' + TraderDatFileName);
-      raise Exception.Create('Unable to open ' + TraderDatFileName);
+      raise Exception.Create('Unable to open ' + ExtractFileName(TraderDatFileName) + '.  Sorry.');
     end;
   end;
 end;
@@ -274,8 +291,7 @@ begin
       Close(F);
     end else
     begin
-      DoorWriteLn('Unable to open ' + TraderDatFileName);
-      raise Exception.Create('Unable to open ' + TraderDatFileName);
+      raise Exception.Create('Unable to open ' + ExtractFileName(TraderDatFileName) + '.  Sorry.');
     end;
   end;
 end;
@@ -301,7 +317,7 @@ begin
       Close(F);
     end else
     begin
-      DoorWriteLn('Unable to open ' + STimeDatFileName);
+      DoorWriteLn('Unable to open ' + ExtractFileName(STimeDatFileName) + '.  Sorry.');
       Result := false;
       Exit;
     end;
@@ -319,7 +335,7 @@ begin
       Result := true;
     end else
     begin
-      DoorWriteLn('Unable to overwrite ' + STimeDatFileName);
+      DoorWriteLn('Unable to overwrite ' + ExtractFileName(STimeDatFileName) + '.  Sorry.');
       Result := false;
     end;
   end else
@@ -342,7 +358,7 @@ begin
       Time := StrToInt(S);
     end else
     begin
-      DoorWriteLn('Unable to open ' + TimeDatFileName);
+      DoorWriteLn('Unable to open ' + ExtractFileName(TimeDatFileName) + '.  Sorry.');
       Result := false;
       Exit;
     end;
@@ -362,7 +378,7 @@ begin
       Result := true;
     end else
     begin
-      DoorWriteLn('Unable to overwrite ' + TraderDatFileName);
+      DoorWriteLn('Unable to overwrite ' + ExtractFileName(TimeDatFileName) + '.  Sorry.');
       Result := false;
     end;
   end else
@@ -384,14 +400,19 @@ begin
       Result := true;
     end else
     begin
-      DoorWriteLn('Unable to open ' + WorldDatFileName);
+      DoorWriteLn('Unable to open ' + ExtractFileName(WorldDatFileName) + '.  Sorry.');
       Result := false;
     end;
   end else
   begin
-    DoorWriteLn('File does not exist ' + TraderDatFileName);
+    DoorWriteLn(ExtractFileName(WorldDatFileName) + ' is missing.  Sorry.');
     Result := false;
   end;
+end;
+
+procedure Maint;
+begin
+  RTReader.Execute('MAINT.REF', 'MAINT');
 end;
 
 procedure MoveBack;
@@ -534,6 +555,9 @@ begin
       Seek(F, (PlayerNum - 1) * SizeOf(TraderDatRecord));
       Write(F, Player);
       Close(F);
+    end else
+    begin
+      raise Exception.Create('Unable to open ' + ExtractFileName(TraderDatFileName) + '.  Sorry.');
     end;
   end;
 end;
@@ -546,115 +570,99 @@ begin
   OldExitProc := ExitProc;
   ExitProc := @NewExitProc;
 
-  if (LoadDataFiles) then
+  if (IsNewDay) then
   begin
-    Player.RealName := DoorDropInfo.Alias;
-    Player.LastDayOn := Game.Time;
-    Player.LastDayPlayed := Game.Time;
-    Player.LastSaved := Game.Time;
+    Maint;
+  end;
 
-    RTReader.Execute('RULES.REF', 'RULES');
-
-    if (IsNewDay) then
+  PlayerNum := LoadPlayerByRealName(DoorDropInfo.RealName, Player);
+  if (PlayerNum = -1) then
+  begin
+    if (TotalAccounts < 200) then
     begin
-      RTReader.Execute('MAINT.REF', 'MAINT');
+      RTReader.Execute('GAMETXT.REF', 'NEWPLAYER');
+    end else
+    begin
+      RTReader.Execute('GAMETXT.REF', 'FULL');
     end;
+  end;
 
-    PlayerNum := LoadPlayerByRealName(DoorDropInfo.RealName, Player);
-    if (PlayerNum = -1) then
-    begin
-      if (TotalAccounts < 200) then
+  if (PlayerNum <> -1) then
+  begin
+    RTReader.Execute('GAMETXT.REF', 'STARTGAME');
+
+    LoadMap(Player.Map);
+    DrawMap;
+    Update;
+
+    repeat
+      (*TODO W  Write mail to another player
+        H  Interact with another player.  The player pressing this key must be on the
+            same map square as the player they are trying to interact with.
+        B  Show the log of messages.
+        F  Show the last three messages.
+        Q  Quit the game.  Confirmation will be requested.*)
+      Ch := UpCase(DoorReadKey);
+      if (DoorLastKey.Extended) then
       begin
-        RTReader.Execute('GAMETXT.REF', 'NEWPLAYER');
+        case Ch of
+          'H': MovePlayer(0, -1);
+          'K': MovePlayer(-1, 0);
+          'M': MovePlayer(1, 0);
+          'P': MovePlayer(0, 1);
+        end;
       end else
       begin
-        RTReader.Execute('GAMETXT.REF', 'FULL');
-      end;
-    end;
+        case Ch of
+          '8': MovePlayer(0, -1);
+          '4': MovePlayer(-1, 0);
+          '6': MovePlayer(1, 0);
+          '2': MovePlayer(0, 1);
+          'L': RTReader.Execute('HELP', 'LISTPLAYERS');
+          'M': RTReader.Execute('HELP', 'MAP');
+          'P': RTReader.Execute('HELP', 'WHOISON');
+          'Q': begin
+                  // Confirm exit
+                  DoorGotoXY(1, 23);
+                  DoorWrite('`r0`2  Are you sure you want to quit back to the BBS? [`%Y`2] : ');
 
-    if (PlayerNum <> -1) then
-    begin
-      RTReader.Execute('GAMETXT.REF', 'STARTGAME');
+                  repeat
+                    // Repeat until we have a valid selection
+                    Ch := UpCase(DoorReadKey);
+                  until (Ch in ['Y', 'N', #13]);
 
-      LoadMap(Player.Map);
-      DrawMap;
-      Update;
-
-      repeat
-        (*TODO W  Write mail to another player
-          H  Interact with another player.  The player pressing this key must be on the
-             same map square as the player they are trying to interact with.
-          B  Show the log of messages.
-          F  Show the last three messages.
-          Q  Quit the game.  Confirmation will be requested.*)
-        Ch := UpCase(DoorReadKey);
-        if (DoorLastKey.Extended) then
-        begin
-          case Ch of
-            'H': MovePlayer(0, -1);
-            'K': MovePlayer(-1, 0);
-            'M': MovePlayer(1, 0);
-            'P': MovePlayer(0, 1);
-          end;
-        end else
-        begin
-          case Ch of
-            '8': MovePlayer(0, -1);
-            '4': MovePlayer(-1, 0);
-            '6': MovePlayer(1, 0);
-            '2': MovePlayer(0, 1);
-            'L': RTReader.Execute('HELP', 'LISTPLAYERS');
-            'M': RTReader.Execute('HELP', 'MAP');
-            'P': RTReader.Execute('HELP', 'WHOISON');
-            'Q': begin
-                   // Confirm exit
-                   DoorGotoXY(1, 23);
-                   DoorWrite('`r0`2  Are you sure you want to quit back to the BBS? [`%Y`2] : ');
-
-                   repeat
-                     // Repeat until we have a valid selection
-                     Ch := UpCase(DoorReadKey);
-                   until (Ch in ['Y', 'N', #13]);
-
-                   // Translate selection into either #0 to abort quit, or Q to confirm quit
-                   if (Ch = 'N') then
-                   begin
-                     Ch := #0;
-                     GotoXY(1, 23);
-                     DoorWrite(PadRight('', 79));
-                     DoorGotoXY(Player.X, Player.Y);
-                   end else
-                   begin
-                     Ch := 'Q';
-                   end;
-                 end;
-            'T': RTReader.Execute('HELP', 'TALK');
-            'V': begin
-                   RTReader.Execute('GAMETXT', 'STATS');
-                   ViewInventory;
-                   RTReader.Execute('GAMETXT', 'CLOSESTATS');
-                 end;
-            'Y': RTReader.Execute('HELP', 'YELL');
-            'Z': RTReader.Execute('HELP', 'Z');
-            '?': RTReader.Execute('HELP', 'HELP');
-          end;
+                  // Translate selection into either #0 to abort quit, or Q to confirm quit
+                  if (Ch = 'N') then
+                  begin
+                    Ch := #0;
+                    GotoXY(1, 23);
+                    DoorWrite(PadRight('', 79));
+                    DoorGotoXY(Player.X, Player.Y);
+                  end else
+                  begin
+                    Ch := 'Q';
+                  end;
+                end;
+          'T': RTReader.Execute('HELP', 'TALK');
+          'V': begin
+                  RTReader.Execute('GAMETXT', 'STATS');
+                  ViewInventory;
+                  RTReader.Execute('GAMETXT', 'CLOSESTATS');
+                end;
+          'Y': RTReader.Execute('HELP', 'YELL');
+          'Z': RTReader.Execute('HELP', 'Z');
+          '?': RTReader.Execute('HELP', 'HELP');
         end;
-      until (Ch = 'Q');
+      end;
+    until (Ch = 'Q');
 
-      // TODO Clear status bar and disable events so its not redrawn
-      RTReader.Execute('GAMETXT', 'ENDGAME');
-      Sleep(2500);
-    end;
-
-    RTGlobal.RefFiles.Clear;
-    RTGlobal.RefFiles.Free;
-  end else
-  begin
-    DoorWriteLn('ERROR: Unable to load data files.  Please inform your SysOp');
-    DoorWriteLn;
-    DoorWriteLn('Hit a key to quit');
-    DoorReadKey;
+    // TODO Clear status bar and disable events so its not redrawn
+    RTReader.Execute('GAMETXT', 'ENDGAME');
+    Sleep(2500);
   end;
+
+  RTGlobal.RefFiles.Clear;
+  RTGlobal.RefFiles.Free;
 end;
 
 function TotalAccounts: Integer;
@@ -669,8 +677,7 @@ begin
       Close(F);
     end else
     begin
-      DoorWriteLn('Unable to open ' + TraderDatFileName);
-      raise Exception.Create('Unable to open ' + TraderDatFileName);
+      raise Exception.Create('Unable to open ' + ExtractFileName(TraderDatFileName) + '.  Sorry.');
     end;
   end else
   begin

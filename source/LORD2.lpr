@@ -5,19 +5,45 @@ program LORD2;
 uses
   Game,
   Door,
-  SysUtils;
+  Crt, SysUtils;
+
+var 
+  Maint: Boolean;
 
 begin
   try
     try
-      DoorStartUp;
-      DoorSession.SethWrite := true;
-      DoorClrScr;
+      ClrScr;
 
-      // TODO RUN MAINT IN MAINT.REF IF /MAINT IS PASSED
+      Maint := (ParamCount > 0) and (LowerCase(ParamStr(1)) = '/maint');
 
-      // Start the game
-      Game.Start;
+      if (Game.Init) then
+      begin
+        // Check if maintenance was requested
+        if (Maint) then
+        begin
+          // Yep, so run it now
+          Game.Maint;
+        end else
+        begin
+          // Nope, so initialize the doorkit
+          DoorStartUp;
+          DoorSession.SethWrite := true;
+          DoorClrScr;
+
+          // And start the game          
+          Game.Start;
+        end;
+      end else
+      begin
+        // Unable to initialize game (likely data files missing)
+        DoorWriteLn('Aborting due to game initialization failure...');
+        if Not(Maint) then
+        begin
+          DoorWriteLn('Hit a key to quit back to the BBS');
+          DoorReadKey;
+        end;
+      end;
     except
       on E: Exception do
       begin
@@ -30,7 +56,10 @@ begin
       end;
     end;
   finally
-    DoorShutDown;
+    if Not(Maint) then
+    begin
+      DoorShutDown;
+    end;
   end;
 end.
 

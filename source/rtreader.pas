@@ -6,7 +6,7 @@ interface
 
 uses
   RTGlobal, RTRefLabel, RTRefFile, RTRefSection, Struct,
-  Ansi, Door, StringUtils, VideoUtils,
+  Ansi, Door, FileUtils, StringUtils, VideoUtils,
   Classes, Crt, Math, StrUtils, SysUtils;
 
 const
@@ -2650,6 +2650,9 @@ begin
 end;
 
 procedure TRTReader.LogTODO(ATokens: TTokens);
+var
+  F: Text;
+  LogTODOFileName: String;
 begin
   if (DoorLocal) then
   begin
@@ -2657,6 +2660,23 @@ begin
     DoorReadKey;
     FastWrite(PadRight('', 80), 1, 25, 7);
   end;
+
+  LogTODOFileName := Game.GetSafeAbsolutePath('LogTODO.txt');
+  if (FileExists(LogTODOFileName)) then
+  begin
+    if Not(OpenFileForAppend(F, LogTODOFileName, 100)) then
+    begin
+      Exit;
+    end;
+  end else
+  begin
+    if Not(OpenFileForOverwrite(F, LogTODOFileName, 100)) then
+    begin
+      Exit;
+    end;
+  end;
+  WriteLn(F, TokToStr(ATokens, ' '));
+  Close(F);
 end;
 
 procedure TRTReader.ParseCommand(ATokens: TTokens);

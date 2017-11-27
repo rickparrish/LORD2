@@ -607,7 +607,7 @@ begin
     Update;
 
     repeat
-      (*TODO W  Write mail to another player
+      (*TODOX W  Write mail to another player
         H  Interact with another player.  The player pressing this key must be on the
             same map square as the player they are trying to interact with.
         B  Show the log of messages.
@@ -667,7 +667,7 @@ begin
       end;
     until (Ch = 'Q');
 
-    // TODO Clear status bar and disable events so its not redrawn
+    // TODOX Clear status bar and disable events so its not redrawn
     RTReader.Execute('GAMETXT', 'ENDGAME');
     Sleep(2500);
   end;
@@ -704,7 +704,7 @@ begin
   DoorGotoXY(Player.x, Player.y);
   DoorWrite(#02);
 
-  // TODO Draw the other players
+  // TODOX Draw the other players
 end;
 
 procedure ViewInventory;
@@ -762,7 +762,7 @@ begin
       begin
         Item := Game.ItemsDat.Item[StrToInt(InventoryItems[DoorLiteBarIndex])];
 
-        // TODO Equip/use/whatever the item
+        // TODOX Equip/use/whatever the item
         DoorGotoXY(1, 24);
         DoorWrite('`r4                                                                               ');
         DoorGotoX(1);

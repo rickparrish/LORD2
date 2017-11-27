@@ -302,7 +302,8 @@ begin
       @READSTRING, @DO COPYTONAME, set appropriate variables including the player's
       X and Y coordinates and map block number before issuing this command.  Failure
       to do this can result in a corrupted TRADER.DAT file. *)
-  // TODO Retry if IOError
+  // TODOX Retry if IOError
+  // TODOX Race conditions
   Assign(FTraderDat, TraderDatFileName);
   if (FileExists(TraderDatFileName)) then
   begin
@@ -325,7 +326,8 @@ begin
   UTR.OnNow := 1;
   UTR.Busy := 0;
   UTR.Battle := 0;
-  // TODO Retry if IOError
+  // TODOX Retry if IOError
+  // TODOX Race conditions
   Assign(FUpdateTmp, UpdateTmpFileName);
   if (FileExists(UpdateTmpFileName)) then
   begin
@@ -372,7 +374,7 @@ begin
       This makes the player appear 'red' to other players currently playing.  It
       also tells the Lord II engine to run @#busy in gametxt.ref if a player logs on
       and someone is attacking him or giving him an item. *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandBUYMANAGER(ATokens: TTokens);
@@ -390,7 +392,7 @@ procedure TRTReader.CommandCHECKMAIL(ATokens: TTokens);
 begin
   (* @CHECKMAIL
       Undocumented.  Will need to determine what this does *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandCHOICE(ATokens: TTokens);
@@ -451,7 +453,7 @@ begin
       partial name' prompt, with a 'you mean this guy?'.  It returns the players #
       or 0 if none.  If the player isn't found it will display "No one by that name
       lives 'round here" and return 0. *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandCLEAR(ATokens: TTokens);
@@ -513,7 +515,7 @@ begin
       DoorGotoXY(78, 23);
     end;
     else
-      LogTODO(ATokens);
+      LogTODO(ATokens); // TODOX
   end;
 end;
 
@@ -555,7 +557,7 @@ begin
   (* @CONVERT_FILE_TO_ANSI <input file> <output file>
       Converts a text file of Sethansi (whatever) to regular Ansi  This is good for
       a final score output. *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandCONVERT_FILE_TO_ASCII(ATokens: TTokens);
@@ -563,7 +565,7 @@ begin
   (* @CONVERT_FILE_TO_ASCII <input file> <output file>
       Converts a text file of Sethansi (whatever) to regular ascii, ie, no colors at
       all. *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandCOPYFILE(ATokens: TTokens);
@@ -579,7 +581,7 @@ begin
   DestFileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
   if ((SourceFileName <> '') AND (DestFileName <> '') AND (FileExists(SourceFileName))) then
   begin
-    // TODO Error handling
+    // TODOX Error handling
     SourceFile := TFileStream.Create(SourceFileName, fmOpenRead);
     DestFile := TFileStream.Create(DestFileName, fmCreate);
     DestFile.CopyFrom(SourceFile, SourceFile.Size);
@@ -604,16 +606,16 @@ begin
   begin
     if (FileExists(FileName)) then
     begin
-      // TODO Error handling
+      // TODOX Error handling
       Assign(F, FileName);
       {$I-}Reset(F);{$I+}
       if (IOResult = 0) then
       begin
         Read(F, Idf);
-      end;
-      Close(F);
+        Close(F);
 
-      AssignVariable(ATokens[4], IntToStr(Idf.Data[StrToInt(ATokens[3])]));
+        AssignVariable(ATokens[4], IntToStr(Idf.Data[StrToInt(ATokens[3])]));
+      end;
     end else
     begin
       Idf.LastUsed := Game.STime;
@@ -622,7 +624,7 @@ begin
         Idf.Data[I] := 0;
       end;
 
-      // TODO Error handling
+      // TODOX Error handling
       Assign(F, FileName);
       {$I-}ReWrite(F);{$I+}
       if (IOResult = 0) then
@@ -652,31 +654,31 @@ begin
   begin
     if (FileExists(FileName)) then
     begin
-      // TODO Error handling
+      // TODOX Error handling
       Assign(F, FileName);
       {$I-}Reset(F);{$I+}
       if (IOResult = 0) then
       begin
         Read(F, Idf);
-      end;
-      Close(F);
-
-      if (Idf.LastUsed <> Game.STime) then
-      begin
-        Idf.LastUsed := Game.STime;
-        for I := Low(Idf.Data) to High(Idf.Data) do
-        begin
-          Idf.Data[I] := 0;
-        end;
-
-        // TODO Error handling
-        Assign(F, FileName);
-        {$I-}ReWrite(F);{$I+}
-        if (IOResult = 0) then
-        begin
-          Write(F, Idf);
-        end;
         Close(F);
+
+        if (Idf.LastUsed <> Game.STime) then
+        begin
+          Idf.LastUsed := Game.STime;
+          for I := Low(Idf.Data) to High(Idf.Data) do
+          begin
+            Idf.Data[I] := 0;
+          end;
+
+          // TODOX Error handling
+          Assign(F, FileName);
+          {$I-}ReWrite(F);{$I+}
+          if (IOResult = 0) then
+          begin
+            Write(F, Idf);
+            Close(F);
+          end;
+        end;
       end;
     end else
     begin
@@ -686,7 +688,7 @@ begin
         Idf.Data[I] := 0;
       end;
 
-      // TODO Error handling
+      // TODOX Error handling
       Assign(F, FileName);
       {$I-}ReWrite(F);{$I+}
       if (IOResult = 0) then
@@ -715,7 +717,7 @@ begin
   begin
       if (FileExists(FileName)) then
       begin
-        // TODO Error handling
+        // TODOX Error handling
         Assign(F, FileName);
         {$I-}Reset(F);{$I+}
         if (IOResult = 0) then
@@ -726,7 +728,7 @@ begin
 
         Idf.Data[StrToInt(ATokens[3])] := StrToInt(TranslateVariables(ATokens[4]));
 
-        // TODO Error handling
+        // TODOX Error handling
         Assign(F, FileName);
         {$I-}ReWrite(F);{$I+}
         if (IOResult = 0) then
@@ -744,7 +746,7 @@ begin
 
         Idf.Data[StrToInt(ATokens[3])] := StrToInt(TranslateVariables(ATokens[4]));
 
-        // TODO Error handling
+        // TODOX Error handling
         Assign(F, FileName);
         {$I-}ReWrite(F);{$I+}
         if (IOResult = 0) then
@@ -857,7 +859,7 @@ begin
   (* @DO DELETE <file name>
       This command deletes the file specified by <file name>.  The file name must be
       a valid DOS file name.  There can be no spaces. *)
-  // TODO Error handling
+  // TODOX Error handling
   FileName := Game.GetSafeAbsolutePath(ATokens[3]);
   if (FileExists(FileName)) then
   begin
@@ -1077,8 +1079,8 @@ begin
       <message>
       This adds a message to the saybar que.  This will ensure that the message is
       displayed at it's proper time instead of immediately. *)
-  LogTODO(ATokens);
-  // TODO Quebar items only last 1 second or so
+  LogTODO(ATokens); // TODOX
+  // NB: Quebar items only last 1 second or so
 end;
 
 procedure TRTReader.CommandDO_RANDOM(ATokens: TTokens);
@@ -1219,7 +1221,7 @@ begin
     (* @DO STATBAR
         This draws the statbar. *)
     // Identified as @STATBAR not @DO STATBAR in the docs
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandDO_STRIP(ATokens: TTokens);
@@ -1241,7 +1243,7 @@ begin
   (* @DO STRIPBAD
       This strips out illegal ` codes, and replaces badwords with the standard
       badword.dat file. *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandDO_STRIPCODE(ATokens: TTokens);
@@ -1262,7 +1264,7 @@ begin
   (* @DO TALK <message> [recipients]
       Undocumented. Looks like recipients is usually ALL, which sends a global message
       Lack of recipients value means message is only displayed to those on the same screen *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandDO_TRIM(ATokens: TTokens);
@@ -1275,7 +1277,7 @@ begin
                   This nifty command makes text file larger than <number to trim to> get
                   smaller.  (It deletes lines from the top until the file is correct # of lines,
                   if smaller than <number to trim to>, it doesn't change the file) *)
-  // TODO Error handling
+  // TODOX Error handling
   FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
   if (FileExists(FileName)) then
   begin
@@ -1326,7 +1328,7 @@ begin
   (* @DRAWPART <x> <y>
       This command will draw one block of the current map as defined by <x> and <y>
       with whatever is supposed to be there, including any people. *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandEND(ATokens: TTokens);
@@ -1436,7 +1438,7 @@ function TRTReader.CommandIF_BITCHECK(ATokens: TTokens): Boolean;
 begin
   (* @IF bitcheck <`t variable> <bit number> <0 or 1>
       Check if the given bit is set or not in the given `t variable *)
-  // TODO Untested
+  // TODOX Untested
   Result := ((StrToInt(TranslateVariables(ATokens[3])) AND (1 SHL StrToInt(TranslateVariables(ATokens[4])))) = StrToInt(TranslateVariables(ATokens[5])));
 end;
 
@@ -1574,7 +1576,7 @@ begin
       This tells the item editor to automatically return the player to the map
       screen after the item is used.  It is up to you to use the @drawmap and
       @update commands as usual though. *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandKEY(ATokens: TTokens);
@@ -1618,7 +1620,7 @@ begin
       DoorWrite(#8#8#8#8#8#8 + '      ' + #8#8#8#8#8#8);
   end else
   begin
-    LogTODO(ATokens);
+    LogTODO(ATokens); // TODOX
   end;
 
   // Restore text attribute
@@ -1638,7 +1640,7 @@ begin
       This command restores the cursor to the position before the last @SAVECURSOR
       was issued.  This is good for creative graphics and text positioning with a
       minimum of calculations.  See @SAVECURSOR below. *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandLOADGLOBALS(ATokens: TTokens);
@@ -1686,14 +1688,14 @@ begin
         48         Status
         60         Alignment
         65         Quests completed *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandMOREMAP(ATokens: TTokens);
 begin
   (* @MOREMAP
       The line UNDER this will be the new <more> prompt.  30 characters maximum. *)
-  LogTODO(ATokens); // Used in CNW
+  LogTODO(ATokens); // TODOX Used in CNW
 end;
 
 procedure TRTReader.CommandNAME(ATokens: TTokens);
@@ -1728,7 +1730,7 @@ begin
       This takes the player's symbol off the map.  This makes the player appear to
       disappear to other players currently playing.  This is usful to make it look
       like they actually went into the hut, building, ect. *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandOVERHEADMAP(ATokens: TTokens);
@@ -1787,21 +1789,21 @@ begin
   (* @PAUSEOFF
       This turns the 24 line pause off so you can show long ansis etc and it won't
       pause every 24 lines. *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandPAUSEON(ATokens: TTokens);
 begin
   (* @PAUSEON
       Just the opposite of the above command.  This turns the pause back on. *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandPROGNAME(ATokens: TTokens);
 begin
   (* @PROGNAME
       The line UNDER this will be the status bar name of the game. *)
-  LogTODO(ATokens); // Used in CNW
+  LogTODO(ATokens); // TODOX Used in CNW
 end;
 
 procedure TRTReader.CommandRANK(ATokens: TTokens);
@@ -1813,7 +1815,7 @@ begin
       if feasible.  This one works, but @LORDRANK uses a preset formatting
       procedure and is therefore quicker.  There may be occasion, however, if you
       write your own world to use this command rather than @LORDRANK. *)
-  LogTODO(ATokens); // Used in CNW
+  LogTODO(ATokens); // TODOX Used in CNW
 end;
 
 procedure TRTReader.CommandREADFILE(ATokens: TTokens);
@@ -1862,7 +1864,7 @@ procedure TRTReader.CommandSAVECURSOR(ATokens: TTokens);
 begin
   (* @SAVECURSOR
       This command saves the current cursor positioning for later retrieval. *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandSAVEGLOBALS(ATokens: TTokens);
@@ -1947,7 +1949,7 @@ begin
   (* @UPDATE_UPDATE
       This command writes current player data to UPDATE.TMP file.  This is useful
       when you just can't wait until the script is finished for some reason. *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandVERSION(ATokens: TTokens);
@@ -1973,7 +1975,7 @@ procedure TRTReader.CommandWHOISON(ATokens: TTokens);
 begin
   (* @WHOISON
       Undocumented.  Will need to find out what this does *)
-  LogTODO(ATokens);
+  LogTODO(ATokens); // TODOX
 end;
 
 procedure TRTReader.CommandWRITEFILE(ATokens: TTokens);
@@ -2035,8 +2037,8 @@ begin
 
   // Repeatedly display litebar until user quits
   repeat
-    // TODO Need a way to tell the litebar how big each page is in case we have many items to buy
-    if (DoorLiteBar(DoorLiteBarOptions.Count)) then // TODO Should calculate size based on WhereY
+    // TODOX Need a way to tell the litebar how big each page is in case we have many items to buy
+    if (DoorLiteBar(DoorLiteBarOptions.Count)) then // TODOX Should calculate size based on WhereY
     begin
       Item := Game.ItemsDat.Item[StrToInt(FInBUYMANAGEROptions[DoorLiteBarIndex])];
 
@@ -2188,7 +2190,7 @@ begin
   end;
 
   // Display the litebar options until the user picks an option
-  while NOT(DoorLiteBar(DoorLiteBarOptions.Count)) do DoorCursorRestore; // TODO Dumb, but avoids user hitting Q.  Maybe add parameter to disable Q
+  while NOT(DoorLiteBar(DoorLiteBarOptions.Count)) do DoorCursorRestore; // TODOX Dumb, but avoids user hitting Q.  Maybe add parameter to disable Q
 
   // Update global variable responses
   AssignVariable('`V01', OptionIndexes[DoorLiteBarIndex]);
@@ -2511,10 +2513,10 @@ var
   LoopMax: Integer;
   SL: TStringList;
 begin
-  // TODO _InWRITEFILE could be handled like this, so no need for multiple writes per writefile
+  // TODOX _InWRITEFILE could be handled like this, so no need for multiple writes per writefile
   if (FileExists(FInREADFILE)) then
   begin
-    // TODO Error handling
+    // TODOX Error handling
     SL := TStringList.Create;
     SL.LoadFromFile(FInREADFILE);
 
@@ -2546,7 +2548,7 @@ begin
   SpacesLeft := Max(0, (76 - StrippedLength) div 2);
   SpacesRight := Max(0, 76 - StrippedLength - SpacesLeft);
   DoorWrite(PadRight('', SpacesLeft) + TranslateVariables(AText) + PadRight('', SpacesRight));
-  // TODO say bar should be removed after 5 seconds or so
+  // TODOX say bar should be removed after 5 seconds or so
 
   // Restore
   DoorCursorRestore;
@@ -2555,7 +2557,7 @@ end;
 
 procedure TRTReader.EndSELLMANAGER;
 begin
-  LogTODO(StrToTok('EndSELLMANAGER', ' '));
+  LogTODO(StrToTok('EndSELLMANAGER', ' ')); // TODOX
 end;
 
 procedure TRTReader.EndSHOWSCROLL;
@@ -2742,11 +2744,11 @@ begin
               'ADD': CommandDO_ADD(ATokens);
               'IS': CommandDO_IS(ATokens);
               'RANDOM': CommandDO_RANDOM(ATokens);
-              else LogTODO(ATokens);
+              else LogTODO(ATokens); // TODOX
             end;
           end else
           begin
-            LogTODO(ATokens);
+            LogTODO(ATokens); // TODOX
           end;
         end;
       end;
@@ -2779,7 +2781,7 @@ begin
             '=': IFResult := CommandIF_IS(ATokens);
             '<': IFResult := CommandIF_LESS(ATokens);
             '>': IFResult := CommandIF_MORE(ATokens);
-            else LogTODO(ATokens);
+            else LogTODO(ATokens); // TODOX
           end;
         end;
       end;
@@ -2839,7 +2841,7 @@ begin
     '@VERSION': CommandVERSION(ATokens);
     '@WHOISON': CommandWHOISON(ATokens);
     '@WRITEFILE': CommandWRITEFILE(ATokens);
-    else LogTODO(ATokens);
+    else LogTODO(ATokens); // TODOX
   end;
 end;
 
@@ -2913,7 +2915,7 @@ begin
         end else
         if (FInDO_ADDLOG) then
         begin
-          // TODO Error handling
+          // TODOX Error handling
           Assign(F, Game.GetSafeAbsolutePath('LOGNOW.TXT'));
           if (FileExists(Game.GetSafeAbsolutePath('LOGNOW.TXT'))) then
           begin
@@ -2953,7 +2955,7 @@ begin
         end else
         if (FInSAY) then
         begin
-          // TODO SHould be in TEXT window (but since LORD2 doesn't use @SAY, not a high priority)
+          // TODOX SHould be in TEXT window (but since LORD2 doesn't use @SAY, not a high priority)
           DoorWrite(TranslateVariables(Line));
         end else
         if (FInSAYBAR) then
@@ -2979,7 +2981,7 @@ begin
         end else
         if (FInWRITEFILE <> '') then
         begin
-          // TODO Error handling
+          // TODOX Error handling
           Assign(F, FInWRITEFILE);
           if (FileExists(FInWRITEFILE)) then
           begin
@@ -3006,7 +3008,7 @@ var
   I: Integer;
   TextUpper: String;
 begin
-  // TODO commas get added to numbers (ie 123456 is 123,456)
+  // TODOX commas get added to numbers (ie 123456 is 123,456)
   TextUpper := UpperCase(Trim(AText));
 
   // Handle variables that must match exactly

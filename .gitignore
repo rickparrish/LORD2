@@ -6,4 +6,6 @@ bin/i386-linux/*
 !bin/i386-linux/LORD2
 bin/i386-win32/*
 !bin/i386-win32/LORD2.exe
+bin/x86_64-win64/*
+!bin/x86_64-win64/LORD2.exe
 obj/

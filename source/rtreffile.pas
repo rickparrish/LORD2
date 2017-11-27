@@ -5,17 +5,20 @@ unit RTRefFile;
 interface
 
 uses
-  contnrs;
+  RTRefSection,
+  fgl;
 
 type
   TRTRefFile = class
   public
     Name: String;
-    Sections: TFPHashObjectList;
+    Sections: TRTRefSectionMap;
 
     constructor Create(AFileName: String);
     destructor Destroy; override;
   end;
+
+  TRTRefFileMap = specialize TFPGMap<string, TRTRefFile>;
 
 implementation
 
@@ -23,7 +26,7 @@ constructor TRTRefFile.Create(AFileName: String);
 begin
   inherited Create;
   Name := AFileName;
-  Sections := TFPHashObjectList.Create;
+  Sections := TRTRefSectionMap.Create;
 end;
 
 destructor TRTRefFile.Destroy;

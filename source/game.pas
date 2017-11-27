@@ -33,15 +33,16 @@ var
 
 procedure DrawMap;
 function GetSafeAbsolutePath(AFileName: String): String;
-function Init: Boolean;
+procedure Init;
 function LoadDataFiles: Boolean;
 procedure LoadMap(AMapNumber: Integer);
-function LoadPlayerByGameName(AGameName: String; var ARecord: TraderDatRecord): Integer;
-function LoadPlayerByPlayerNumber(APlayerNumber: Integer; var ARecord: TraderDatRecord): Integer;
-function LoadPlayerByRealName(ARealName: String; var ARecord: TraderDatRecord): Integer;
+function LoadPlayerByGameName(AGameName: String; out ARecord: TraderDatRecord): Integer;
+function LoadPlayerByPlayerNumber(APlayerNumber: Integer; out ARecord: TraderDatRecord): Integer;
+function LoadPlayerByRealName(ARealName: String; out ARecord: TraderDatRecord): Integer;
 procedure Maint;
 procedure MoveBack;
 procedure SavePlayer;
+procedure SaveWorldDat;
 procedure Start;
 function TotalAccounts: Integer;
 procedure Update;
@@ -111,27 +112,28 @@ begin
   Result := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + AFileName;
 end;
 
-function Init: Boolean;
+procedure Init;
 begin
-  if (LoadDataFiles) then
-  begin
-    Player.RealName := DoorDropInfo.Alias;
-    Player.LastDayOn := Game.Time;
-    Player.LastDayPlayed := Game.Time;
-    Player.LastSaved := Game.Time;
+  LoadDataFiles;
 
-    RTReader.Execute('RULES.REF', 'RULES');
+  Player.RealName := DoorDropInfo.Alias;
+  Player.LastDayOn := Game.Time;
+  Player.LastDayPlayed := Game.Time;
+  Player.LastSaved := Game.Time;
 
-    Result := true;
-  end else
-  begin
-    DoorWriteLn('ERROR: Unable to load data files.  Please inform your SysOp');
-    Result := false;
-  end;
+  RTReader.Execute('RULES.REF', 'RULES');
 end;
 
 function LoadDataFiles: Boolean;
 begin
+  ItemsDatFileName := GetSafeAbsolutePath('ITEMS.DAT');
+  MapDatFileName := GetSafeAbsolutePath('MAP.DAT');
+  STimeDatFileName := GetSafeAbsolutePath('STIME.DAT');
+  TimeDatFileName := GetSafeAbsolutePath('TIME.DAT');
+  TraderDatFileName := GetSafeAbsolutePath('TRADER.DAT');
+  UpdateTmpFileName := GetSafeAbsolutePath('UPDATE.TMP');
+  WorldDatFileName := GetSafeAbsolutePath('WORLD.DAT');
+
   Result := true;
   Result := Result AND LoadItemsDat;
   Result := Result AND LoadMapDat;
@@ -153,12 +155,12 @@ begin
       Result := true;
     end else
     begin
-      DoorWriteLn('Unable to open ' + ExtractFileName(ItemsDatFileName) + '.  Sorry.');
+      raise Exception.Create('Unable to open ' + ExtractFileName(ItemsDatFileName) + '.  Sorry.');
       Result := false;
     end;
   end else
   begin
-    DoorWriteLn(ExtractFileName(ItemsDatFileName) + ' is missing.  Sorry.');
+    raise Exception.Create(ExtractFileName(ItemsDatFileName) + ' is missing.  Sorry.');
     Result := false;
   end;
 end;
@@ -166,13 +168,12 @@ end;
 procedure LoadMap(AMapNumber: Integer);
 var
   F: File of MapDatRecord;
-  I: Integer;
 begin
   if (FileExists(MapDatFileName)) then
   begin
     if (OpenFileForReadWrite(F, MapDatFileName, 2500)) then
     begin
-      Seek(F, (WorldDat.MapDatIndex[AMapNumber] - 1) * SizeOf(MapDatRecord));
+      Seek(F, (Int64(WorldDat.MapDatIndex[AMapNumber]) - 1) * SizeOf(MapDatRecord));
       Read(F, CurrentMap);
       Close(F);
     end else
@@ -194,12 +195,12 @@ begin
     Result := true;
   end else
   begin
-    DoorWriteLn(ExtractFileName(MapDatFileName) + ' is missing.  Sorry.');
+    raise Exception.Create(ExtractFileName(MapDatFileName) + ' is missing.  Sorry.');
     Result := false;
   end;
 end;
 
-function LoadPlayerByGameName(AGameName: String; var ARecord: TraderDatRecord): Integer;
+function LoadPlayerByGameName(AGameName: String; out ARecord: TraderDatRecord): Integer;
 var
   F: File of TraderDatRecord;
   I: Integer;
@@ -232,7 +233,7 @@ begin
   end;
 end;
 
-function LoadPlayerByPlayerNumber(APlayerNumber: Integer; var ARecord: TraderDatRecord): Integer;
+function LoadPlayerByPlayerNumber(APlayerNumber: Integer; out ARecord: TraderDatRecord): Integer;
 var
   F: File of TraderDatRecord;
   I: Integer;
@@ -263,7 +264,7 @@ begin
   end;
 end;
 
-function LoadPlayerByRealName(ARealName: String; var ARecord: TraderDatRecord): Integer;
+function LoadPlayerByRealName(ARealName: String; out ARecord: TraderDatRecord): Integer;
 var
   F: File of TraderDatRecord;
   I: Integer;
@@ -317,7 +318,7 @@ begin
       Close(F);
     end else
     begin
-      DoorWriteLn('Unable to open ' + ExtractFileName(STimeDatFileName) + '.  Sorry.');
+      raise Exception.Create('Unable to open ' + ExtractFileName(STimeDatFileName) + '.  Sorry.');
       Result := false;
       Exit;
     end;
@@ -335,7 +336,7 @@ begin
       Result := true;
     end else
     begin
-      DoorWriteLn('Unable to overwrite ' + ExtractFileName(STimeDatFileName) + '.  Sorry.');
+      raise Exception.Create('Unable to overwrite ' + ExtractFileName(STimeDatFileName) + '.  Sorry.');
       Result := false;
     end;
   end else
@@ -358,7 +359,7 @@ begin
       Time := StrToInt(S);
     end else
     begin
-      DoorWriteLn('Unable to open ' + ExtractFileName(TimeDatFileName) + '.  Sorry.');
+      raise Exception.Create('Unable to open ' + ExtractFileName(TimeDatFileName) + '.  Sorry.');
       Result := false;
       Exit;
     end;
@@ -378,7 +379,7 @@ begin
       Result := true;
     end else
     begin
-      DoorWriteLn('Unable to overwrite ' + ExtractFileName(TimeDatFileName) + '.  Sorry.');
+      raise Exception.Create('Unable to overwrite ' + ExtractFileName(TimeDatFileName) + '.  Sorry.');
       Result := false;
     end;
   end else
@@ -400,12 +401,12 @@ begin
       Result := true;
     end else
     begin
-      DoorWriteLn('Unable to open ' + ExtractFileName(WorldDatFileName) + '.  Sorry.');
+      raise Exception.Create('Unable to open ' + ExtractFileName(WorldDatFileName) + '.  Sorry.');
       Result := false;
     end;
   end else
   begin
-    DoorWriteLn(ExtractFileName(WorldDatFileName) + ' is missing.  Sorry.');
+    raise Exception.Create(ExtractFileName(WorldDatFileName) + ' is missing.  Sorry.');
     Result := false;
   end;
 end;
@@ -542,13 +543,33 @@ begin
   begin
     if (OpenFileForReadWrite(F, TraderDatFileName, 2500)) then
     begin
-      Seek(F, (PlayerNum - 1) * SizeOf(TraderDatRecord));
+      Seek(F, (Int64(PlayerNum) - 1) * SizeOf(TraderDatRecord));
       Write(F, Player);
       Close(F);
     end else
     begin
       raise Exception.Create('Unable to open ' + ExtractFileName(TraderDatFileName) + '.  Sorry.');
     end;
+  end;
+end;
+
+procedure SaveWorldDat;
+var
+  F: File of WorldDatRecord;
+begin
+  if (FileExists(WorldDatFileName)) then
+  begin
+    if (OpenFileForReadWrite(F, WorldDatFileName, 2500)) then
+    begin
+      Write(F, WorldDat);
+      Close(F);
+    end else
+    begin
+      raise Exception.Create('Unable to open ' + ExtractFileName(WorldDatFileName) + '.  Sorry.');
+    end;
+  end else
+  begin
+    raise Exception.Create(ExtractFileName(WorldDatFileName) + ' is missing.  Sorry.');
   end;
 end;
 
@@ -761,12 +782,5 @@ begin
 end;
 
 begin
-  ItemsDatFileName := GetSafeAbsolutePath('ITEMS.DAT');
-  MapDatFileName := GetSafeAbsolutePath('MAP.DAT');
-  STimeDatFileName := GetSafeAbsolutePath('STIME.DAT');
-  TimeDatFileName := GetSafeAbsolutePath('TIME.DAT');
-  TraderDatFileName := GetSafeAbsolutePath('TRADER.DAT');
-  UpdateTmpFileName := GetSafeAbsolutePath('UPDATE.TMP');
-  WorldDatFileName := GetSafeAbsolutePath('WORLD.DAT');
 end.
 

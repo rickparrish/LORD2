@@ -5,7 +5,7 @@ unit RTRefLabel;
 interface
 
 uses
-  Classes;
+  Classes, fgl;
 
 type
   TRTRefLabel = class
@@ -16,6 +16,8 @@ type
     constructor Create(ALabelName: String; ALineNumber: Integer);
     destructor Destroy; override;
   end;
+
+  TRTRefLabelMap = specialize TFPGMap<string, TRTRefLabel>;
 
 implementation
 

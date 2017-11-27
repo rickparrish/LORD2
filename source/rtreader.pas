@@ -775,21 +775,21 @@ begin
   FileName := ChangeFileExt(UpperCase(TranslateVariables(ATokens[4])), '');
   SectionName := UpperCase(TranslateVariables(ATokens[2]));
 
-  if (RTGlobal.RefFiles.FindIndexOf(FileName) = -1) then
+  if (RTGlobal.RefFiles.IndexOf(FileName) = -1) then
   begin
     DoorWriteLn('`4`b**`b `%ERROR : `2File `0' + FileName + ' `2not found. `4`b**`b`2');
     DoorReadKey;
   end else
   begin
-    RefFile := TRTRefFile(RTGlobal.RefFiles.Find(FileName));
+    RefFile := RTGlobal.RefFiles[FileName];
 
-    if (RefFile.Sections.FindIndexOf(SectionName) = -1) then
+    if (RefFile.Sections.IndexOf(SectionName) = -1) then
     begin
       DoorWriteLn('`4`b**`b `%ERROR : Section `0' + SectionName + ' `2not found in `0' + FileName + ' `4`b**`b`2');
       DoorReadKey;
     end else
     begin
-      RefSection := TRTRefSection(RefFile.Sections.Find(SectionName));
+      RefSection := RefFile.Sections[SectionName];
       DoorWriteLn(TranslateVariables(RefSection.Script.Text));
     end;
   end;
@@ -917,12 +917,12 @@ begin
       Passes control of the script to the header or label specified. *)
   LabelName := UpperCase(Trim(TranslateVariables(ATokens[3])));
 
-  if (FCurrentSection.Labels.FindIndexOf(LabelName) <> -1) then
+  if (FCurrentSection.Labels.IndexOf(LabelName) <> -1) then
   begin
     // LABEL goto within current section
-    FCurrentLineNumber := TRTRefLabel(FCurrentSection.Labels.Find(LabelName)).LineNumber;
+    FCurrentLineNumber := FCurrentSection.Labels[LabelName].LineNumber;
   end else
-  if (FCurrentFile.Sections.FindIndexOf(LabelName) <> -1) then
+  if (FCurrentFile.Sections.IndexOf(LabelName) <> -1) then
   begin
     // HEADER goto
     RTReader.Execute(FCurrentFile.Name, LabelName);
@@ -932,7 +932,7 @@ begin
     for I := 0 to FCurrentFile.Sections.Count - 1 do
     begin
       RefSection := TRTRefSection(FCurrentFile.Sections.Items[I]);
-      if (RefSection.Labels.FindIndexOf(LabelName) <> -1) then
+      if (RefSection.Labels.IndexOf(LabelName) <> -1) then
       begin
         // LABEL goto within a different section
         RTReader.Execute(FCurrentFile.Name, RefSection.Name, LabelName);
@@ -1869,7 +1869,7 @@ procedure TRTReader.CommandSAVEGLOBALS(ATokens: TTokens);
 begin
   (* @SAVEGLOBALS
       This command saves the current global variables for later retrieval *)
-  LogTODO(ATokens);
+  Game.SaveWorldDat;
 end;
 
 procedure TRTReader.CommandSAVEWORLD(ATokens: TTokens);
@@ -2615,31 +2615,31 @@ end;
 
 procedure TRTReader.Execute(AFileName: String; ASectionName: String; ALabelName: String);
 begin
-  if (RTGlobal.RefFiles.FindIndexOf(AFileName) = -1) then
+  if (RTGlobal.RefFiles.IndexOf(AFileName) = -1) then
   begin
     DoorWriteLn('`4`b**`% ERROR : `2File `0' + AFileName + ' `2not found. `4`b**`2');
     DoorReadKey;
   end else
   begin
-    FCurrentFile := TRTRefFile(RTGlobal.RefFiles.Find(AFileName));
+    FCurrentFile := RTGlobal.RefFiles[AFileName];
 
-    if (FCurrentFile.Sections.FindIndexOf(ASectionName) = -1) then
+    if (FCurrentFile.Sections.IndexOf(ASectionName) = -1) then
     begin
       DoorWriteLn('`4`b**`% ERROR : Section `0' + ASectionName + ' `2not found in `0' + AFileName + ' `4`b**`2');
       DoorReadKey;
     end else
     begin
-      FCurrentSection := TRTRefSection(FCurrentFile.Sections.Find(ASectionName));
+      FCurrentSection := FCurrentFile.Sections[ASectionName];
 
       if (ALabelName <> '') then
       begin
-        if (FCurrentSection.Labels.FindIndexOf(ALabelName) = -1) then
+        if (FCurrentSection.Labels.IndexOf(ALabelName) = -1) then
         begin
           DoorWriteLn('`4`b**`% ERROR : Label `0' + ASectionName + ' `2not found in `0' + AFileName + ' `4`b**`2');
           DoorReadKey;
         end else
         begin
-          FCurrentLabel := TRTRefLabel(FCurrentSection.Labels.Find(ALabelName));
+          FCurrentLabel := FCurrentSection.Labels[ALabelName];
           FCurrentLineNumber := FCurrentLabel.LineNumber;
         end;
       end;
@@ -2652,31 +2652,19 @@ end;
 procedure TRTReader.LogTODO(ATokens: TTokens);
 var
   F: Text;
-  LogTODOFileName: String;
 begin
+  if (OpenFileForAppend(F, Game.GetSafeAbsolutePath('LogTODO.txt'), 100)) then
+  begin
+    WriteLn(F, TokToStr(ATokens, ' '));
+    Close(F);
+  end;
+
   if (DoorLocal) then
   begin
     FastWrite(PadRight('TODO: ' + TokToStr(ATokens, ' '), 80), 1, 25, 31);
     DoorReadKey;
     FastWrite(PadRight('', 80), 1, 25, 7);
   end;
-
-  LogTODOFileName := Game.GetSafeAbsolutePath('LogTODO.txt');
-  if (FileExists(LogTODOFileName)) then
-  begin
-    if NOT(OpenFileForAppend(F, LogTODOFileName, 100)) then
-    begin
-      Exit;
-    end;
-  end else
-  begin
-    if NOT(OpenFileForOverwrite(F, LogTODOFileName, 100)) then
-    begin
-      Exit;
-    end;
-  end;
-  WriteLn(F, TokToStr(ATokens, ' '));
-  Close(F);
 end;
 
 procedure TRTReader.ParseCommand(ATokens: TTokens);

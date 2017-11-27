@@ -4,51 +4,45 @@ program LORD2;
 
 uses
   Game,
-  Door,
+  Door, FileUtils,
   Crt, SysUtils;
 
 var 
+  CrashLogFile: Text;
   Maint: Boolean;
 
 begin
   try
     try
       ClrScr;
+      DoorSession.SethWrite := true;
 
+      // Check if maintenance was requested
       Maint := (ParamCount > 0) AND (LowerCase(ParamStr(1)) = '/maint');
-
-      if (Game.Init) then
+      if (Maint) then
       begin
-        // Check if maintenance was requested
-        if (Maint) then
-        begin
-          // Yep, so run it now
-          Game.Maint;
-        end else
-        begin
-          // Nope, so initialize the doorkit
-          DoorStartUp;
-          DoorSession.SethWrite := true;
-          DoorClrScr;
-
-          // And start the game          
-          Game.Start;
-        end;
+        // Maintenance was requested
+        Game.Init;
+        Game.Maint;
       end else
       begin
-        // Unable to initialize game (likely data files missing)
-        DoorWriteLn('Aborting due to game initialization failure...');
-        if NOT(Maint) then
-        begin
-          DoorWriteLn('Hit a key to quit back to the BBS');
-          DoorReadKey;
-        end;
+        // Not asking for maintenance, so start the game
+        DoorStartUp;
+        DoorClrScr;
+        Game.Init;
+        Game.Start;
       end;
     except
       on E: Exception do
       begin
-        // TODO Log to file as well as to screen that an abnormal exit occurred
-        // TODO Log to file instead of screen
+        if (OpenFileForAppend(CrashLogFile, Game.GetSafeAbsolutePath('CrashLog.txt'), 100)) then
+        begin
+          WriteLn(CrashLogFile, DateTimeToStr(Now));
+          DumpExceptionCallStack(CrashLogFile, E);
+          WriteLn(CrashLogFile, '');
+          Close(CrashLogFile);
+        end;
+        
         DoorWriteLn;
         DoorWriteLn('`4`b**`% ERROR : `2' + E.Message + ' `4`b**`2');
         DoorWrite('Hit a key to quit');

@@ -6,10 +6,10 @@ interface
 
 uses
   RTRefLabel, RTRefFile, RTRefSection,
-  Classes, contnrs, SysUtils;
+  Classes, SysUtils;
 
 var
-  RefFiles: TFPHashObjectList;
+  RefFiles: TRTRefFileMap;
 
 implementation
 
@@ -45,7 +45,7 @@ begin
     if (Pos('@#', LineTrimmed) = 1) then
     begin
       // Store last section we were working on in dictionary
-      if (NewFile.Sections.FindIndexOf(NewSectionName) <> -1) then
+      if (NewFile.Sections.IndexOf(NewSectionName) <> -1) then
       begin
         // Section already exists, so we can't add it
         // CASTLE4 has multiple DONE sections
@@ -82,7 +82,7 @@ begin
   SL.Free;
 
   // Store last section we were working on in dictionary
-  if (NewFile.Sections.FindIndexOf(NewSectionName) <> -1) then
+  if (NewFile.Sections.IndexOf(NewSectionName) <> -1) then
   begin
     // Section already exists, so we can't add it
     // CASTLE4 has multiple DONE sections
@@ -99,7 +99,7 @@ end;
 var
   SR: TSearchRec;
 begin
-  RefFiles := TFPHashObjectList.Create();
+  RefFiles := TRTRefFileMap.Create();
 
   if (FindFirst(Game.GetSafeAbsolutePath('*.REF'), faAnyFile, SR) = 0) then
   begin
@@ -107,5 +107,6 @@ begin
       LoadRefFile(Game.GetSafeAbsolutePath(SR.Name));
     until (FindNext(SR) <> 0);
   end;
+  FindClose(SR);
 end.
 

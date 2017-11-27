@@ -5,12 +5,13 @@ unit RTRefSection;
 interface
 
 uses
-  contnrs, Classes;
+  RTRefLabel,
+  Classes, fgl;
 
 type
   TRTRefSection = class
   public
-    Labels: TFPHashObjectList;
+    Labels: TRTRefLabelMap;
     Name: String;
     Script: TStringList;
 
@@ -18,12 +19,14 @@ type
     destructor Destroy; override;
   end;
 
+  TRTRefSectionMap = specialize TFPGMap<string, TRTRefSection>;
+
 implementation
 
 constructor TRTRefSection.Create(ASectionName: String);
 begin
   inherited Create;
-  Labels := TFPHashObjectList.Create;
+  Labels := TRTRefLabelMap.Create;
   Name := ASectionName;
   Script := TStringList.Create;
 end;

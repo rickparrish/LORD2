@@ -43,6 +43,10 @@ type
     FInSHOWSCROLLLines: TStringList;
     FInWRITEFILE: String;
 
+    FPauseAfter24Lines: Boolean;
+    FSavedCursorX: Byte;
+    FSavedCursorY: Byte;
+
     procedure AssignVariable(AVariable: String; AValue: String);
 
     procedure CommandADDCHAR(ATokens: TTokens);
@@ -165,6 +169,7 @@ type
 
     procedure InitializeIdfFile(AFileName: String);
 
+    procedure LogInvalid(ATokens: TTokens);
     procedure LogTODO(ATokens: TTokens);
 
     procedure ParseCommand(ATokens: TTokens);
@@ -285,6 +290,10 @@ begin
   FInSHOWSCROLL := false;
   FInSHOWSCROLLLines := TStringList.Create;
   FInWRITEFILE := '';
+
+  FPauseAfter24Lines := True;
+  FSavedCursorX := 1;
+  FSavedCursorY := 1;
 end;
 
 destructor TRTReader.Destroy;
@@ -459,6 +468,7 @@ begin
       CommandCLEAR(StrToTok('@CLEAR TEXT', ' '));
       CommandCLEAR(StrToTok('@CLEAR NAME', ' '));
     end;
+
     'NAME':
     begin
       (* @CLEAR NAME
@@ -466,6 +476,7 @@ begin
       DoorGotoXY(55, 15);
       DoorWrite(PadRight('', 22));
     end;
+
     'PICTURE':
     begin
       (* @CLEAR PICTURE
@@ -476,12 +487,14 @@ begin
           DoorWrite(PadRight('', 22));
       end;
     end;
+
     'SCREEN':
     begin
       (* @CLEAR SCREEN
           This command clears the entire screen. *)
       DoorClrScr;
     end;
+
     'TEXT':
     begin
       (* @CLEAR TEXT
@@ -492,6 +505,7 @@ begin
           DoorWrite(PadRight('', 22));
       end;
     end;
+
     'USERSCREEN':
     begin
       (* @CLEAR USERSCREEN
@@ -503,8 +517,11 @@ begin
       end;
       DoorGotoXY(78, 23);
     end;
+
     else
-      LogTODO(ATokens); // TODOX
+    begin
+      LogInvalid(ATokens);
+    end;
   end;
 end;
 
@@ -732,6 +749,7 @@ begin
   begin
     SL := TStringList.Create;
     SL.LoadFromFile(FileName);
+    // TODOX Take FPauseAfter24Lines, NOPAUSE, and NOSKIP into account
     DoorWrite(TranslateVariables(SL.Text));
     SL.Free;
   end;
@@ -781,7 +799,6 @@ begin
   (* @DO DELETE <file name>
       This command deletes the file specified by <file name>.  The file name must be
       a valid DOS file name.  There can be no spaces. *)
-  // TODOX Error handling
   FileName := Game.GetSafeAbsolutePath(ATokens[3]);
   if (FileExists(FileName)) then
   begin
@@ -1542,7 +1559,7 @@ begin
       DoorWrite(#8#8#8#8#8#8 + '      ' + #8#8#8#8#8#8);
   end else
   begin
-    LogTODO(ATokens); // TODOX
+    LogInvalid(ATokens);
   end;
 
   // Restore text attribute
@@ -1562,7 +1579,7 @@ begin
       This command restores the cursor to the position before the last @SAVECURSOR
       was issued.  This is good for creative graphics and text positioning with a
       minimum of calculations.  See @SAVECURSOR below. *)
-  LogTODO(ATokens); // TODOX
+  DoorGotoXY(FSavedCursorX, FSavedCursorY);
 end;
 
 procedure TRTReader.CommandLOADGLOBALS(ATokens: TTokens);
@@ -1711,14 +1728,14 @@ begin
   (* @PAUSEOFF
       This turns the 24 line pause off so you can show long ansis etc and it won't
       pause every 24 lines. *)
-  LogTODO(ATokens); // TODOX
+  FPauseAfter24Lines := False;
 end;
 
 procedure TRTReader.CommandPAUSEON(ATokens: TTokens);
 begin
   (* @PAUSEON
       Just the opposite of the above command.  This turns the pause back on. *)
-  LogTODO(ATokens); // TODOX
+  FPauseAfter24Lines := True;
 end;
 
 procedure TRTReader.CommandPROGNAME(ATokens: TTokens);
@@ -1786,7 +1803,8 @@ procedure TRTReader.CommandSAVECURSOR(ATokens: TTokens);
 begin
   (* @SAVECURSOR
       This command saves the current cursor positioning for later retrieval. *)
-  LogTODO(ATokens); // TODOX
+  FSavedCursorX := WhereX;
+  FSavedCursorY := WhereY;
 end;
 
 procedure TRTReader.CommandSAVEGLOBALS(ATokens: TTokens);
@@ -2595,6 +2613,11 @@ begin
   end;
 end;
 
+procedure TRTReader.LogInvalid(ATokens: TTokens);
+begin
+  raise Exception.Create('Invalid command: ' + TokToStr(ATokens, ' '));
+end;
+
 procedure TRTReader.LogTODO(ATokens: TTokens);
 var
   F: Text;
@@ -2688,11 +2711,11 @@ begin
               'ADD': CommandDO_ADD(ATokens);
               'IS': CommandDO_IS(ATokens);
               'RANDOM': CommandDO_RANDOM(ATokens);
-              else LogTODO(ATokens); // TODOX
+              else LogInvalid(ATokens);
             end;
           end else
           begin
-            LogTODO(ATokens); // TODOX
+            LogInvalid(ATokens);
           end;
         end;
       end;
@@ -2725,7 +2748,7 @@ begin
             '=': IFResult := CommandIF_IS(ATokens);
             '<': IFResult := CommandIF_LESS(ATokens);
             '>': IFResult := CommandIF_MORE(ATokens);
-            else LogTODO(ATokens); // TODOX
+            else LogInvalid(ATokens);
           end;
         end;
       end;
@@ -2785,7 +2808,7 @@ begin
     '@VERSION': CommandVERSION(ATokens);
     '@WHOISON': CommandWHOISON(ATokens);
     '@WRITEFILE': CommandWRITEFILE(ATokens);
-    else LogTODO(ATokens); // TODOX
+    else LogInvalid(ATokens);
   end;
 end;
 

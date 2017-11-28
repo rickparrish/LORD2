@@ -163,6 +163,8 @@ type
 
     procedure Execute(AFileName: String; ASectionName: String; ALabelName: String);
 
+    procedure InitializeIdfFile(AFileName: String);
+
     procedure LogTODO(ATokens: TTokens);
 
     procedure ParseCommand(ATokens: TTokens);
@@ -302,23 +304,16 @@ begin
       @READSTRING, @DO COPYTONAME, set appropriate variables including the player's
       X and Y coordinates and map block number before issuing this command.  Failure
       to do this can result in a corrupted TRADER.DAT file. *)
-  // TODOX Retry if IOError
-  // TODOX Race conditions
-  Assign(FTraderDat, TraderDatFileName);
-  if (FileExists(TraderDatFileName)) then
-  begin
-    {$I-}Reset(FTraderDat);{$I+}
-  end else
-  begin
-    {$I-}ReWrite(FTraderDat);{$I+}
-  end;
-  if (IOResult = 0) then
+  if (OpenFileForReadWrite(FTraderDat, TraderDatFileName, 2500)) then
   begin
     Seek(FTraderDat, FileSize(FTraderDat));
     Write(FTraderDat, Game.Player);
-    Game.PlayerNum := FileSize(FTraderDat);
+    Game.PlayerNum := FileSize(FTraderDat) div SizeOf(TraderDatRecord);
+    Close(FTraderDat);
+  end else
+  begin
+    raise Exception.Create('Unable to open ' + ExtractFileName(TraderDatFileName) + '.  Sorry.');
   end;
-  Close(FTraderDat);
 
   UTR.X := Game.Player.X;
   UTR.Y := Game.Player.Y;
@@ -326,22 +321,16 @@ begin
   UTR.OnNow := 1;
   UTR.Busy := 0;
   UTR.Battle := 0;
-  // TODOX Retry if IOError
-  // TODOX Race conditions
-  Assign(FUpdateTmp, UpdateTmpFileName);
-  if (FileExists(UpdateTmpFileName)) then
+
+  if (OpenFileForReadWrite(FUpdateTmp, UpdateTmpFileName, 2500)) then
   begin
-    {$I-}Reset(FUpdateTmp);{$I+}
+    Seek(FUpdateTmp, Game.PlayerNum * SizeOf(UpdateTmpRecord));
+    Write(FUpdateTmp, UTR);
+    Close(FUpdateTmp);
   end else
   begin
-    {$I-}ReWrite(FUpdateTmp);{$I+}
+    raise Exception.Create('Unable to open ' + ExtractFileName(UpdateTmpFileName) + '.  Sorry.');
   end;
-  if (IOResult = 0) then
-  begin
-    Seek(FUpdateTmp, Game.PlayerNum);
-    Write(FUpdateTmp, UTR);
-  end;
-  Close(FUpdateTmp);
 end;
 
 procedure TRTReader.CommandBEGIN(ATokens: TTokens);
@@ -594,7 +583,6 @@ procedure TRTReader.CommandDATALOAD(ATokens: TTokens);
 var
   F: File of IdfRecord;
   FileName: String;
-  I: Integer;
   Idf: IdfRecord;
 begin
   (* @DATALOAD <filename> <record (1 to 200)> <`p variable to put it in> : This loads
@@ -604,36 +592,20 @@ begin
   FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
   if (FileName <> '') then
   begin
-    if (FileExists(FileName)) then
+    if NOT(FileExists(FileName)) then
     begin
-      // TODOX Error handling
-      Assign(F, FileName);
-      {$I-}Reset(F);{$I+}
-      if (IOResult = 0) then
-      begin
-        Read(F, Idf);
-        Close(F);
+      InitializeIdfFile(FileName);
+    end;
 
-        AssignVariable(ATokens[4], IntToStr(Idf.Data[StrToInt(ATokens[3])]));
-      end;
-    end else
+    if (OpenFileForReadWrite(F, FileName, 2500)) then
     begin
-      Idf.LastUsed := Game.STime;
-      for I := Low(Idf.Data) to High(Idf.Data) do
-      begin
-        Idf.Data[I] := 0;
-      end;
-
-      // TODOX Error handling
-      Assign(F, FileName);
-      {$I-}ReWrite(F);{$I+}
-      if (IOResult = 0) then
-      begin
-        Write(F, Idf);
-      end;
+      Read(F, Idf);
       Close(F);
 
-      AssignVariable(ATokens[4], '0');
+      AssignVariable(ATokens[4], IntToStr(Idf.Data[StrToInt(ATokens[3])]));
+    end else
+    begin
+      raise Exception.Create('Unable to open ' + ExtractFileName(FileName) + '.  Sorry.');
     end;
   end;
 end;
@@ -642,7 +614,6 @@ procedure TRTReader.CommandDATANEWDAY(ATokens: TTokens);
 var
   F: File of IdfRecord;
   FileName: String;
-  I: Integer;
   Idf: IdfRecord;
 begin
   (* @DATANEWDAY <filename> :  If it is the NEXT day since this function was
@@ -652,50 +623,24 @@ begin
   FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
   if (FileName <> '') then
   begin
-    if (FileExists(FileName)) then
+    if NOT(FileExists(FileName)) then
     begin
-      // TODOX Error handling
-      Assign(F, FileName);
-      {$I-}Reset(F);{$I+}
-      if (IOResult = 0) then
+      InitializeIdfFile(FileName);
+    end else
+    begin
+      if (OpenFileForReadWrite(F, FileName, 2500)) then
       begin
         Read(F, Idf);
         Close(F);
 
         if (Idf.LastUsed <> Game.STime) then
         begin
-          Idf.LastUsed := Game.STime;
-          for I := Low(Idf.Data) to High(Idf.Data) do
-          begin
-            Idf.Data[I] := 0;
-          end;
-
-          // TODOX Error handling
-          Assign(F, FileName);
-          {$I-}ReWrite(F);{$I+}
-          if (IOResult = 0) then
-          begin
-            Write(F, Idf);
-            Close(F);
-          end;
+          InitializeIdfFile(FileName);
         end;
-      end;
-    end else
-    begin
-      Idf.LastUsed := Game.STime;
-      for I := Low(Idf.Data) to High(Idf.Data) do
+      end else
       begin
-        Idf.Data[I] := 0;
+        raise Exception.Create('Unable to open ' + ExtractFileName(FileName) + '.  Sorry.');
       end;
-
-      // TODOX Error handling
-      Assign(F, FileName);
-      {$I-}ReWrite(F);{$I+}
-      if (IOResult = 0) then
-      begin
-        Write(F, Idf);
-      end;
-      Close(F);
     end;
   end;
 end;
@@ -704,7 +649,6 @@ procedure TRTReader.CommandDATASAVE(ATokens: TTokens);
 var
   F: File of IdfRecord;
   FileName: String;
-  I: Integer;
   Idf: IdfRecord;
 begin
   (* @DATASAVE <filename> <record (1 to 200)> <value to make it> : This SAVES
@@ -715,46 +659,24 @@ begin
   FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
   if (FileName <> '') then
   begin
-      if (FileExists(FileName)) then
-      begin
-        // TODOX Error handling
-        Assign(F, FileName);
-        {$I-}Reset(F);{$I+}
-        if (IOResult = 0) then
-        begin
-          Read(F, Idf);
-        end;
-        Close(F);
+    if NOT(FileExists(FileName)) then
+    begin
+      InitializeIdfFile(FileName);
+    end;
 
-        Idf.Data[StrToInt(ATokens[3])] := StrToInt(TranslateVariables(ATokens[4]));
+    if (OpenFileForReadWrite(F, FileName, 2500)) then
+    begin
+      Read(F, Idf);
 
-        // TODOX Error handling
-        Assign(F, FileName);
-        {$I-}ReWrite(F);{$I+}
-        if (IOResult = 0) then
-        begin
-          Write(F, Idf);
-        end;
-        Close(F);
-      end else
-      begin
-        Idf.LastUsed := Game.STime;
-        for I := Low(Idf.Data) to High(Idf.Data) do
-        begin
-          Idf.Data[I] := 0;
-        end;
+      Idf.Data[StrToInt(ATokens[3])] := StrToInt(TranslateVariables(ATokens[4]));
 
-        Idf.Data[StrToInt(ATokens[3])] := StrToInt(TranslateVariables(ATokens[4]));
-
-        // TODOX Error handling
-        Assign(F, FileName);
-        {$I-}ReWrite(F);{$I+}
-        if (IOResult = 0) then
-        begin
-          Write(F, Idf);
-        end;
-        Close(F);
-      end;
+      Seek(F, 0);
+      Write(F, Idf);
+      Close(F);
+    end else
+    begin
+      raise Exception.Create('Unable to open ' + ExtractFileName(FileName) + '.  Sorry.');
+    end;
   end;
 end;
 
@@ -2651,11 +2573,33 @@ begin
   end;
 end;
 
+procedure TRTReader.InitializeIdfFile(AFileName: String);
+var
+  F: File of IdfRecord;
+  I: Integer;
+  Idf: IdfRecord;
+begin
+  Idf.LastUsed := Game.STime;
+  for I := Low(Idf.Data) to High(Idf.Data) do
+  begin
+    Idf.Data[I] := 0;
+  end;
+
+  if (OpenFileForOverwrite(F, AFileName, 2500)) then
+  begin
+    Write(F, Idf);
+    Close(F);
+  end else
+  begin
+    raise Exception.Create('Unable to open ' + ExtractFileName(AFileName) + '.  Sorry.');
+  end;
+end;
+
 procedure TRTReader.LogTODO(ATokens: TTokens);
 var
   F: Text;
 begin
-  if (OpenFileForAppend(F, Game.GetSafeAbsolutePath('LogTODO.txt'), 100)) then
+  if (OpenFileForAppend(F, Game.GetSafeAbsolutePath('LOGTODO.txt'), 100)) then
   begin
     WriteLn(F, TokToStr(ATokens, ' '));
     Close(F);
@@ -2915,20 +2859,14 @@ begin
         end else
         if (FInDO_ADDLOG) then
         begin
-          // TODOX Error handling
-          Assign(F, Game.GetSafeAbsolutePath('LOGNOW.TXT'));
-          if (FileExists(Game.GetSafeAbsolutePath('LOGNOW.TXT'))) then
-          begin
-            {$I-}Append(F);{$I+}
-          end else
-          begin
-            {$I-}ReWrite(F);{$I+}
-          end;
-          if (IOResult = 0) then
+          if (OpenFileForAppend(F, Game.GetSafeAbsolutePath('LOGNOW.TXT'), 2500)) then
           begin
             WriteLn(F, TranslateVariables(Line));
+            Close(F);
+          end else
+          begin
+            raise Exception.Create('Unable to open LOGNOW.TXT.  Sorry.');
           end;
-          Close(F);
 
           FInDO_ADDLOG := false;
         end else
@@ -2981,20 +2919,14 @@ begin
         end else
         if (FInWRITEFILE <> '') then
         begin
-          // TODOX Error handling
-          Assign(F, FInWRITEFILE);
-          if (FileExists(FInWRITEFILE)) then
-          begin
-            {$I-}Append(F);{$I+}
-          end else
-          begin
-            {$I-}ReWrite(F);{$I+}
-          end;
-          if (IOResult = 0) then
+          if (OpenFileForAppend(F, FInWRITEFILE, 2500)) then
           begin
             WriteLn(F, TranslateVariables(Line));
+            Close(F);
+          end else
+          begin
+            raise Exception.Create('Unable to open ' + FInWRITEFILE + '.  Sorry.');
           end;
-          Close(F);
         end;
       end;
     end;

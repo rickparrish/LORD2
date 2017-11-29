@@ -372,7 +372,7 @@ begin
       This makes the player appear 'red' to other players currently playing.  It
       also tells the Lord II engine to run @#busy in gametxt.ref if a player logs on
       and someone is attacking him or giving him an item. *)
-  LogTODO(ATokens); // TODOX
+  LogTODO(ATokens); // TODOY
 end;
 
 procedure TRTReader.CommandBUYMANAGER(ATokens: TTokens);
@@ -389,8 +389,12 @@ end;
 procedure TRTReader.CommandCHECKMAIL(ATokens: TTokens);
 begin
   (* @CHECKMAIL
-      Undocumented.  Will need to determine what this does *)
-  LogTODO(ATokens); // TODOX
+      Undocumented.  Will need to determine what this does
+      Looks like it's only called when a player plays, dies, and then comes back in again on the same day
+      Looks like various events log to this mail\mail{usernumber}.dat file, so it's to read that.
+      Shouldn't it be used in more than just this one place though?
+  *)
+  LogTODO(ATokens); // TODOY
 end;
 
 procedure TRTReader.CommandCHOICE(ATokens: TTokens);
@@ -451,7 +455,7 @@ begin
       partial name' prompt, with a 'you mean this guy?'.  It returns the players #
       or 0 if none.  If the player isn't found it will display "No one by that name
       lives 'round here" and return 0. *)
-  LogTODO(ATokens); // TODOX
+  LogTODO(ATokens); // TODOY
 end;
 
 procedure TRTReader.CommandCLEAR(ATokens: TTokens);
@@ -1018,7 +1022,7 @@ begin
       <message>
       This adds a message to the saybar que.  This will ensure that the message is
       displayed at it's proper time instead of immediately. *)
-  LogTODO(ATokens); // TODOX
+  LogTODO(ATokens); // TODOY
   // NB: Quebar items only last 1 second or so
 end;
 
@@ -1174,7 +1178,7 @@ procedure TRTReader.CommandDO_STRIPALL(ATokens: TTokens);
 begin
   (* @DO STRIPALL
       This command strips out all ` codes.  This is good for passwords, etc. *)
-  LogTODO(ATokens); // Unused
+  LogTODO(ATokens); // TODOZ
 end;
 
 procedure TRTReader.CommandDO_STRIPBAD(ATokens: TTokens);
@@ -1189,7 +1193,7 @@ procedure TRTReader.CommandDO_STRIPCODE(ATokens: TTokens);
 begin
   (* @STRIPCODE <any `s variable>
       This will remove ALL ` codes from a string. *)
-  LogTODO(ATokens); // Unused
+  LogTODO(ATokens); // TODOZ
 end;
 
 procedure TRTReader.CommandDO_SUBTRACT(ATokens: TTokens);
@@ -1203,7 +1207,7 @@ begin
   (* @DO TALK <message> [recipients]
       Undocumented. Looks like recipients is usually ALL, which sends a global message
       Lack of recipients value means message is only displayed to those on the same screen *)
-  LogTODO(ATokens); // TODOX
+  LogTODO(ATokens); // TODOY
 end;
 
 procedure TRTReader.CommandDO_TRIM(ATokens: TTokens);
@@ -1357,7 +1361,7 @@ begin
   (* @GRAPHICS IS <Num>
       3 or more enable remote Ansi  If you never wanted to send ANSI, you could set
       this to 1. You will probably never touch this one. *)
-  LogTODO(ATokens); // Unused
+  LogTODO(ATokens); // TODOZ
 end;
 
 procedure TRTReader.CommandHALT(ATokens: TTokens);
@@ -1587,7 +1591,7 @@ begin
   (* @LOADGLOBALS
       This command loads the last value of all global variables as existed when the
       last @SAVEGLOBALS command was issued.  See @SAVEGLOBALS below. *)
-  LogTODO(ATokens); // Unused
+  LogTODO(ATokens); // TODOZ
 end;
 
 procedure TRTReader.CommandLOADMAP(ATokens: TTokens);
@@ -1607,7 +1611,7 @@ begin
   (* @LOADWORLD
       This command loads globals and world data.  It has never been used but is
       included just in case it becomes necessary to do this.  See @SAVEWORLD below. *)
-  LogTODO(ATokens); // Unused
+  LogTODO(ATokens); // TODOZ
 end;
 
 procedure TRTReader.CommandLORDRANK(ATokens: TTokens);
@@ -1669,7 +1673,7 @@ begin
       This takes the player's symbol off the map.  This makes the player appear to
       disappear to other players currently playing.  This is usful to make it look
       like they actually went into the hut, building, ect. *)
-  LogTODO(ATokens); // TODOX
+  LogTODO(ATokens); // TODOY
 end;
 
 procedure TRTReader.CommandOVERHEADMAP(ATokens: TTokens);
@@ -1819,7 +1823,7 @@ begin
   (* @SAVEWORLD
       This command saves stats and world data.  The only use yet is right after
       @#maint is called to save random stats set for that day and such. *)
-  LogTODO(ATokens); // Unused
+  LogTODO(ATokens); // TODOZ
 end;
 
 procedure TRTReader.CommandSAY(ATokens: TTokens);
@@ -1889,7 +1893,7 @@ begin
   (* @UPDATE_UPDATE
       This command writes current player data to UPDATE.TMP file.  This is useful
       when you just can't wait until the script is finished for some reason. *)
-  LogTODO(ATokens); // TODOX
+  LogTODO(ATokens); // TODOY
 end;
 
 procedure TRTReader.CommandVERSION(ATokens: TTokens);
@@ -1915,7 +1919,7 @@ procedure TRTReader.CommandWHOISON(ATokens: TTokens);
 begin
   (* @WHOISON
       Undocumented.  Will need to find out what this does *)
-  LogTODO(ATokens); // TODOX
+  LogTODO(ATokens); // TODOY
 end;
 
 procedure TRTReader.CommandWRITEFILE(ATokens: TTokens);
@@ -2488,7 +2492,7 @@ begin
   SpacesLeft := Max(0, (76 - StrippedLength) div 2);
   SpacesRight := Max(0, 76 - StrippedLength - SpacesLeft);
   DoorWrite(PadRight('', SpacesLeft) + TranslateVariables(AText) + PadRight('', SpacesRight));
-  // TODOX say bar should be removed after 5 seconds or so
+  // TODOY say bar should be removed after 5 seconds or so
 
   // Restore
   DoorCursorRestore;
@@ -2916,7 +2920,7 @@ begin
         end else
         if (FInSAY) then
         begin
-          // TODOX SHould be in TEXT window (but since LORD2 doesn't use @SAY, not a high priority)
+          // TODOZ SHould be in TEXT window (but since LORD2 doesn't use @SAY, not a high priority)
           DoorWrite(TranslateVariables(Line));
         end else
         if (FInSAYBAR) then

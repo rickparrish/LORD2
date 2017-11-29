@@ -1,3 +1,7 @@
+// TODO Legend:
+// TODOX: Complete before considering playable
+// TODOY: Multiplayer enhancements
+// TODOZ: Shouldn't be needed for the game
 program LORD2;
 
 {$mode objfpc}{$h+}

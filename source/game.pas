@@ -602,12 +602,6 @@ begin
     Update;
 
     repeat
-      (*TODOX W  Write mail to another player
-        H  Interact with another player.  The player pressing this key must be on the
-            same map square as the player they are trying to interact with.
-        B  Show the log of messages.
-        F  Show the last three messages.
-        Q  Quit the game.  Confirmation will be requested.*)
       Ch := UpCase(DoorReadKey);
       if (DoorLastKey.Extended) then
       begin
@@ -624,6 +618,25 @@ begin
           '4': MovePlayer(-1, 0);
           '6': MovePlayer(1, 0);
           '2': MovePlayer(0, 1);
+          'B': begin
+                 // TODOY Show the log of messages.
+                 //       Clears the screen, on third line centers "BACK BUFFER" in dark green on blue text
+                 //       Skips one line then says "Ree: text here" in gray text
+                 //       Line 24 says "Press a key to return to the game." centered white on blue text
+               end;
+          'D': begin
+                 // Show daily happenings
+                 RTReader.Execute('LOGSTUFF', 'READLOG');
+                 DrawMap;
+                 Update;
+               end;
+          'F': begin
+                 // TODOY Show the last three messages.
+                 //       Shows the three lines below the status bar, then changes status bar to "Fast Backbuffer - Press a key to continue."
+               end;
+          'H': begin
+                 // TODOY Interact with another player.  The player pressing this key must be on the same map square as the player they are trying to interact with.
+               end;
           'L': RTReader.Execute('HELP', 'LISTPLAYERS');
           'M': RTReader.Execute('HELP', 'MAP');
           'P': RTReader.Execute('HELP', 'WHOISON');
@@ -649,12 +662,24 @@ begin
                     Ch := 'Q';
                   end;
                 end;
+          'R': begin
+                 // Redraw the screen
+                 DrawMap;
+                 Update;
+               end;
+          'S': begin
+                 // TODOY Show names of everybody on the current screen
+                 //       Names appear to the right of the player, and a "Press a key to continue." message appears on the status line
+               end;
           'T': RTReader.Execute('HELP', 'TALK');
           'V': begin
                   RTReader.Execute('GAMETXT', 'STATS');
                   ViewInventory;
                   RTReader.Execute('GAMETXT', 'CLOSESTATS');
                 end;
+          'W': begin
+                 // TODOY Write mail to another player
+               end;
           'Y': RTReader.Execute('HELP', 'YELL');
           'Z': RTReader.Execute('HELP', 'Z');
           '?': RTReader.Execute('HELP', 'HELP');
@@ -699,7 +724,7 @@ begin
   DoorGotoXY(Player.x, Player.y);
   DoorWrite(#02);
 
-  // TODOX Draw the other players
+  // TODOY Draw the other players
 end;
 
 procedure ViewInventory;

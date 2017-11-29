@@ -5,16 +5,13 @@ unit RTGlobal;
 interface
 
 uses
-  RTRefLabel, RTRefFile, RTRefSection,
+  Helpers, RTRefLabel, RTRefFile, RTRefSection,
   Classes, SysUtils;
 
 var
   RefFiles: TRTRefFileMap;
 
 implementation
-
-uses
-  Game;
 
 procedure LoadRefFile(AFileName: String); forward;
 
@@ -101,10 +98,10 @@ var
 begin
   RefFiles := TRTRefFileMap.Create();
 
-  if (FindFirst(Game.GetSafeAbsolutePath('*.REF'), faAnyFile, SR) = 0) then
+  if (FindFirst(Helpers.GetAbsolutePath('*.REF'), faAnyFile, SR) = 0) then
   begin
     repeat
-      LoadRefFile(Game.GetSafeAbsolutePath(SR.Name));
+      LoadRefFile(Helpers.GetAbsolutePath(SR.Name));
     until (FindNext(SR) <> 0);
   end;
   FindClose(SR);

@@ -32,7 +32,6 @@ var
   WorldDatFileName: String;
 
 procedure DrawMap;
-function GetSafeAbsolutePath(AFileName: String): String;
 procedure Init;
 function LoadDataFiles: Boolean;
 procedure LoadMap(AMapNumber: Integer);
@@ -49,6 +48,9 @@ procedure Update;
 procedure ViewInventory;
 
 implementation
+
+uses
+  Helpers;
 
 var
   OldExitProc: Pointer;
@@ -105,13 +107,6 @@ begin
   end;
 end;
 
-function GetSafeAbsolutePath(AFileName: String): String;
-begin
-  AFileName := StringReplace(AFileName, '`*', IntToStr(DoorDropInfo.Node), [rfReplaceAll, rfIgnoreCase]);
-  DoDirSeparators(AFileName); // Ensure \ and / are used appropriately
-  Result := IncludeTrailingPathDelimiter(ExtractFilePath(ParamStr(0))) + AFileName;
-end;
-
 procedure Init;
 begin
   LoadDataFiles;
@@ -126,13 +121,13 @@ end;
 
 function LoadDataFiles: Boolean;
 begin
-  ItemsDatFileName := GetSafeAbsolutePath('ITEMS.DAT');
-  MapDatFileName := GetSafeAbsolutePath('MAP.DAT');
-  STimeDatFileName := GetSafeAbsolutePath('STIME.DAT');
-  TimeDatFileName := GetSafeAbsolutePath('TIME.DAT');
-  TraderDatFileName := GetSafeAbsolutePath('TRADER.DAT');
-  UpdateTmpFileName := GetSafeAbsolutePath('UPDATE.TMP');
-  WorldDatFileName := GetSafeAbsolutePath('WORLD.DAT');
+  ItemsDatFileName := Helpers.GetAbsolutePath('ITEMS.DAT');
+  MapDatFileName := Helpers.GetAbsolutePath('MAP.DAT');
+  STimeDatFileName := Helpers.GetAbsolutePath('STIME.DAT');
+  TimeDatFileName := Helpers.GetAbsolutePath('TIME.DAT');
+  TraderDatFileName := Helpers.GetAbsolutePath('TRADER.DAT');
+  UpdateTmpFileName := Helpers.GetAbsolutePath('UPDATE.TMP');
+  WorldDatFileName := Helpers.GetAbsolutePath('WORLD.DAT');
 
   Result := true;
   Result := Result AND LoadItemsDat;

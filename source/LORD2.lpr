@@ -3,7 +3,7 @@ program LORD2;
 {$mode objfpc}{$h+}
 
 uses
-  Game,
+  Game, Helpers,
   Door, FileUtils,
   Crt, SysUtils;
 
@@ -35,7 +35,7 @@ begin
     except
       on E: Exception do
       begin
-        if (OpenFileForAppend(CrashLogFile, Game.GetSafeAbsolutePath('CrashLog.txt'), 100)) then
+        if (OpenFileForAppend(CrashLogFile, Helpers.GetAbsolutePath('CRASHLOG.TXT'), 100)) then
         begin
           WriteLn(CrashLogFile, DateTimeToStr(Now));
           DumpExceptionCallStack(CrashLogFile, E);

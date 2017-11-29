@@ -31,7 +31,7 @@
         <FormatVersion Value="1"/>
       </local>
     </RunParams>
-    <Units Count="15">
+    <Units Count="16">
       <Unit0>
         <Filename Value="LORD2.lpr"/>
         <IsPartOfProject Value="True"/>
@@ -105,6 +105,11 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="VideoUtils"/>
       </Unit14>
+      <Unit15>
+        <Filename Value="helpers.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="Helpers"/>
+      </Unit15>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

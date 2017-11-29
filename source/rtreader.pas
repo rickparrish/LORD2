@@ -187,7 +187,7 @@ procedure Execute(AFileName: String; ASectionName: String; ALabelName: String);
 implementation
 
 uses
-  Game;
+  Game, Helpers;
 
 procedure TRTReader.AssignVariable(AVariable: String; AValue: String);
 var
@@ -583,8 +583,8 @@ var
 begin
   (* @COPYFILE <input filename> <output filename>
       This command copies a <input filename to <output filename>.           *)
-  SourceFileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
-  DestFileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
+  SourceFileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[2]));
+  DestFileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[3]));
   if ((SourceFileName <> '') AND (DestFileName <> '') AND (FileExists(SourceFileName))) then
   begin
     // TODOX Error handling
@@ -606,7 +606,7 @@ begin
       a long integer by # from a datafile.  If the file doesn't exist, it is created
       and all 200 long integers are set to 0.
       NOTE: You should specify an extension (usually .IDF) *)
-  FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
+  FileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[2]));
   if (FileName <> '') then
   begin
     if NOT(FileExists(FileName)) then
@@ -637,7 +637,7 @@ begin
       called, all records in <filename> will be set to 0.  Check EXAMPLE.REF in the
       LORD II archive for an example of how this works.
       NOTE: You should specify an extension (usually .IDF) *)
-  FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
+  FileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[2]));
   if (FileName <> '') then
   begin
     if NOT(FileExists(FileName)) then
@@ -673,7 +673,7 @@ begin
       and all 200 long integers (except the one referenced) are set to 0.  The
       record that is referenced will be set to the value of the 3rd parameter.
       NOTE: You should specify an extension (usually .IDF) *)
-  FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
+  FileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[2]));
   if (FileName <> '') then
   begin
     if NOT(FileExists(FileName)) then
@@ -744,7 +744,7 @@ begin
   (* @DISPLAYFILE <filename> <options>
       This display an entire file.  Possible options are:  NOPAUSE and NOSKIP.  Put a
       space between options if you use both. *)
-  FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
+  FileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[2]));
   if (FileExists(FileName)) then
   begin
     SL := TStringList.Create;
@@ -799,7 +799,7 @@ begin
   (* @DO DELETE <file name>
       This command deletes the file specified by <file name>.  The file name must be
       a valid DOS file name.  There can be no spaces. *)
-  FileName := Game.GetSafeAbsolutePath(ATokens[3]);
+  FileName := Helpers.GetAbsolutePath(ATokens[3]);
   if (FileExists(FileName)) then
   begin
     DeleteFile(FileName);
@@ -1137,8 +1137,8 @@ var
 begin
   (* @DO RENAME <old name> <new name>
       Undocumented.  Renames a file *)
-  OldFile := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
-  NewFile := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[4]));
+  OldFile := Helpers.GetAbsolutePath(TranslateVariables(ATokens[3]));
+  NewFile := Helpers.GetAbsolutePath(TranslateVariables(ATokens[4]));
   if ((OldFile <> '') AND (NewFile <> '') AND (FileExists(OldFile))) then
   begin
     RenameFile(OldFile, NewFile);
@@ -1217,7 +1217,7 @@ begin
                   smaller.  (It deletes lines from the top until the file is correct # of lines,
                   if smaller than <number to trim to>, it doesn't change the file) *)
   // TODOX Error handling
-  FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[3]));
+  FileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[3]));
   if (FileExists(FileName)) then
   begin
     MaxLines := StrToInt(TranslateVariables(ATokens[4]));
@@ -1412,7 +1412,7 @@ var
 begin
   (* @IF <filename> EXIST <true or false>
       Undocumented.  Checks if given file exists *)
-  FileName := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
+  FileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[2]));
   TrueFalse := StrToBool(TranslateVariables(ATokens[4]));
   Result := (FileExists(FileName) = TrueFalse);
 end;
@@ -1770,7 +1770,7 @@ begin
       anything, even if you try to read past the end of the file. It simply won't
       change the variables if the file isn't long enough. *)
   FInREADFILELines.Clear;
-  FInREADFILE := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
+  FInREADFILE := Helpers.GetAbsolutePath(TranslateVariables(ATokens[2]));
 end;
 
 procedure TRTReader.CommandROUTINE(ATokens: TTokens);
@@ -1928,7 +1928,7 @@ begin
       write - or a combination of the two.
       Note:  @WRITEFILE appends the lines if the file exists, otherwise it creates
       it.  File locking techniques are used. *)
-  FInWRITEFILE := Game.GetSafeAbsolutePath(TranslateVariables(ATokens[2]));
+  FInWRITEFILE := Helpers.GetAbsolutePath(TranslateVariables(ATokens[2]));
 end;
 
 procedure TRTReader.EndBUYMANAGER;
@@ -2622,7 +2622,7 @@ procedure TRTReader.LogTODO(ATokens: TTokens);
 var
   F: Text;
 begin
-  if (OpenFileForAppend(F, Game.GetSafeAbsolutePath('LOGTODO.txt'), 100)) then
+  if (OpenFileForAppend(F, Helpers.GetAbsolutePath('LOGTODO.txt'), 100)) then
   begin
     WriteLn(F, TokToStr(ATokens, ' '));
     Close(F);
@@ -2882,7 +2882,7 @@ begin
         end else
         if (FInDO_ADDLOG) then
         begin
-          if (OpenFileForAppend(F, Game.GetSafeAbsolutePath('LOGNOW.TXT'), 2500)) then
+          if (OpenFileForAppend(F, Helpers.GetAbsolutePath('LOGNOW.TXT'), 2500)) then
           begin
             WriteLn(F, TranslateVariables(Line));
             Close(F);

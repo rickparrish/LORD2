@@ -16,6 +16,7 @@ var
   ItemsDat: ItemsDatCollection;
   LastX: Integer;
   LastY: Integer;
+  MorePrompt: String;
   Player: TraderDatRecord;
   PlayerNum: Integer = -1;
   RESPONSE: String = '';

@@ -31,6 +31,7 @@ type
     FInFIGHT: Boolean;
     FInFIGHTLines: TStringList;
     FInIFFalse: Integer;
+    FInMOREMAP: Boolean;
     FInREADFILE: String;
     FInREADFILELines: TStringList;
     FInSAY: Boolean;
@@ -279,6 +280,7 @@ begin
   FInFIGHT := false;
   FInFIGHTLines := TStringList.Create;
   FInIFFalse := 999;
+  FInMOREMAP := false;
   FInREADFILE := '';
   FInREADFILELines := TStringList.Create;
   FInSAY := false;
@@ -1517,6 +1519,7 @@ begin
   // Save text attribute
   SavedTextAttr := Crt.TextAttr;
 
+  // TODOX Use Game.MorePrompt
   if (High(ATokens) = 1) then
   begin
       (* @KEY
@@ -1626,7 +1629,7 @@ procedure TRTReader.CommandMOREMAP(ATokens: TTokens);
 begin
   (* @MOREMAP
       The line UNDER this will be the new <more> prompt.  30 characters maximum. *)
-  LogTODO(ATokens); // TODOX Used in CNW
+  FInMOREMAP := true;
 end;
 
 procedure TRTReader.CommandNAME(ATokens: TTokens);
@@ -2904,6 +2907,14 @@ begin
               FInFIGHT := false;
             end;
           end;
+        end else
+        if (FInMOREMAP) then
+        begin
+          if (LineTrimmed <> '') then
+          begin
+            Game.MorePrompt := LineTrimmed;
+          end;
+          FInMOREMAP := false;
         end else
         if (FInREADFILE <> '') then
         begin

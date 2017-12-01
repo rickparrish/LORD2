@@ -580,10 +580,7 @@ end;
 
 procedure TRTReader.CommandCOPYFILE(ATokens: TTokens);
 var
-  DestFile: TFileStream;
-  DestFileName: String;
-  SourceFile: TFileStream;
-  SourceFileName: String;
+  DestFileName, SourceFileName: String;
 begin
   (* @COPYFILE <input filename> <output filename>
       This command copies a <input filename to <output filename>.           *)
@@ -591,12 +588,10 @@ begin
   DestFileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[3]));
   if ((SourceFileName <> '') AND (DestFileName <> '') AND (FileExists(SourceFileName))) then
   begin
-    // TODOX Error handling
-    SourceFile := TFileStream.Create(SourceFileName, fmOpenRead);
-    DestFile := TFileStream.Create(DestFileName, fmCreate);
-    DestFile.CopyFrom(SourceFile, SourceFile.Size);
-    SourceFile.Free;
-    DestFile.Free;
+    if NOT(CopyFile(SourceFileName, DestFileName, 2500)) then
+    begin
+      raise Exception.Create('Unable to copy ' + ExtractFileName(SourceFileName) + ' to ' + ExtractFileName(DestFileName) + '.  Sorry.');
+    end;
   end;
 end;
 
@@ -1136,16 +1131,18 @@ end;
 
 procedure TRTReader.CommandDO_RENAME(ATokens: TTokens);
 var
-  NewFile: String;
-  OldFile: String;
+  NewFileName, OldFileName: String;
 begin
   (* @DO RENAME <old name> <new name>
       Undocumented.  Renames a file *)
-  OldFile := Helpers.GetAbsolutePath(TranslateVariables(ATokens[3]));
-  NewFile := Helpers.GetAbsolutePath(TranslateVariables(ATokens[4]));
-  if ((OldFile <> '') AND (NewFile <> '') AND (FileExists(OldFile))) then
+  OldFileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[3]));
+  NewFileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[4]));
+  if ((OldFileName <> '') AND (NewFileName <> '') AND (FileExists(OldFileName))) then
   begin
-    RenameFile(OldFile, NewFile);
+    if Not(FileUtils.RenameFile(OldFileName, NewFileName, 2500)) then
+    begin
+      raise Exception.Create('Unable to rename ' + ExtractFileName(OldFileName) + ' to ' + ExtractFileName(NewFileName) + '.  Sorry.');
+    end;
   end;
 end;
 
@@ -1214,27 +1211,18 @@ procedure TRTReader.CommandDO_TRIM(ATokens: TTokens);
 var
   FileName: String;
   MaxLines: Integer;
-  SL: TStringList;
 begin
   (* @DO TRIM <file name> <number to trim to>
                   This nifty command makes text file larger than <number to trim to> get
                   smaller.  (It deletes lines from the top until the file is correct # of lines,
                   if smaller than <number to trim to>, it doesn't change the file) *)
-  // TODOX Error handling
   FileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[3]));
   if (FileExists(FileName)) then
   begin
     MaxLines := StrToInt(TranslateVariables(ATokens[4]));
-    SL := TStringList.Create;
-    SL.LoadFromFile(FileName);
-    if (SL.Count > MaxLines) then
+    if NOT(TrimTopLines(FileName, MaxLines, 2500)) then
     begin
-      while (SL.Count > MaxLines) do
-      begin
-        SL.Delete(0);
-      end;
-      SL.SaveToFile(FileName);
-      SL.Free;
+      raise Exception.Create('Unable to trim ' + ExtractFileName(FileName) + '.  Sorry.');
     end;
   end;
 end;
@@ -2457,20 +2445,23 @@ var
   LoopMax: Integer;
   SL: TStringList;
 begin
-  // TODOX _InWRITEFILE could be handled like this, so no need for multiple writes per writefile
   if (FileExists(FInREADFILE)) then
   begin
-    // TODOX Error handling
     SL := TStringList.Create;
-    SL.LoadFromFile(FInREADFILE);
-
-    LoopMax := Min(SL.Count, FInREADFILELines.Count) - 1;
-    for I := 0 to LoopMax do
+    if (ReadFile(FInREADFILE, SL, 2500)) then
     begin
-      AssignVariable(FInREADFILELines[I], TranslateVariables(SL[I]));
-    end;
+      LoopMax := Min(SL.Count, FInREADFILELines.Count) - 1;
 
-    SL.Free;
+      for I := 0 to LoopMax do
+      begin
+        AssignVariable(FInREADFILELines[I], TranslateVariables(SL[I]));
+      end;
+
+      SL.Free;
+    end else
+    begin
+      raise Exception.Create('Unable to open ' + ExtractFileName(FInREADFILE) + '.  Sorry.');
+    end;
   end;
 end;
 

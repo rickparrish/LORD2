@@ -10,7 +10,7 @@ implementation
 
 uses
   Door,
-  StrUtils, SysUtils;
+  SysUtils;
 
 function GetAbsolutePath(AFileName: String): String;
 begin

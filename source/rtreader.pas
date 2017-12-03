@@ -565,11 +565,200 @@ begin
 end;
 
 procedure TRTReader.CommandCONVERT_FILE_TO_ANSI(ATokens: TTokens);
+var
+  BeforeBackTick, SethCode: String;
+  DestSL, SourceSL: TStringList;
+  SethTextAttr: Byte;
+  DestFileName, SourceFileName: String;
+  DestText, SourceText: String;
 begin
   (* @CONVERT_FILE_TO_ANSI <input file> <output file>
       Converts a text file of Sethansi (whatever) to regular Ansi  This is good for
       a final score output. *)
-  LogTODO(ATokens); // TODOX
+  SourceFileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[2]));
+  DestFileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[3]));
+
+  SourceSL := TStringList.Create;
+  if (ReadFile(SourceFileName, SourceSL, 2500)) then
+  begin
+    DestText := '';
+    SethTextAttr := TextAttr;
+    SourceText := SourceSL.Text;
+
+    while (Length(SourceText) > 0) do
+    begin
+      // Check where the next backtick is in the string
+      if (Pos('`', SourceText) = 0) then
+      begin
+        // No backticks left in the string
+        DestText += SourceText;
+        SourceText := '';
+      end else
+      if (Pos('`', SourceText) > 1) then
+      begin
+        // Backtick further into the string, so write everything up to the backtick to the output string
+        BeforeBackTick := Copy(SourceText, 1, Pos('`', SourceText) - 1);
+        DestText += BeforeBackTick;
+        Delete(SourceText, 1, Length(BeforeBackTick));
+      end;
+
+      // Now we have a backtick at the beginning of the string
+      while (Pos('`', SourceText) = 1) do
+      begin
+        if (Length(SourceText) <= 1) then
+        begin
+          // SourceText is left with a single ` symbol, so throw it away
+          SourceText := '';
+        end else
+        if (Length(SourceText) >= 2) then
+        begin
+          // SourceText has ` and at least one more character, so try to convert
+          SethCode := Copy(SourceText, 1, 2);
+          case SethCode of
+            '`1': begin
+                    SethTextAttr := Crt.Blue + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`2': begin
+                    SethTextAttr := Crt.Green + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`3': begin
+                    SethTextAttr := Crt.Cyan + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`4': begin
+                    SethTextAttr := Crt.Red + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`5': begin
+                    SethTextAttr := Crt.Magenta + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`6': begin
+                    SethTextAttr := Crt.Brown + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`7': begin
+                    SethTextAttr := Crt.LightGray + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`8': begin
+                    SethTextAttr := Crt.DarkGray + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`9': begin
+                    SethTextAttr := Crt.LightBlue + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`0': begin
+                    SethTextAttr := Crt.LightGreen + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`!': begin
+                    SethTextAttr := Crt.LightCyan + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`@': begin
+                    SethTextAttr := Crt.LightRed + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`#': begin
+                    SethTextAttr := Crt.LightMagenta + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`$': begin
+                    SethTextAttr := Crt.Yellow + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`%': begin
+                    SethTextAttr := Crt.White + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`*': begin
+                    SethTextAttr := Crt.Black + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr);
+                  end;
+            '`b': begin
+                    SethTextAttr := Crt.Red + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr) + AnsiBlink(true);
+                  end;
+            '`c': begin
+                    SethTextAttr := Crt.LightGray;
+                    DestText += AnsiTextAttr(SethTextAttr) + AnsiClrScr + #13#10#13#10;
+                end;
+            '`d': DestText += #8;
+            '`k': ; // MORE prompt -- can't translate
+            '`l': ; // 500ms delay -- can't translate
+            '`r': begin
+                    if (Length(SourceText) >= 3) then
+                    begin
+                      SethCode := Copy(SourceText, 1, 3);
+                      case SethCode of
+                        '`r0': begin
+                                 SethTextAttr := (SethTextAttr AND $0F) + (Crt.Black SHL 4);
+                                 DestText += AnsiTextAttr(SethTextAttr);
+                               end;
+                        '`r1': begin
+                                 SethTextAttr := (SethTextAttr AND $0F) + (Crt.Blue SHL 4);
+                                 DestText += AnsiTextAttr(SethTextAttr);
+                               end;
+                        '`r2': begin
+                                 SethTextAttr := (SethTextAttr AND $0F) + (Crt.Green SHL 4);
+                                 DestText += AnsiTextAttr(SethTextAttr);
+                               end;
+                        '`r3': begin
+                                 SethTextAttr := (SethTextAttr AND $0F) + (Crt.Cyan SHL 4);
+                                 DestText += AnsiTextAttr(SethTextAttr);
+                               end;
+                        '`r4': begin
+                                 SethTextAttr := (SethTextAttr AND $0F) + (Crt.Red SHL 4);
+                                 DestText += AnsiTextAttr(SethTextAttr);
+                               end;
+                        '`r5': begin
+                                 SethTextAttr := (SethTextAttr AND $0F) + (Crt.Magenta SHL 4);
+                                 DestText += AnsiTextAttr(SethTextAttr);
+                               end;
+                        '`r6': begin
+                                 SethTextAttr := (SethTextAttr AND $0F) + (Crt.Brown SHL 4);
+                                 DestText += AnsiTextAttr(SethTextAttr);
+                               end;
+                        '`r7': begin
+                                 SethTextAttr := (SethTextAttr AND $0F) + (Crt.LightGray SHL 4);
+                                 DestText += AnsiTextAttr(SethTextAttr);
+                               end;
+                      end;
+                    end;
+                  end;
+            '`w': ; // 100ms delay -- can't translate
+            '`x': DestText += ' ';
+            '`y': begin
+                    SethTextAttr := Crt.Yellow + (SethTextAttr AND $70);
+                    DestText += AnsiTextAttr(SethTextAttr) + AnsiBlink(true);
+                  end;
+            '`\': DestText += #13#10;
+            '`|': ; // Spin prompt -- can't translate
+          end;
+
+          // Delete the SethCode out of the input string (could be 2 or 3 characters)
+          Delete(SourceText, 1, Length(SethCode));
+        end;
+      end;
+    end;
+
+    // Translation finished, so save to file
+    DestSL := TStringList.Create;
+    DestSL.Text := DestText;
+    if NOT(WriteFile(DestFileName, DestSL, 2500)) then
+    begin
+      raise Exception.Create('Unable to convert ' + ExtractFileName(SourceFileName) + ' to ' + ExtractFileName(DestFileName) + ' (write failed).  Sorry.');
+    end;
+    DestSL.Free;
+  end else
+  begin
+    raise Exception.Create('Unable to convert ' + ExtractFileName(SourceFileName) + ' to ' + ExtractFileName(DestFileName) + ' (read failed).  Sorry.');
+  end;
+  SourceSL.Free;
 end;
 
 procedure TRTReader.CommandCONVERT_FILE_TO_ASCII(ATokens: TTokens);

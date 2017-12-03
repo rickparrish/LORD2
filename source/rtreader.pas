@@ -1,3 +1,4 @@
+// TODOX REF uses `' and `/ so need to test what they do
 unit RTReader;
 
 {$mode objfpc}{$h+}
@@ -567,7 +568,7 @@ end;
 procedure TRTReader.CommandCONVERT_FILE_TO_ANSI(ATokens: TTokens);
 var
   BeforeBackTick, SethCode: String;
-  DestSL, SourceSL: TStringList;
+  SL: TStringList;
   SethTextAttr: Byte;
   DestFileName, SourceFileName: String;
   DestText, SourceText: String;
@@ -578,12 +579,12 @@ begin
   SourceFileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[2]));
   DestFileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[3]));
 
-  SourceSL := TStringList.Create;
-  if (ReadFile(SourceFileName, SourceSL, 2500)) then
+  SL := TStringList.Create;
+  if (ReadFile(SourceFileName, SL, 2500)) then
   begin
     DestText := '';
     SethTextAttr := TextAttr;
-    SourceText := SourceSL.Text;
+    SourceText := SL.Text;
 
     while (Length(SourceText) > 0) do
     begin
@@ -747,26 +748,79 @@ begin
     end;
 
     // Translation finished, so save to file
-    DestSL := TStringList.Create;
-    DestSL.Text := DestText;
-    if NOT(WriteFile(DestFileName, DestSL, 2500)) then
+    SL.Text := DestText;
+    if NOT(WriteFile(DestFileName, SL, 2500)) then
     begin
       raise Exception.Create('Unable to convert ' + ExtractFileName(SourceFileName) + ' to ' + ExtractFileName(DestFileName) + ' (write failed).  Sorry.');
     end;
-    DestSL.Free;
   end else
   begin
     raise Exception.Create('Unable to convert ' + ExtractFileName(SourceFileName) + ' to ' + ExtractFileName(DestFileName) + ' (read failed).  Sorry.');
   end;
-  SourceSL.Free;
+  SL.Free;
 end;
 
 procedure TRTReader.CommandCONVERT_FILE_TO_ASCII(ATokens: TTokens);
+var
+  SL: TStringList;
+  DestFileName, SourceFileName: String;
 begin
   (* @CONVERT_FILE_TO_ASCII <input file> <output file>
       Converts a text file of Sethansi (whatever) to regular ascii, ie, no colors at
       all. *)
-  LogTODO(ATokens); // TODOX
+  SourceFileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[2]));
+  DestFileName := Helpers.GetAbsolutePath(TranslateVariables(ATokens[3]));
+
+  SL := TStringList.Create;
+  if (ReadFile(SourceFileName, SL, 2500)) then
+  begin
+    if (Pos('`', SL.Text) > 0) then
+    begin
+      SL.Text := StringReplace(SL.Text, '`1', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`2', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`3', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`4', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`5', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`6', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`7', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`8', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`9', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`!', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`@', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`#', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`$', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`%', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`*', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`b', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`c', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`d', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`k', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`l', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`r0', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`r1', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`r2', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`r3', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`r4', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`r5', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`r6', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`r7', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`w', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`x', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`y', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`\', '', [rfReplaceAll]);
+      SL.Text := StringReplace(SL.Text, '`|', '', [rfReplaceAll]);
+    end;
+
+    // Translation finished, so save to file
+    if NOT(WriteFile(DestFileName, SL, 2500)) then
+    begin
+      raise Exception.Create('Unable to convert ' + ExtractFileName(SourceFileName) + ' to ' + ExtractFileName(DestFileName) + ' (write failed).  Sorry.');
+    end;
+  end else
+  begin
+    raise Exception.Create('Unable to convert ' + ExtractFileName(SourceFileName) + ' to ' + ExtractFileName(DestFileName) + ' (read failed).  Sorry.');
+  end;
+  SL.Free;
 end;
 
 procedure TRTReader.CommandCOPYFILE(ATokens: TTokens);

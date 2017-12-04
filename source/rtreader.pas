@@ -1,4 +1,3 @@
-// TODOX REF uses `' and `/ so need to test what they do
 unit RTReader;
 
 {$mode objfpc}{$h+}
@@ -360,7 +359,9 @@ var
 begin
   (* @BITSET <`tX> <bit> <Y>
       Sets a certain bit in byte variable X to value Y.  Y must be 0 or 1.  This lets you
-      have 8 yes/no variables to each byte variable. *)
+      have 8 yes/no variables to each byte variable.
+      Based on REF usage, <bit> values are 0 through 7
+  *)
   VariableName := ATokens[2];
   StartValue := StrToInt(TranslateVariables(VariableName));
   BitToSet := StrToInt(TranslateVariables(ATokens[3]));
@@ -1406,7 +1407,7 @@ begin
     (* @DO STATBAR
         This draws the statbar. *)
     // Identified as @STATBAR not @DO STATBAR in the docs
-  LogTODO(ATokens); // TODOX
+  Game.DrawStatBar;
 end;
 
 procedure TRTReader.CommandDO_STRIP(ATokens: TTokens);
@@ -1613,8 +1614,9 @@ end;
 function TRTReader.CommandIF_BITCHECK(ATokens: TTokens): Boolean;
 begin
   (* @IF bitcheck <`t variable> <bit number> <0 or 1>
-      Check if the given bit is set or not in the given `t variable *)
-  // TODOX Untested
+      Check if the given bit is set or not in the given `t variable
+      Based on REF usage, <bit> values are 0 through 7
+  *)
   Result := ((StrToInt(TranslateVariables(ATokens[3])) AND (1 SHL StrToInt(TranslateVariables(ATokens[4])))) = StrToInt(TranslateVariables(ATokens[5])));
 end;
 
@@ -2683,6 +2685,7 @@ begin
   // Clear "action" area
   DoorTextAttr(2);
   CommandCLEARBLOCK(StrToTok('@CLEARBLOCK 21 24', ' '));
+  Game.DrawStatBar;
 end;
 
 procedure TRTReader.EndREADFILE;

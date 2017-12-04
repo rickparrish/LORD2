@@ -33,6 +33,7 @@ var
   WorldDatFileName: String;
 
 procedure DrawMap;
+procedure DrawStatBar;
 procedure Init;
 function LoadDataFiles: Boolean;
 procedure LoadMap(AMapNumber: Integer);
@@ -106,6 +107,25 @@ begin
     DoorGotoXY(1, Y);
     DoorWrite(ToSend);
   end;
+
+  DrawStatBar;
+end;
+
+procedure DrawStatBar;
+begin
+  DoorCursorSave;
+  DoorGotoXY(1, 21);
+  DoorWrite('`r0' + AnsiClrEol + '  ');
+  DoorGotoXY(3, 21);
+  DoorWrite('`r1`2Location is `0' + CurrentMap.Name + '`2. HP: (`%' + IntToStr(Game.Player.P[2]) + ' `2of `%' + IntToStr(Game.Player.P[3]) + '`2).  Press `%? `2for help.');
+  if (WhereY = 21) AND (WhereX < 78) then
+  begin
+    DoorWrite(PadRight('', 78 - WhereX + 1) + '`r0');
+  end else
+  begin
+    DoorWrite('`r0');
+  end;
+  DoorCursorRestore;
 end;
 
 procedure Init;
